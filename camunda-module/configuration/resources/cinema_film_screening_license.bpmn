@@ -2,77 +2,71 @@
 <bpmn:definitions xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL"
                    xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI"
                    xmlns:dc="http://www.omg.org/spec/DD/20100524/DC"
+                   xmlns:di="http://www.omg.org/spec/DD/20100524/DI"
                    xmlns:camunda="http://camunda.org/schema/1.0/bpmn"
-                   id="Definitions_cinema" targetNamespace="http://oman-info.gov.om/bpmn">
+                   id="Definitions_El_cinema_film_screening_license" targetNamespace="http://oman-info.gov.om/bpmn">
 
   <bpmn:process id="cinema_film_screening_license" name="Cinema Film Screening License" isExecutable="true" camunda:historyTimeToLive="180">
-
-    <bpmn:startEvent id="StartEvent_Submit" name="Application Submitted" />
-
-    <bpmn:businessRuleTask id="Task_EligibilityCheck" name="Eligibility Check (DMN)"
-        camunda:decisionRef="cinema_eligibility_and_fee"
-        camunda:mapDecisionResult="singleResult"
-        camunda:resultVariable="eligibilityResult" />
-
-    <bpmn:exclusiveGateway id="Gateway_EligibilityMet" name="Eligible?" />
-
-    <bpmn:endEvent id="EndEvent_Rejected_NotEligible" name="Rejected - Not Eligible" />
-
-    <bpmn:userTask id="Task_PayFee" name="Applicant Pays Fee" camunda:candidateGroups="applicant" />
-
-    <bpmn:serviceTask id="Task_AutoSchedule" name="Auto-schedule Field Visit"
-        camunda:type="external" camunda:topic="auto-schedule-field-visit" />
-
-    <bpmn:userTask id="Task_FieldVisitEvaluation" name="Field Visit &amp; Evaluation"
-        camunda:candidateGroups="specialist" />
-
-    <bpmn:userTask id="Task_HeadOfSectionReview" name="Head of Section Review"
-        camunda:candidateGroups="head_of_section" />
-
-    <bpmn:boundaryEvent id="BoundaryEvent_SlaTimer" name="SLA 1hr" attachedToRef="Task_HeadOfSectionReview">
-      <bpmn:timerEventDefinition>
-        <bpmn:timeDuration xsi:type="bpmn:tFormalExpression" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">PT1H</bpmn:timeDuration>
-      </bpmn:timerEventDefinition>
-    </bpmn:boundaryEvent>
-
-    <bpmn:serviceTask id="Task_EscalateSla" name="Escalate SLA Breach"
-        camunda:type="external" camunda:topic="escalate-sla-breach" />
-
-    <bpmn:endEvent id="EndEvent_EscalatedThenContinue" name="Escalation Sent" />
-
-    <bpmn:exclusiveGateway id="Gateway_ReviewOutcome" name="Outcome?" />
-
-    <bpmn:endEvent id="EndEvent_Rejected" name="Rejected" />
-
-    <bpmn:serviceTask id="Task_IssueLicense" name="Issue License + QR"
-        camunda:type="external" camunda:topic="issue-license" />
-
-    <bpmn:endEvent id="EndEvent_Approved" name="License Issued" />
-
-    <bpmn:sequenceFlow id="Flow_1" sourceRef="StartEvent_Submit" targetRef="Task_EligibilityCheck" />
-    <bpmn:sequenceFlow id="Flow_2" sourceRef="Task_EligibilityCheck" targetRef="Gateway_EligibilityMet" />
-    <bpmn:sequenceFlow id="Flow_3" sourceRef="Gateway_EligibilityMet" targetRef="Task_PayFee">
-      <bpmn:conditionExpression xsi:type="bpmn:tFormalExpression" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">${eligibilityResult.eligible == true}</bpmn:conditionExpression>
-    </bpmn:sequenceFlow>
-    <bpmn:sequenceFlow id="Flow_4" sourceRef="Gateway_EligibilityMet" targetRef="EndEvent_Rejected_NotEligible">
-      <bpmn:conditionExpression xsi:type="bpmn:tFormalExpression" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">${eligibilityResult.eligible == false}</bpmn:conditionExpression>
-    </bpmn:sequenceFlow>
-    <bpmn:sequenceFlow id="Flow_5" sourceRef="Task_PayFee" targetRef="Task_AutoSchedule" />
-    <bpmn:sequenceFlow id="Flow_6" sourceRef="Task_AutoSchedule" targetRef="Task_FieldVisitEvaluation" />
-    <bpmn:sequenceFlow id="Flow_7" sourceRef="Task_FieldVisitEvaluation" targetRef="Task_HeadOfSectionReview" />
-    <bpmn:sequenceFlow id="Flow_SlaEscalate" sourceRef="BoundaryEvent_SlaTimer" targetRef="Task_EscalateSla" />
-    <bpmn:sequenceFlow id="Flow_EscalateEnd" sourceRef="Task_EscalateSla" targetRef="EndEvent_EscalatedThenContinue" />
-    <bpmn:sequenceFlow id="Flow_8" sourceRef="Task_HeadOfSectionReview" targetRef="Gateway_ReviewOutcome" />
-    <bpmn:sequenceFlow id="Flow_9" sourceRef="Gateway_ReviewOutcome" targetRef="Task_IssueLicense">
-      <bpmn:conditionExpression xsi:type="bpmn:tFormalExpression" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">${outcome == "approve"}</bpmn:conditionExpression>
-    </bpmn:sequenceFlow>
-    <bpmn:sequenceFlow id="Flow_10" sourceRef="Gateway_ReviewOutcome" targetRef="Task_FieldVisitEvaluation">
-      <bpmn:conditionExpression xsi:type="bpmn:tFormalExpression" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">${outcome == "comments"}</bpmn:conditionExpression>
-    </bpmn:sequenceFlow>
-    <bpmn:sequenceFlow id="Flow_11" sourceRef="Gateway_ReviewOutcome" targetRef="EndEvent_Rejected">
-      <bpmn:conditionExpression xsi:type="bpmn:tFormalExpression" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">${outcome == "reject"}</bpmn:conditionExpression>
-    </bpmn:sequenceFlow>
-    <bpmn:sequenceFlow id="Flow_12" sourceRef="Task_IssueLicense" targetRef="EndEvent_Approved" />
-
+    <bpmn:startEvent id="El_start" name="Application Submitted" />
+    <bpmn:businessRuleTask id="El_decision" name="Eligibility Check" camunda:decisionRef="cinema_eligibility_and_fee" camunda:mapDecisionResult="singleResult" camunda:resultVariable="eligibilityResult" />
+    <bpmn:endEvent id="El_notEligible" name="Rejected - Not Eligible" />
+    <bpmn:userTask id="El_pay" name="Applicant Pays Fee" camunda:candidateGroups="applicant" />
+    <bpmn:serviceTask id="El_schedule" name="Auto-schedule Field Visit" camunda:type="external" camunda:topic="auto-schedule-field-visit" />
+    <bpmn:userTask id="El_evaluate" name="Field Visit &amp; Evaluation" camunda:candidateGroups="specialist" />
+    <bpmn:userTask id="El_review" name="Head of Section Review" camunda:candidateGroups="head_of_section" />
+    <bpmn:boundaryEvent id="El_review_timer" name="Timeout" attachedToRef="El_review"><bpmn:timerEventDefinition><bpmn:timeDuration xsi:type="bpmn:tFormalExpression" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">PT60M</bpmn:timeDuration></bpmn:timerEventDefinition></bpmn:boundaryEvent>
+    <bpmn:serviceTask id="El_review_escalate" name="Escalate" camunda:type="external" camunda:topic="escalate-sla-breach" />
+    <bpmn:endEvent id="El_review_timer_end" name="Escalation Sent" />
+    <bpmn:endEvent id="El_rejected" name="Rejected" />
+    <bpmn:serviceTask id="El_issue" name="Issue License + QR" camunda:type="external" camunda:topic="issue-license" />
+    <bpmn:endEvent id="El_approved" name="License Issued" />
+    <bpmn:exclusiveGateway id="El_decision_gw" name="?" />
+    <bpmn:exclusiveGateway id="El_review_gw" name="?" />
+    <bpmn:sequenceFlow id="Flow_1" sourceRef="El_decision" targetRef="El_decision_gw" />
+    <bpmn:sequenceFlow id="Flow_2" sourceRef="El_review" targetRef="El_review_gw" />
+    <bpmn:sequenceFlow id="Flow_3" sourceRef="El_start" targetRef="El_decision" />
+    <bpmn:sequenceFlow id="Flow_4" sourceRef="El_decision_gw" targetRef="El_pay"><bpmn:conditionExpression xsi:type="bpmn:tFormalExpression" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">${eligibilityResult.eligible == true}</bpmn:conditionExpression></bpmn:sequenceFlow>
+    <bpmn:sequenceFlow id="Flow_5" sourceRef="El_decision_gw" targetRef="El_notEligible"><bpmn:conditionExpression xsi:type="bpmn:tFormalExpression" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">${eligibilityResult.eligible == false}</bpmn:conditionExpression></bpmn:sequenceFlow>
+    <bpmn:sequenceFlow id="Flow_6" sourceRef="El_pay" targetRef="El_schedule" />
+    <bpmn:sequenceFlow id="Flow_7" sourceRef="El_schedule" targetRef="El_evaluate" />
+    <bpmn:sequenceFlow id="Flow_8" sourceRef="El_evaluate" targetRef="El_review" />
+    <bpmn:sequenceFlow id="Flow_9" sourceRef="El_review_gw" targetRef="El_evaluate"><bpmn:conditionExpression xsi:type="bpmn:tFormalExpression" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">${outcome == "comments"}</bpmn:conditionExpression></bpmn:sequenceFlow>
+    <bpmn:sequenceFlow id="Flow_10" sourceRef="El_review_gw" targetRef="El_rejected"><bpmn:conditionExpression xsi:type="bpmn:tFormalExpression" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">${outcome == "reject"}</bpmn:conditionExpression></bpmn:sequenceFlow>
+    <bpmn:sequenceFlow id="Flow_11" sourceRef="El_review_gw" targetRef="El_issue"><bpmn:conditionExpression xsi:type="bpmn:tFormalExpression" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">${outcome == "approve"}</bpmn:conditionExpression></bpmn:sequenceFlow>
+    <bpmn:sequenceFlow id="Flow_12" sourceRef="El_issue" targetRef="El_approved" />
+    <bpmn:sequenceFlow id="El_review_timerflow" sourceRef="El_review_timer" targetRef="El_review_escalate" />
+    <bpmn:sequenceFlow id="El_review_timerend" sourceRef="El_review_escalate" targetRef="El_review_timer_end" />
   </bpmn:process>
+
+  <bpmndi:BPMNDiagram id="BPMNDiagram_1">
+    <bpmndi:BPMNPlane id="BPMNPlane_1" bpmnElement="cinema_film_screening_license">
+      <bpmndi:BPMNShape id="El_start_di" bpmnElement="El_start"><dc:Bounds x="40" y="160" width="36" height="36" /></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="El_decision_di" bpmnElement="El_decision"><dc:Bounds x="200" y="140" width="50" height="50" /></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="El_notEligible_di" bpmnElement="El_notEligible"><dc:Bounds x="260" y="340" width="36" height="36" /></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="El_pay_di" bpmnElement="El_pay"><dc:Bounds x="420" y="140" width="110" height="80" /></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="El_schedule_di" bpmnElement="El_schedule"><dc:Bounds x="600" y="140" width="110" height="80" /></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="El_evaluate_di" bpmnElement="El_evaluate"><dc:Bounds x="940" y="33" width="110" height="80" /></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="El_review_di" bpmnElement="El_review"><dc:Bounds x="578" y="397" width="110" height="80" /></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="El_rejected_di" bpmnElement="El_rejected"><dc:Bounds x="1140" y="340" width="36" height="36" /></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="El_issue_di" bpmnElement="El_issue"><dc:Bounds x="1140" y="140" width="110" height="80" /></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="El_approved_di" bpmnElement="El_approved"><dc:Bounds x="1320" y="140" width="36" height="36" /></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="El_decision_gw_di" bpmnElement="El_decision_gw"><dc:Bounds x="340" y="140" width="50" height="50" /></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="El_review_gw_di" bpmnElement="El_review_gw"><dc:Bounds x="718" y="412" width="50" height="50" /></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="El_review_timer_di" bpmnElement="El_review_timer"><dc:Bounds x="642" y="459" width="36" height="36" /></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="El_review_escalate_di" bpmnElement="El_review_escalate"><dc:Bounds x="578" y="597" width="110" height="80" /></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="El_review_timer_end_di" bpmnElement="El_review_timer_end"><dc:Bounds x="708" y="619" width="36" height="36" /></bpmndi:BPMNShape>
+      <bpmndi:BPMNEdge id="Flow_1_di" bpmnElement="Flow_1"><di:waypoint x="225" y="165" /><di:waypoint x="365" y="165" /></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_2_di" bpmnElement="Flow_2"><di:waypoint x="633" y="437" /><di:waypoint x="743" y="437" /></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_3_di" bpmnElement="Flow_3"><di:waypoint x="58" y="178" /><di:waypoint x="225" y="165" /></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_4_di" bpmnElement="Flow_4"><di:waypoint x="365" y="165" /><di:waypoint x="475" y="180" /></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_5_di" bpmnElement="Flow_5"><di:waypoint x="365" y="165" /><di:waypoint x="278" y="358" /></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_6_di" bpmnElement="Flow_6"><di:waypoint x="475" y="180" /><di:waypoint x="655" y="180" /></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_7_di" bpmnElement="Flow_7"><di:waypoint x="655" y="180" /><di:waypoint x="995" y="73" /></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_8_di" bpmnElement="Flow_8"><di:waypoint x="995" y="73" /><di:waypoint x="633" y="437" /></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_9_di" bpmnElement="Flow_9"><di:waypoint x="743" y="437" /><di:waypoint x="995" y="73" /></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_10_di" bpmnElement="Flow_10"><di:waypoint x="743" y="437" /><di:waypoint x="1158" y="358" /></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_11_di" bpmnElement="Flow_11"><di:waypoint x="743" y="437" /><di:waypoint x="1195" y="180" /></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_12_di" bpmnElement="Flow_12"><di:waypoint x="1195" y="180" /><di:waypoint x="1338" y="158" /></bpmndi:BPMNEdge>
+    </bpmndi:BPMNPlane>
+  </bpmndi:BPMNDiagram>
 </bpmn:definitions>

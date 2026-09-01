@@ -1,0 +1,83 @@
+name: Promote to UAT
+
+# Two-stage gate for shipping Directus schema (field) changes and Camunda
+# BPMN/DMN (process flow) changes from a developer's DEV machine to UAT:
+#
+#   1. Pull request review — a human approves the PR diff (schema snapshot
+#      JSON + BPMN/DMN XML) before it can merge to main.
+#   2. GitHub Environment approval — merging to main queues the promote job
+#      against the "uat" environment, which requires a *second*, explicit
+#      "Approve and deploy" click (configured once under Settings ->
+#      Environments -> uat -> Required reviewers) before anything actually
+#      touches the UAT machine.
+#
+# Only runs when the files that actually represent promotable config change
+# — editing app code (platform/, etc.) does not trigger a UAT promotion.
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - 'directus/schema/**'
+      - 'camunda-module/configuration/resources/**'
+  push:
+    branches: [main]
+    paths:
+      - 'directus/schema/**'
+      - 'camunda-module/configuration/resources/**'
+
+jobs:
+  validate:
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Summarize config changes for the reviewer
+        run: |
+          echo "## Config changes in this PR" >> "$GITHUB_STEP_SUMMARY"
+          echo "" >> "$GITHUB_STEP_SUMMARY"
+          git diff --name-only "origin/${{ github.base_ref }}...HEAD" -- directus/schema camunda-module/configuration/resources | sed 's/^/- /' >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Validate BPMN/DMN files are well-formed XML
+        run: |
+          shopt -s nullglob
+          for f in camunda-module/configuration/resources/*.bpmn camunda-module/configuration/resources/*.dmn; do
+            echo "checking $f"
+            python3 -c "import xml.dom.minidom as m; m.parse('$f')"
+          done
+
+      - name: Validate Directus schema snapshot is valid JSON
+        run: |
+          shopt -s nullglob
+          for f in directus/schema/*.json; do
+            node -e "JSON.parse(require('fs').readFileSync('$f','utf8')); console.log('$f OK')"
+          done
+
+  promote-uat:
+    if: github.event_name == 'push'
+    runs-on: ubuntu-latest
+    # This is the deploy-time approval gate: the job pauses here until a
+    # required reviewer on the "uat" environment approves it in the GitHub
+    # Actions UI, separate from and in addition to the PR review above.
+    environment: uat
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Promote Directus schema to UAT
+        env:
+          DIRECTUS_URL: ${{ secrets.UAT_DIRECTUS_URL }}
+          DIRECTUS_ADMIN_EMAIL: ${{ secrets.UAT_DIRECTUS_ADMIN_EMAIL }}
+          DIRECTUS_ADMIN_PASSWORD: ${{ secrets.UAT_DIRECTUS_ADMIN_PASSWORD }}
+        run: node ops/promote-directus-schema.mjs directus/schema/directus-schema.json
+
+      - name: Promote Camunda BPMN/DMN to UAT
+        env:
+          CAMUNDA_URL: ${{ secrets.UAT_CAMUNDA_URL }}
+        run: node ops/promote-camunda-resources.mjs camunda-module/configuration/resources

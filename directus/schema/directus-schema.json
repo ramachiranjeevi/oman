@@ -1,0 +1,1269 @@
+{
+  "version": 1,
+  "directus": "12.3.1",
+  "vendor": "sqlite",
+  "collections": [
+    {
+      "collection": "articles",
+      "meta": {
+        "accountability": "all",
+        "archive_app_filter": true,
+        "archive_field": "archived",
+        "archive_value": "true",
+        "autosave_revision_interval": null,
+        "collapse": "open",
+        "collection": "articles",
+        "color": null,
+        "display_template": null,
+        "group": null,
+        "hidden": false,
+        "icon": null,
+        "item_duplication_fields": null,
+        "note": null,
+        "preview_url": null,
+        "singleton": false,
+        "sort": null,
+        "sort_field": null,
+        "status": "active",
+        "translations": null,
+        "unarchive_value": "false",
+        "versioning": false
+      },
+      "schema": {
+        "name": "articles"
+      }
+    },
+    {
+      "collection": "license_applications",
+      "meta": {
+        "accountability": "all",
+        "archive_app_filter": true,
+        "archive_field": null,
+        "archive_value": null,
+        "autosave_revision_interval": null,
+        "collapse": "open",
+        "collection": "license_applications",
+        "color": null,
+        "display_template": null,
+        "group": null,
+        "hidden": false,
+        "icon": "movie",
+        "item_duplication_fields": null,
+        "note": null,
+        "preview_url": null,
+        "singleton": false,
+        "sort": null,
+        "sort_field": null,
+        "status": "active",
+        "translations": null,
+        "unarchive_value": null,
+        "versioning": false
+      },
+      "schema": {
+        "name": "license_applications"
+      }
+    }
+  ],
+  "fields": [
+    {
+      "collection": "articles",
+      "field": "id",
+      "type": "integer",
+      "meta": {
+        "collection": "articles",
+        "conditions": null,
+        "display": null,
+        "display_options": null,
+        "field": "id",
+        "group": null,
+        "hidden": true,
+        "interface": "input",
+        "note": null,
+        "options": null,
+        "readonly": true,
+        "required": false,
+        "searchable": true,
+        "sort": 1,
+        "special": null,
+        "translations": null,
+        "validation": null,
+        "validation_message": null,
+        "width": "full"
+      },
+      "schema": {
+        "name": "id",
+        "table": "articles",
+        "data_type": "integer",
+        "default_value": null,
+        "max_length": null,
+        "numeric_precision": null,
+        "numeric_scale": null,
+        "is_nullable": false,
+        "is_unique": false,
+        "is_indexed": false,
+        "is_primary_key": true,
+        "is_generated": false,
+        "generation_expression": null,
+        "has_auto_increment": true,
+        "foreign_key_table": null,
+        "foreign_key_column": null
+      }
+    },
+    {
+      "collection": "articles",
+      "field": "archived",
+      "type": "boolean",
+      "meta": {
+        "collection": "articles",
+        "conditions": null,
+        "display": "boolean",
+        "display_options": {
+          "colorOff": "transparent",
+          "colorOn": "var(--theme--foreground-subdued)",
+          "iconOff": "unarchive",
+          "iconOn": "archive",
+          "labelOff": "$t:not_archived",
+          "labelOn": "$t:archived"
+        },
+        "field": "archived",
+        "group": null,
+        "hidden": false,
+        "interface": "boolean",
+        "note": null,
+        "options": null,
+        "readonly": false,
+        "required": false,
+        "searchable": true,
+        "sort": 2,
+        "special": [
+          "cast-boolean"
+        ],
+        "translations": null,
+        "validation": null,
+        "validation_message": null,
+        "width": "full"
+      },
+      "schema": {
+        "name": "archived",
+        "table": "articles",
+        "data_type": "boolean",
+        "default_value": false,
+        "max_length": null,
+        "numeric_precision": null,
+        "numeric_scale": null,
+        "is_nullable": false,
+        "is_unique": false,
+        "is_indexed": false,
+        "is_primary_key": false,
+        "is_generated": false,
+        "generation_expression": null,
+        "has_auto_increment": false,
+        "foreign_key_table": null,
+        "foreign_key_column": null
+      }
+    },
+    {
+      "collection": "articles",
+      "field": "date_created",
+      "type": "timestamp",
+      "meta": {
+        "collection": "articles",
+        "conditions": null,
+        "display": "datetime",
+        "display_options": {
+          "relative": true
+        },
+        "field": "date_created",
+        "group": null,
+        "hidden": true,
+        "interface": "datetime",
+        "note": null,
+        "options": null,
+        "readonly": true,
+        "required": false,
+        "searchable": true,
+        "sort": 3,
+        "special": [
+          "date-created",
+          "cast-timestamp"
+        ],
+        "translations": null,
+        "validation": null,
+        "validation_message": null,
+        "width": "half"
+      },
+      "schema": {
+        "name": "date_created",
+        "table": "articles",
+        "data_type": "datetime",
+        "default_value": null,
+        "max_length": null,
+        "numeric_precision": null,
+        "numeric_scale": null,
+        "is_nullable": true,
+        "is_unique": false,
+        "is_indexed": false,
+        "is_primary_key": false,
+        "is_generated": false,
+        "generation_expression": null,
+        "has_auto_increment": false,
+        "foreign_key_table": null,
+        "foreign_key_column": null
+      }
+    },
+    {
+      "collection": "articles",
+      "field": "title",
+      "type": "string",
+      "meta": {
+        "collection": "articles",
+        "conditions": null,
+        "display": null,
+        "display_options": null,
+        "field": "title",
+        "group": null,
+        "hidden": false,
+        "interface": "input",
+        "note": null,
+        "options": null,
+        "readonly": false,
+        "required": false,
+        "searchable": true,
+        "sort": 4,
+        "special": null,
+        "translations": null,
+        "validation": null,
+        "validation_message": null,
+        "width": "full"
+      },
+      "schema": {
+        "name": "title",
+        "table": "articles",
+        "data_type": "varchar",
+        "default_value": null,
+        "max_length": 255,
+        "numeric_precision": null,
+        "numeric_scale": null,
+        "is_nullable": true,
+        "is_unique": false,
+        "is_indexed": false,
+        "is_primary_key": false,
+        "is_generated": false,
+        "generation_expression": null,
+        "has_auto_increment": false,
+        "foreign_key_table": null,
+        "foreign_key_column": null
+      }
+    },
+    {
+      "collection": "articles",
+      "field": "content",
+      "type": "text",
+      "meta": {
+        "collection": "articles",
+        "conditions": null,
+        "display": null,
+        "display_options": null,
+        "field": "content",
+        "group": null,
+        "hidden": false,
+        "interface": "input-rich-text-html",
+        "note": null,
+        "options": null,
+        "readonly": false,
+        "required": false,
+        "searchable": true,
+        "sort": 5,
+        "special": null,
+        "translations": null,
+        "validation": null,
+        "validation_message": null,
+        "width": "full"
+      },
+      "schema": {
+        "name": "content",
+        "table": "articles",
+        "data_type": "text",
+        "default_value": null,
+        "max_length": null,
+        "numeric_precision": null,
+        "numeric_scale": null,
+        "is_nullable": true,
+        "is_unique": false,
+        "is_indexed": false,
+        "is_primary_key": false,
+        "is_generated": false,
+        "generation_expression": null,
+        "has_auto_increment": false,
+        "foreign_key_table": null,
+        "foreign_key_column": null
+      }
+    },
+    {
+      "collection": "license_applications",
+      "field": "id",
+      "type": "integer",
+      "meta": {
+        "collection": "license_applications",
+        "conditions": null,
+        "display": null,
+        "display_options": null,
+        "field": "id",
+        "group": null,
+        "hidden": true,
+        "interface": "input",
+        "note": null,
+        "options": null,
+        "readonly": false,
+        "required": false,
+        "searchable": true,
+        "sort": 1,
+        "special": null,
+        "translations": null,
+        "validation": null,
+        "validation_message": null,
+        "width": "full"
+      },
+      "schema": {
+        "name": "id",
+        "table": "license_applications",
+        "data_type": "integer",
+        "default_value": null,
+        "max_length": null,
+        "numeric_precision": null,
+        "numeric_scale": null,
+        "is_nullable": false,
+        "is_unique": false,
+        "is_indexed": false,
+        "is_primary_key": true,
+        "is_generated": false,
+        "generation_expression": null,
+        "has_auto_increment": true,
+        "foreign_key_table": null,
+        "foreign_key_column": null
+      }
+    },
+    {
+      "collection": "license_applications",
+      "field": "status",
+      "type": "string",
+      "meta": {
+        "collection": "license_applications",
+        "conditions": null,
+        "display": null,
+        "display_options": null,
+        "field": "status",
+        "group": null,
+        "hidden": false,
+        "interface": "select-dropdown",
+        "note": null,
+        "options": {
+          "choices": [
+            {
+              "text": "Submitted",
+              "value": "submitted"
+            },
+            {
+              "text": "Eligibility Check",
+              "value": "eligibility_check"
+            },
+            {
+              "text": "Awaiting Payment",
+              "value": "awaiting_payment"
+            },
+            {
+              "text": "Field Visit Scheduled",
+              "value": "field_visit_scheduled"
+            },
+            {
+              "text": "Under Review",
+              "value": "under_review"
+            },
+            {
+              "text": "Approved",
+              "value": "approved"
+            },
+            {
+              "text": "Rejected",
+              "value": "rejected"
+            },
+            {
+              "text": "Revision Requested",
+              "value": "revision_requested"
+            }
+          ]
+        },
+        "readonly": false,
+        "required": false,
+        "searchable": true,
+        "sort": 2,
+        "special": null,
+        "translations": null,
+        "validation": null,
+        "validation_message": null,
+        "width": "full"
+      },
+      "schema": {
+        "name": "status",
+        "table": "license_applications",
+        "data_type": "varchar",
+        "default_value": "submitted",
+        "max_length": 255,
+        "numeric_precision": null,
+        "numeric_scale": null,
+        "is_nullable": true,
+        "is_unique": false,
+        "is_indexed": false,
+        "is_primary_key": false,
+        "is_generated": false,
+        "generation_expression": null,
+        "has_auto_increment": false,
+        "foreign_key_table": null,
+        "foreign_key_column": null
+      }
+    },
+    {
+      "collection": "license_applications",
+      "field": "date_created",
+      "type": "timestamp",
+      "meta": {
+        "collection": "license_applications",
+        "conditions": null,
+        "display": null,
+        "display_options": null,
+        "field": "date_created",
+        "group": null,
+        "hidden": false,
+        "interface": "datetime",
+        "note": null,
+        "options": null,
+        "readonly": false,
+        "required": false,
+        "searchable": true,
+        "sort": 3,
+        "special": [
+          "date-created",
+          "cast-timestamp"
+        ],
+        "translations": null,
+        "validation": null,
+        "validation_message": null,
+        "width": "full"
+      },
+      "schema": {
+        "name": "date_created",
+        "table": "license_applications",
+        "data_type": "datetime",
+        "default_value": null,
+        "max_length": null,
+        "numeric_precision": null,
+        "numeric_scale": null,
+        "is_nullable": true,
+        "is_unique": false,
+        "is_indexed": false,
+        "is_primary_key": false,
+        "is_generated": false,
+        "generation_expression": null,
+        "has_auto_increment": false,
+        "foreign_key_table": null,
+        "foreign_key_column": null
+      }
+    },
+    {
+      "collection": "license_applications",
+      "field": "film_title",
+      "type": "string",
+      "meta": {
+        "collection": "license_applications",
+        "conditions": null,
+        "display": null,
+        "display_options": null,
+        "field": "film_title",
+        "group": null,
+        "hidden": false,
+        "interface": "input",
+        "note": "Official title of the film",
+        "options": null,
+        "readonly": false,
+        "required": false,
+        "searchable": true,
+        "sort": null,
+        "special": null,
+        "translations": null,
+        "validation": null,
+        "validation_message": null,
+        "width": "full"
+      },
+      "schema": {
+        "name": "film_title",
+        "table": "license_applications",
+        "data_type": "varchar",
+        "default_value": null,
+        "max_length": 255,
+        "numeric_precision": null,
+        "numeric_scale": null,
+        "is_nullable": true,
+        "is_unique": false,
+        "is_indexed": false,
+        "is_primary_key": false,
+        "is_generated": false,
+        "generation_expression": null,
+        "has_auto_increment": false,
+        "foreign_key_table": null,
+        "foreign_key_column": null
+      }
+    },
+    {
+      "collection": "license_applications",
+      "field": "classification",
+      "type": "string",
+      "meta": {
+        "collection": "license_applications",
+        "conditions": null,
+        "display": null,
+        "display_options": null,
+        "field": "classification",
+        "group": null,
+        "hidden": false,
+        "interface": "select-dropdown",
+        "note": null,
+        "options": {
+          "choices": [
+            {
+              "text": "General (G)",
+              "value": "G"
+            },
+            {
+              "text": "Parental Guidance (PG)",
+              "value": "PG"
+            },
+            {
+              "text": "PG-13",
+              "value": "PG-13"
+            },
+            {
+              "text": "18+ Adults Only",
+              "value": "18+"
+            }
+          ]
+        },
+        "readonly": false,
+        "required": false,
+        "searchable": true,
+        "sort": null,
+        "special": null,
+        "translations": null,
+        "validation": null,
+        "validation_message": null,
+        "width": "full"
+      },
+      "schema": {
+        "name": "classification",
+        "table": "license_applications",
+        "data_type": "varchar",
+        "default_value": null,
+        "max_length": 255,
+        "numeric_precision": null,
+        "numeric_scale": null,
+        "is_nullable": true,
+        "is_unique": false,
+        "is_indexed": false,
+        "is_primary_key": false,
+        "is_generated": false,
+        "generation_expression": null,
+        "has_auto_increment": false,
+        "foreign_key_table": null,
+        "foreign_key_column": null
+      }
+    },
+    {
+      "collection": "license_applications",
+      "field": "applicant_name",
+      "type": "string",
+      "meta": {
+        "collection": "license_applications",
+        "conditions": null,
+        "display": null,
+        "display_options": null,
+        "field": "applicant_name",
+        "group": null,
+        "hidden": false,
+        "interface": "input",
+        "note": null,
+        "options": null,
+        "readonly": false,
+        "required": false,
+        "searchable": true,
+        "sort": null,
+        "special": null,
+        "translations": null,
+        "validation": null,
+        "validation_message": null,
+        "width": "full"
+      },
+      "schema": {
+        "name": "applicant_name",
+        "table": "license_applications",
+        "data_type": "varchar",
+        "default_value": null,
+        "max_length": 255,
+        "numeric_precision": null,
+        "numeric_scale": null,
+        "is_nullable": true,
+        "is_unique": false,
+        "is_indexed": false,
+        "is_primary_key": false,
+        "is_generated": false,
+        "generation_expression": null,
+        "has_auto_increment": false,
+        "foreign_key_table": null,
+        "foreign_key_column": null
+      }
+    },
+    {
+      "collection": "license_applications",
+      "field": "has_riyada_card",
+      "type": "boolean",
+      "meta": {
+        "collection": "license_applications",
+        "conditions": null,
+        "display": null,
+        "display_options": null,
+        "field": "has_riyada_card",
+        "group": null,
+        "hidden": false,
+        "interface": "boolean",
+        "note": null,
+        "options": {
+          "label": "Applicant holds a valid Riyada (SME) card"
+        },
+        "readonly": false,
+        "required": false,
+        "searchable": true,
+        "sort": null,
+        "special": null,
+        "translations": null,
+        "validation": null,
+        "validation_message": null,
+        "width": "full"
+      },
+      "schema": {
+        "name": "has_riyada_card",
+        "table": "license_applications",
+        "data_type": "boolean",
+        "default_value": false,
+        "max_length": null,
+        "numeric_precision": null,
+        "numeric_scale": null,
+        "is_nullable": true,
+        "is_unique": false,
+        "is_indexed": false,
+        "is_primary_key": false,
+        "is_generated": false,
+        "generation_expression": null,
+        "has_auto_increment": false,
+        "foreign_key_table": null,
+        "foreign_key_column": null
+      }
+    },
+    {
+      "collection": "license_applications",
+      "field": "valid_commercial_registration",
+      "type": "boolean",
+      "meta": {
+        "collection": "license_applications",
+        "conditions": null,
+        "display": null,
+        "display_options": null,
+        "field": "valid_commercial_registration",
+        "group": null,
+        "hidden": false,
+        "interface": "boolean",
+        "note": null,
+        "options": {
+          "label": "Valid Commercial Registration on file"
+        },
+        "readonly": false,
+        "required": false,
+        "searchable": true,
+        "sort": null,
+        "special": null,
+        "translations": null,
+        "validation": null,
+        "validation_message": null,
+        "width": "full"
+      },
+      "schema": {
+        "name": "valid_commercial_registration",
+        "table": "license_applications",
+        "data_type": "boolean",
+        "default_value": false,
+        "max_length": null,
+        "numeric_precision": null,
+        "numeric_scale": null,
+        "is_nullable": true,
+        "is_unique": false,
+        "is_indexed": false,
+        "is_primary_key": false,
+        "is_generated": false,
+        "generation_expression": null,
+        "has_auto_increment": false,
+        "foreign_key_table": null,
+        "foreign_key_column": null
+      }
+    },
+    {
+      "collection": "license_applications",
+      "field": "valid_prior_practice_license",
+      "type": "boolean",
+      "meta": {
+        "collection": "license_applications",
+        "conditions": null,
+        "display": null,
+        "display_options": null,
+        "field": "valid_prior_practice_license",
+        "group": null,
+        "hidden": false,
+        "interface": "boolean",
+        "note": null,
+        "options": {
+          "label": "Valid prior Cinema Screening Practice License"
+        },
+        "readonly": false,
+        "required": false,
+        "searchable": true,
+        "sort": null,
+        "special": null,
+        "translations": null,
+        "validation": null,
+        "validation_message": null,
+        "width": "full"
+      },
+      "schema": {
+        "name": "valid_prior_practice_license",
+        "table": "license_applications",
+        "data_type": "boolean",
+        "default_value": false,
+        "max_length": null,
+        "numeric_precision": null,
+        "numeric_scale": null,
+        "is_nullable": true,
+        "is_unique": false,
+        "is_indexed": false,
+        "is_primary_key": false,
+        "is_generated": false,
+        "generation_expression": null,
+        "has_auto_increment": false,
+        "foreign_key_table": null,
+        "foreign_key_column": null
+      }
+    },
+    {
+      "collection": "license_applications",
+      "field": "final_fee",
+      "type": "float",
+      "meta": {
+        "collection": "license_applications",
+        "conditions": null,
+        "display": "formatted-value",
+        "display_options": {
+          "format": true,
+          "suffix": " OMR"
+        },
+        "field": "final_fee",
+        "group": null,
+        "hidden": false,
+        "interface": "input",
+        "note": null,
+        "options": {
+          "prefix": "OMR"
+        },
+        "readonly": false,
+        "required": false,
+        "searchable": true,
+        "sort": null,
+        "special": null,
+        "translations": null,
+        "validation": null,
+        "validation_message": null,
+        "width": "full"
+      },
+      "schema": {
+        "name": "final_fee",
+        "table": "license_applications",
+        "data_type": "float",
+        "default_value": null,
+        "max_length": null,
+        "numeric_precision": null,
+        "numeric_scale": null,
+        "is_nullable": true,
+        "is_unique": false,
+        "is_indexed": false,
+        "is_primary_key": false,
+        "is_generated": false,
+        "generation_expression": null,
+        "has_auto_increment": false,
+        "foreign_key_table": null,
+        "foreign_key_column": null
+      }
+    },
+    {
+      "collection": "license_applications",
+      "field": "field_visit_notes",
+      "type": "text",
+      "meta": {
+        "collection": "license_applications",
+        "conditions": null,
+        "display": null,
+        "display_options": null,
+        "field": "field_visit_notes",
+        "group": null,
+        "hidden": false,
+        "interface": "input-multiline",
+        "note": null,
+        "options": null,
+        "readonly": false,
+        "required": false,
+        "searchable": true,
+        "sort": null,
+        "special": null,
+        "translations": null,
+        "validation": null,
+        "validation_message": null,
+        "width": "full"
+      },
+      "schema": {
+        "name": "field_visit_notes",
+        "table": "license_applications",
+        "data_type": "text",
+        "default_value": null,
+        "max_length": null,
+        "numeric_precision": null,
+        "numeric_scale": null,
+        "is_nullable": true,
+        "is_unique": false,
+        "is_indexed": false,
+        "is_primary_key": false,
+        "is_generated": false,
+        "generation_expression": null,
+        "has_auto_increment": false,
+        "foreign_key_table": null,
+        "foreign_key_column": null
+      }
+    },
+    {
+      "collection": "license_applications",
+      "field": "review_outcome",
+      "type": "string",
+      "meta": {
+        "collection": "license_applications",
+        "conditions": null,
+        "display": null,
+        "display_options": null,
+        "field": "review_outcome",
+        "group": null,
+        "hidden": false,
+        "interface": "select-dropdown",
+        "note": null,
+        "options": {
+          "choices": [
+            {
+              "text": "Approve",
+              "value": "approve"
+            },
+            {
+              "text": "Comments (send back)",
+              "value": "comments"
+            },
+            {
+              "text": "Reject",
+              "value": "reject"
+            }
+          ]
+        },
+        "readonly": false,
+        "required": false,
+        "searchable": true,
+        "sort": null,
+        "special": null,
+        "translations": null,
+        "validation": null,
+        "validation_message": null,
+        "width": "full"
+      },
+      "schema": {
+        "name": "review_outcome",
+        "table": "license_applications",
+        "data_type": "varchar",
+        "default_value": null,
+        "max_length": 255,
+        "numeric_precision": null,
+        "numeric_scale": null,
+        "is_nullable": true,
+        "is_unique": false,
+        "is_indexed": false,
+        "is_primary_key": false,
+        "is_generated": false,
+        "generation_expression": null,
+        "has_auto_increment": false,
+        "foreign_key_table": null,
+        "foreign_key_column": null
+      }
+    },
+    {
+      "collection": "license_applications",
+      "field": "eligible",
+      "type": "boolean",
+      "meta": {
+        "collection": "license_applications",
+        "conditions": null,
+        "display": null,
+        "display_options": null,
+        "field": "eligible",
+        "group": null,
+        "hidden": true,
+        "interface": "boolean",
+        "note": "Set from the eligibility DMN evaluation at submission time.",
+        "options": null,
+        "readonly": false,
+        "required": false,
+        "searchable": true,
+        "sort": 21,
+        "special": null,
+        "translations": null,
+        "validation": null,
+        "validation_message": null,
+        "width": "full"
+      },
+      "schema": {
+        "name": "eligible",
+        "table": "license_applications",
+        "data_type": "boolean",
+        "default_value": null,
+        "max_length": null,
+        "numeric_precision": null,
+        "numeric_scale": null,
+        "is_nullable": true,
+        "is_unique": false,
+        "is_indexed": false,
+        "is_primary_key": false,
+        "is_generated": false,
+        "generation_expression": null,
+        "has_auto_increment": false,
+        "foreign_key_table": null,
+        "foreign_key_column": null
+      }
+    },
+    {
+      "collection": "license_applications",
+      "field": "review_comments",
+      "type": "text",
+      "meta": {
+        "collection": "license_applications",
+        "conditions": null,
+        "display": null,
+        "display_options": null,
+        "field": "review_comments",
+        "group": null,
+        "hidden": false,
+        "interface": "input-multiline",
+        "note": "Head of Section comments when returning a task to the Specialist.",
+        "options": null,
+        "readonly": false,
+        "required": false,
+        "searchable": true,
+        "sort": 22,
+        "special": null,
+        "translations": null,
+        "validation": null,
+        "validation_message": null,
+        "width": "full"
+      },
+      "schema": {
+        "name": "review_comments",
+        "table": "license_applications",
+        "data_type": "text",
+        "default_value": null,
+        "max_length": null,
+        "numeric_precision": null,
+        "numeric_scale": null,
+        "is_nullable": true,
+        "is_unique": false,
+        "is_indexed": false,
+        "is_primary_key": false,
+        "is_generated": false,
+        "generation_expression": null,
+        "has_auto_increment": false,
+        "foreign_key_table": null,
+        "foreign_key_column": null
+      }
+    },
+    {
+      "collection": "license_applications",
+      "field": "field_visit_date",
+      "type": "date",
+      "meta": {
+        "collection": "license_applications",
+        "conditions": null,
+        "display": null,
+        "display_options": null,
+        "field": "field_visit_date",
+        "group": null,
+        "hidden": false,
+        "interface": "datetime",
+        "note": "Auto-scheduled by the platform worker using the live lead-time setting.",
+        "options": null,
+        "readonly": false,
+        "required": false,
+        "searchable": true,
+        "sort": 51,
+        "special": null,
+        "translations": null,
+        "validation": null,
+        "validation_message": null,
+        "width": "full"
+      },
+      "schema": {
+        "name": "field_visit_date",
+        "table": "license_applications",
+        "data_type": "date",
+        "default_value": null,
+        "max_length": null,
+        "numeric_precision": null,
+        "numeric_scale": null,
+        "is_nullable": true,
+        "is_unique": false,
+        "is_indexed": false,
+        "is_primary_key": false,
+        "is_generated": false,
+        "generation_expression": null,
+        "has_auto_increment": false,
+        "foreign_key_table": null,
+        "foreign_key_column": null
+      }
+    },
+    {
+      "collection": "license_applications",
+      "field": "sla_breached",
+      "type": "boolean",
+      "meta": {
+        "collection": "license_applications",
+        "conditions": null,
+        "display": null,
+        "display_options": null,
+        "field": "sla_breached",
+        "group": null,
+        "hidden": false,
+        "interface": "boolean",
+        "note": "Set by the escalation worker when the Head of Section review misses its SLA.",
+        "options": {
+          "label": "SLA breached (escalated)"
+        },
+        "readonly": false,
+        "required": false,
+        "searchable": true,
+        "sort": 52,
+        "special": null,
+        "translations": null,
+        "validation": null,
+        "validation_message": null,
+        "width": "full"
+      },
+      "schema": {
+        "name": "sla_breached",
+        "table": "license_applications",
+        "data_type": "boolean",
+        "default_value": false,
+        "max_length": null,
+        "numeric_precision": null,
+        "numeric_scale": null,
+        "is_nullable": true,
+        "is_unique": false,
+        "is_indexed": false,
+        "is_primary_key": false,
+        "is_generated": false,
+        "generation_expression": null,
+        "has_auto_increment": false,
+        "foreign_key_table": null,
+        "foreign_key_column": null
+      }
+    },
+    {
+      "collection": "license_applications",
+      "field": "revision_loop_used",
+      "type": "boolean",
+      "meta": {
+        "collection": "license_applications",
+        "conditions": null,
+        "display": null,
+        "display_options": null,
+        "field": "revision_loop_used",
+        "group": null,
+        "hidden": false,
+        "interface": "boolean",
+        "note": "True if this application was ever sent back to the Specialist for revision, regardless of current status.",
+        "options": {
+          "label": "Went through the revision loop"
+        },
+        "readonly": false,
+        "required": false,
+        "searchable": true,
+        "sort": 53,
+        "special": null,
+        "translations": null,
+        "validation": null,
+        "validation_message": null,
+        "width": "full"
+      },
+      "schema": {
+        "name": "revision_loop_used",
+        "table": "license_applications",
+        "data_type": "boolean",
+        "default_value": false,
+        "max_length": null,
+        "numeric_precision": null,
+        "numeric_scale": null,
+        "is_nullable": true,
+        "is_unique": false,
+        "is_indexed": false,
+        "is_primary_key": false,
+        "is_generated": false,
+        "generation_expression": null,
+        "has_auto_increment": false,
+        "foreign_key_table": null,
+        "foreign_key_column": null
+      }
+    },
+    {
+      "collection": "license_applications",
+      "field": "license_qr",
+      "type": "string",
+      "meta": {
+        "collection": "license_applications",
+        "conditions": null,
+        "display": null,
+        "display_options": null,
+        "field": "license_qr",
+        "group": null,
+        "hidden": false,
+        "interface": "input",
+        "note": "QR payload set when the license is issued.",
+        "options": null,
+        "readonly": false,
+        "required": false,
+        "searchable": true,
+        "sort": 54,
+        "special": null,
+        "translations": null,
+        "validation": null,
+        "validation_message": null,
+        "width": "full"
+      },
+      "schema": {
+        "name": "license_qr",
+        "table": "license_applications",
+        "data_type": "varchar",
+        "default_value": null,
+        "max_length": 255,
+        "numeric_precision": null,
+        "numeric_scale": null,
+        "is_nullable": true,
+        "is_unique": false,
+        "is_indexed": false,
+        "is_primary_key": false,
+        "is_generated": false,
+        "generation_expression": null,
+        "has_auto_increment": false,
+        "foreign_key_table": null,
+        "foreign_key_column": null
+      }
+    }
+  ],
+  "systemFields": [
+    {
+      "collection": "directus_activity",
+      "field": "timestamp",
+      "schema": {
+        "is_indexed": true
+      }
+    },
+    {
+      "collection": "directus_oauth_clients",
+      "field": "date_created",
+      "schema": {
+        "is_indexed": true
+      }
+    },
+    {
+      "collection": "directus_oauth_codes",
+      "field": "expires_at",
+      "schema": {
+        "is_indexed": true
+      }
+    },
+    {
+      "collection": "directus_oauth_codes",
+      "field": "used_at",
+      "schema": {
+        "is_indexed": true
+      }
+    },
+    {
+      "collection": "directus_oauth_consents",
+      "field": "client",
+      "schema": {
+        "is_indexed": true
+      }
+    },
+    {
+      "collection": "directus_oauth_tokens",
+      "field": "code_hash",
+      "schema": {
+        "is_indexed": true
+      }
+    },
+    {
+      "collection": "directus_oauth_tokens",
+      "field": "expires_at",
+      "schema": {
+        "is_indexed": true
+      }
+    },
+    {
+      "collection": "directus_oauth_tokens",
+      "field": "previous_session",
+      "schema": {
+        "is_indexed": true
+      }
+    },
+    {
+      "collection": "directus_oauth_tokens",
+      "field": "session",
+      "schema": {
+        "is_indexed": true
+      }
+    },
+    {
+      "collection": "directus_revisions",
+      "field": "activity",
+      "schema": {
+        "is_indexed": true
+      }
+    },
+    {
+      "collection": "directus_revisions",
+      "field": "parent",
+      "schema": {
+        "is_indexed": true
+      }
+    },
+    {
+      "collection": "directus_sessions",
+      "field": "oauth_client",
+      "schema": {
+        "is_indexed": true
+      }
+    }
+  ],
+  "relations": []
+}
