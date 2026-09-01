@@ -1,0 +1,1524 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<title>Oman Info Platform</title>
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<!-- Advanced Editor mode: the real Camunda-native editing surface (bpmn-js — the open-source library Camunda Modeler itself is built on), for whoever actually knows BPMN. -->
+<link rel="stylesheet" href="https://unpkg.com/bpmn-js@18/dist/assets/diagram-js.css" />
+<link rel="stylesheet" href="https://unpkg.com/bpmn-js@18/dist/assets/bpmn-js.css" />
+<link rel="stylesheet" href="https://unpkg.com/bpmn-js@18/dist/assets/bpmn-font/css/bpmn-embedded.css" />
+<script src="https://unpkg.com/bpmn-js@18/dist/bpmn-modeler.production.min.js"></script>
+<style>
+  :root {
+    --bg: #eef3f1; --text: #17251f; --text-muted: #5c7269;
+    --card-bg: #ffffff; --border: #d7e3de; --input-bg: #ffffff;
+    --log-bg: #eef6f3; --kpi-bg: #f7faf8; --tag-bg: #e3edff;
+    --primary: #00695c; --primary-dark: #004d40; --primary-light: #e0f2ef;
+    --accent: #b8831a; --accent-light: #fbf1da;
+    --success: #1b8a5a; --success-bg: #dcfce7;
+    --danger: #c0392b; --danger-bg: #fee2e2;
+    --warning: #b7791f; --warning-bg: #fef3c7;
+    --info: #2563a8; --info-bg: #dbeafe;
+    --shadow: 0 2px 10px rgba(0,77,64,.08), 0 1px 3px rgba(0,77,64,.06);
+  }
+  :root[data-theme="dark"] {
+    --bg: #10181a; --text: #e4ece9; --text-muted: #93a8a1;
+    --card-bg: #16211f; --border: #24413b; --input-bg: #1b2b28;
+    --log-bg: #14201d; --kpi-bg: #17231f; --tag-bg: #1f3a5c;
+    --primary: #2bb3a0; --primary-dark: #1a8c7c; --primary-light: #133129;
+    --accent: #e0ac3f; --accent-light: #2e2510;
+    --success: #34d399; --success-bg: #113025;
+    --danger: #f36a5a; --danger-bg: #3a1b18;
+    --warning: #f0c04d; --warning-bg: #3a2f10;
+    --info: #6fa8dc; --info-bg: #16283d;
+    --shadow: 0 2px 12px rgba(0,0,0,.35);
+  }
+  * { box-sizing: border-box; }
+  body { font-family: 'Segoe UI', system-ui, sans-serif; max-width: 1100px; margin: 1.5rem auto; padding: 0 1rem; color: var(--text); background: var(--bg); }
+  h1 { font-size: 1.5rem; margin-bottom: .2rem; color: var(--primary-dark); font-weight: 800; letter-spacing: -.01em; }
+  :root[data-theme="dark"] h1 { color: var(--primary); }
+  h2 { font-size: 1.08rem; margin-top: 1.8rem; padding: .5rem .8rem; border-radius: 8px; background: var(--primary-light); color: var(--primary-dark); border: none; border-inline-start: 5px solid var(--primary); }
+  :root[data-theme="dark"] h2 { color: var(--primary); }
+  h3 { font-size: .92rem; margin: 1rem 0 .4rem; color: var(--accent); font-weight: 700; text-transform: uppercase; letter-spacing: .03em; }
+  label { display: block; margin-top: .6rem; font-size: .85rem; font-weight: 600; color: var(--text); }
+  input, select, textarea { width: 100%; padding: .45rem .6rem; margin-top: .25rem; box-sizing: border-box; font-family: inherit; background: var(--input-bg); color: var(--text); border: 1.5px solid var(--border); border-radius: 6px; transition: border-color .15s; }
+  input:focus, select:focus, textarea:focus { outline: none; border-color: var(--primary); }
+  button { margin-top: 1rem; padding: .55rem 1.1rem; background: linear-gradient(135deg, var(--primary), var(--primary-dark)); color: white; border: none; border-radius: 7px; cursor: pointer; font-size: .85rem; font-weight: 600; box-shadow: 0 2px 6px rgba(0,77,64,.25); transition: transform .1s, box-shadow .1s; }
+  button:hover { transform: translateY(-1px); box-shadow: 0 4px 10px rgba(0,77,64,.3); }
+  button:active { transform: translateY(0); }
+  button.secondary { background: linear-gradient(135deg, #6b7d78, #4d5a56); box-shadow: 0 2px 6px rgba(0,0,0,.15); }
+  button.danger { background: linear-gradient(135deg, var(--danger), #8f2a1f); box-shadow: 0 2px 6px rgba(192,57,43,.3); }
+  button.small { padding: .35rem .7rem; margin-top: .4rem; margin-inline-end: .4rem; font-size: .78rem; }
+  table { width: 100%; border-collapse: collapse; margin-top: .5rem; border-radius: 8px; overflow: hidden; box-shadow: var(--shadow); }
+  td, th { border: 1px solid var(--border); padding: .5rem .6rem; font-size: .82rem; text-align: left; color: var(--text); }
+  th { background: var(--primary-light); color: var(--primary-dark); font-weight: 700; text-transform: uppercase; font-size: .72rem; letter-spacing: .03em; }
+  :root[data-theme="dark"] th { color: var(--primary); }
+  tbody tr:nth-child(even) { background: var(--kpi-bg); }
+  .tag { display: inline-block; padding: .15rem .55rem; border-radius: 10px; background: var(--tag-bg); color: var(--primary-dark); font-size: .72rem; font-weight: 600; white-space: nowrap; }
+  :root[data-theme="dark"] .tag { color: var(--info); }
+  #log { white-space: pre-wrap; background: var(--log-bg); padding: .7rem; font-size: .76rem; border-radius: 8px; max-height: 180px; overflow: auto; color: var(--text-muted); border: 1px solid var(--border); font-family: 'Consolas', monospace; }
+  .field-note { font-size: .75rem; color: var(--text-muted); margin-top: .3rem; line-height: 1.5; }
+  .card { border: 1px solid var(--border); padding: .9rem 1.1rem; margin-top: .7rem; border-radius: 10px; background: var(--card-bg); box-shadow: var(--shadow); }
+  .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(190px, 1fr)); gap: .8rem; margin-top: .7rem; }
+  .kpi { border: 1px solid var(--border); border-radius: 10px; padding: .9rem; background: var(--kpi-bg); position: relative; color: var(--text); border-top: 3px solid var(--primary); box-shadow: var(--shadow); }
+  .kpi .value { font-size: 1.7rem; font-weight: 800; margin-top: .3rem; color: var(--primary-dark); }
+  :root[data-theme="dark"] .kpi .value { color: var(--primary); }
+  .kpi .label { font-size: .72rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: .04em; font-weight: 700; }
+  .kpi .badge { position: absolute; top: .6rem; right: .6rem; font-size: .68rem; padding: .15rem .5rem; border-radius: 10px; font-weight: 700; white-space: nowrap; }
+  .kpi:has(.badge) .label { padding-right: 5.2rem; }
+  [dir="rtl"] .kpi .badge { right: auto; left: .6rem; }
+  [dir="rtl"] .kpi:has(.badge) .label { padding-right: 0; padding-left: 5.2rem; }
+  .badge.ok { background: var(--success-bg); color: var(--success); }
+  .badge.bad { background: var(--danger-bg); color: var(--danger); }
+  .kpi .remove { position: absolute; bottom: .4rem; right: .5rem; font-size: .68rem; color: var(--danger); cursor: pointer; background: none; border: none; padding: 0; margin: 0; font-weight: 700; }
+
+  /* --- custom control: toggle switch, used for boolean fields instead of a native checkbox --- */
+  .toggle-row { display: flex; align-items: center; gap: .6rem; margin-top: .5rem; }
+  .toggle-switch { position: relative; width: 42px; height: 24px; flex-shrink: 0; }
+  .toggle-switch input { opacity: 0; width: 0; height: 0; }
+  .toggle-slider { position: absolute; inset: 0; background: #c3cfca; border-radius: 999px; cursor: pointer; transition: background .15s; }
+  .toggle-slider::before { content: ""; position: absolute; width: 18px; height: 18px; left: 3px; top: 3px; background: white; border-radius: 50%; transition: transform .15s; box-shadow: 0 1px 3px rgba(0,0,0,.3); }
+  .toggle-switch input:checked + .toggle-slider { background: linear-gradient(135deg, var(--primary), var(--primary-dark)); }
+  .toggle-switch input:checked + .toggle-slider::before { transform: translateX(18px); }
+  .toggle-label { font-size: .85rem; font-weight: 500; }
+
+  /* --- role tabs --- */
+  nav.tabs { display: flex; gap: .2rem; margin-top: 1.2rem; border-bottom: 2px solid var(--border); flex-wrap: wrap; background: var(--card-bg); border-radius: 10px 10px 0 0; padding: .3rem .3rem 0; box-shadow: var(--shadow); }
+  nav.tabs button { margin: 0; background: none; color: var(--text-muted); border: none; border-bottom: 3px solid transparent; border-radius: 6px 6px 0 0; padding: .6rem 1rem; font-weight: 700; font-size: .85rem; box-shadow: none; }
+  nav.tabs button:hover:not(.active) { background: var(--primary-light); color: var(--primary-dark); transform: none; box-shadow: none; }
+  nav.tabs button.active { color: var(--primary); border-bottom-color: var(--accent); background: var(--primary-light); }
+  .tab-panel { display: none; }
+  .tab-panel.active { display: block; }
+  .persona-note { font-size: .8rem; color: var(--primary-dark); margin-top: .3rem; background: var(--accent-light); border-inline-start: 4px solid var(--accent); padding: .5rem .8rem; border-radius: 6px; }
+  :root[data-theme="dark"] .persona-note { color: var(--accent); }
+
+  /* --- RTL / bilingual --- */
+  [dir="rtl"] label, [dir="rtl"] .field-note, [dir="rtl"] .persona-note { text-align: right; }
+  [dir="rtl"] .toggle-row { flex-direction: row-reverse; }
+  [dir="rtl"] table { direction: rtl; }
+  .toolbar { display: flex; gap: .5rem; justify-content: flex-end; margin-top: .5rem; }
+  .toolbar button { margin-top: 0; padding: .4rem .8rem; font-size: .78rem; background: var(--card-bg); color: var(--text); border: 1.5px solid var(--border); box-shadow: none; }
+  .toolbar button.active-lang { background: linear-gradient(135deg, var(--primary), var(--primary-dark)); color: white; border-color: var(--primary); }
+
+  /* --- mobile view simulation --- */
+  body.mobile-frame { max-width: 390px; border: 10px solid var(--primary-dark); border-radius: 28px; padding: 1rem .75rem; box-shadow: 0 8px 30px rgba(0,0,0,.25); }
+  body.mobile-frame nav.tabs { flex-direction: column; }
+  body.mobile-frame .grid { grid-template-columns: 1fr !important; }
+</style>
+</head>
+<body>
+  <div class="toolbar">
+    <button id="langBtnEn" onclick="applyLanguage('en')">EN</button>
+    <button id="langBtnAr" onclick="applyLanguage('ar')">AR</button>
+    <button id="mobileViewBtn" onclick="toggleMobileView()">📱 <span data-i18n="mobileToggle">Mobile View</span></button>
+    <button id="themeToggleBtn" onclick="toggleTheme()">🌓 <span data-i18n="themeToggle">Dark / Light</span></button>
+  </div>
+
+  <h1 data-i18n="pageTitle">Oman Info Platform — Cinema Film Screening License (demo)</h1>
+  <p class="field-note" data-i18n="pageTagline">Platform module: talks only to the Directus API (data) and Camunda API (process) via its own BFF. Neither backend is reached directly.</p>
+
+  <nav class="tabs" id="tabNav"></nav>
+
+  <!-- ================= APPLICANT ================= -->
+  <section class="tab-panel" id="tab-applicant">
+    <p class="persona-note">Persona: <strong>Citizen / Applicant</strong> — submits a license application and pays the fee when prompted.</p>
+
+    <h2>Verify Identity &amp; Registration <span class="tag" style="background:#fef3c7;color:#92400e;">SIMULATED — Phase 3 integration</span></h2>
+    <p class="field-note">Disclosed per the demo script: the Oman Business Platform (CR validity) and ROP Civil Status calls are not available in this sandbox and are simulated here — deterministically, no network call. The internal Practice License lookup is simulated the same way.</p>
+    <div class="card">
+      <label for="lookupCr">Commercial Registration Number (try any 7 digits, e.g. 1234567)</label>
+      <input id="lookupCr" placeholder="1234567" />
+      <label for="lookupCivilId">Civil ID Number (try any 8 digits, e.g. 12345678)</label>
+      <input id="lookupCivilId" placeholder="12345678" />
+      <button onclick="runSimulatedLookup()">Verify &amp; Auto-fill Form (Simulated)</button>
+      <div id="lookupResult" style="margin-top:.6rem;"></div>
+    </div>
+
+    <h2 data-i18n="submitAppHeading">Submit Application</h2>
+    <p class="field-note">This form is generated live from the Directus <code>license_applications</code> schema via <code>GET /api/form-schema/license_applications</code> — add a field on the Admin tab and it appears here automatically, no frontend code change.</p>
+    <form id="dynamicForm"></form>
+    <button data-i18n="submitAppBtn" onclick="submitApplication()">Submit Application</button>
+
+    <h2 data-i18n="payQueueHeading">My Task Queue — Pay Fee</h2>
+    <button class="small" data-i18n="refreshBtn" onclick="loadTasks('applicant')">Refresh</button>
+    <div id="applicantTasks"></div>
+
+    <h2 data-i18n="applicationsHeading">Applications (Directus data)</h2>
+    <button class="small" onclick="loadApplications()">Refresh</button>
+    <table id="appsTable"><thead><tr><th>ID</th><th>Film</th><th>Applicant</th><th>Status</th><th>Eligible</th><th>Fee (OMR)</th><th>Field Visit</th><th>SLA</th><th>License</th></tr></thead><tbody></tbody></table>
+  </section>
+
+  <!-- ================= SPECIALIST ================= -->
+  <section class="tab-panel" id="tab-specialist">
+    <p class="persona-note">Persona: <strong>Audio-Visual Classifications Specialist</strong> — performs the field visit and records an evaluation. Sees only tasks routed to the <code>specialist</code> candidate group (including ones sent back for revision).</p>
+    <h2 data-i18n="specialistQueueHeading">Task Queue — Field Visit &amp; Evaluation</h2>
+    <button class="small" onclick="loadTasks('specialist')">Refresh</button>
+    <div id="specialistTasks"></div>
+  </section>
+
+  <!-- ================= HEAD OF SECTION ================= -->
+  <section class="tab-panel" id="tab-head">
+    <p class="persona-note">Persona: <strong>Head of Cinema Section</strong> — final review against a 1-hour SLA. Sees only tasks routed to the <code>head_of_section</code> candidate group.</p>
+    <h2 data-i18n="headQueueHeading">Task Queue — Review</h2>
+    <button class="small" onclick="loadTasks('head_of_section')">Refresh</button>
+    <div id="headTasks"></div>
+  </section>
+
+  <!-- ================= ADMIN ================= -->
+  <section class="tab-panel" id="tab-admin">
+    <p class="persona-note" data-i18n="adminPersonaNote">Persona: <strong>Ministry Admin</strong> — Phase 1 configuration demo: live schema edits and live fee-logic edits, no code deploy or restart.</p>
+
+    <h2 data-i18n="addFieldHeading">Add a Form Field — live</h2>
+    <p class="field-note" data-i18n="addFieldNote">Adds a real column + Directus field via <code>POST /fields/license_applications</code>. It shows up on the Applicant tab's form immediately.</p>
+    <div class="card">
+      <label for="admFieldKey" data-i18n="fieldKeyLabel">Field key (snake_case)</label>
+      <input id="admFieldKey" placeholder="e.g. accessibility_requirements" />
+      <label for="admFieldLabel" data-i18n="fieldLabelEnLabel">Label / note shown on the form (English)</label>
+      <input id="admFieldLabel" placeholder="e.g. Accessibility requirements for the screening" />
+      <label for="admFieldLabelAr" data-i18n="fieldLabelArLabel">Label shown on the form (Arabic) — optional, confirms it renders correctly when toggled</label>
+      <input id="admFieldLabelAr" dir="rtl" placeholder="مثال: متطلبات إمكانية الوصول للعرض" />
+      <label for="admFieldKind" data-i18n="typeLabel">Type</label>
+      <select id="admFieldKind">
+        <option value="text" data-i18n="typeTextShort">Text (short)</option>
+        <option value="longtext" data-i18n="typeTextLong">Text (long)</option>
+        <option value="number" data-i18n="typeNumber">Number</option>
+        <option value="boolean" data-i18n="typeYesNo">Yes / No</option>
+      </select>
+      <button onclick="addFieldLive()" data-i18n="addFieldBtn">Add Field Live</button>
+    </div>
+
+    <h2 data-i18n="eligRuleHeading">Eligibility Rule — live</h2>
+    <p class="field-note" data-i18n="eligRuleNote">Toggles which conditions the DMN table requires for eligibility, then re-deploys it — Camunda regenerates the decision table, no code, no restart. Test both scenarios instantly below without submitting a real application.</p>
+    <div class="card">
+      <div class="toggle-row">
+        <span class="toggle-switch"><input type="checkbox" id="admReqCr" checked /><span class="toggle-slider" onclick="document.getElementById('admReqCr').click()"></span></span>
+        <span class="toggle-label" data-i18n="reqCrLabel">Require valid Commercial Registration</span>
+      </div>
+      <div class="toggle-row">
+        <span class="toggle-switch"><input type="checkbox" id="admReqPrior" checked /><span class="toggle-slider" onclick="document.getElementById('admReqPrior').click()"></span></span>
+        <span class="toggle-label" data-i18n="reqPriorLabel">Require valid prior Cinema Screening Practice License</span>
+      </div>
+      <button onclick="applyEligibilityRule()" data-i18n="applyEligBtn">Apply Eligibility Rule</button>
+      <button class="secondary" onclick="loadEligibilityRule()" data-i18n="reloadCurrentBtn">Reload Current</button>
+
+      <h3 data-i18n="retestHeading">Re-test Both Scenarios</h3>
+      <div class="grid" style="grid-template-columns: 1fr 1fr;">
+        <div class="kpi">
+          <div class="label" data-i18n="scenarioMet">Scenario: Meets Conditions</div>
+          <div class="value" id="testMetResult" style="font-size:1.1rem;">—</div>
+          <button class="small" onclick="testEligibility(true, true)" data-i18n="runTestBtn">Run Test</button>
+        </div>
+        <div class="kpi">
+          <div class="label" data-i18n="scenarioNotMet">Scenario: Missing Prior License</div>
+          <div class="value" id="testNotMetResult" style="font-size:1.1rem;">—</div>
+          <button class="small" onclick="testEligibility(true, false)" data-i18n="runTestBtn">Run Test</button>
+        </div>
+      </div>
+    </div>
+
+    <h2 data-i18n="feeConfigHeading">Fee Configuration — live</h2>
+    <p class="field-note" data-i18n="feeConfigNote">Reads and writes the actual deployed DMN decision table (<code>cinema_eligibility_and_fee</code>) via Camunda's REST API — changing it here changes what the next submitted application is charged, with no restart.</p>
+    <div class="card">
+      <label for="admBaseFee" data-i18n="baseFeeLabel">Base Fee (OMR)</label>
+      <input id="admBaseFee" type="number" step="0.5" oninput="recalcPricingPreview()" />
+      <label for="admSmeDiscount" data-i18n="smeDiscountLabel">Riyada (SME) Discount %</label>
+      <input id="admSmeDiscount" type="number" step="1" min="0" max="100" oninput="recalcPricingPreview()" />
+      <div class="grid" style="grid-template-columns: 1fr 1fr;">
+        <div class="kpi"><div class="label" data-i18n="smeFinalFeeLabel">SME / Riyada Final Fee</div><div class="value" id="admSmePreview">—</div></div>
+        <div class="kpi"><div class="label" data-i18n="standardFeeLabel">Standard Final Fee</div><div class="value" id="admStandardPreview">—</div></div>
+      </div>
+      <p class="field-note" data-i18n="feePreviewNote">Preview above recalculates instantly as you type. Nothing is live until you apply it.</p>
+      <button onclick="applyPricing()" data-i18n="applyEngineBtn">Apply to Process Engine</button>
+      <button class="secondary" onclick="loadPricing()" data-i18n="reloadCurrentBtn">Reload Current</button>
+    </div>
+
+    <h2 data-i18n="slaHeading">SLA Threshold — live</h2>
+    <p class="field-note" data-i18n="slaNote">Rewrites the boundary-timer duration on the deployed BPMN's Head of Section Review step and redeploys. Set it very low (e.g. 1 minute) to watch a real escalation fire during a demo instead of waiting an hour.</p>
+    <div class="card">
+      <label for="admSlaMinutes" data-i18n="slaMinutesLabel">Head of Section review SLA (minutes)</label>
+      <input id="admSlaMinutes" type="number" step="1" min="1" />
+      <button onclick="applySla()" data-i18n="applyEngineBtn">Apply to Process Engine</button>
+      <button class="secondary" onclick="loadSla()" data-i18n="reloadCurrentBtn">Reload Current</button>
+    </div>
+
+    <h2 data-i18n="scheduleHeading">Field Visit Scheduling — live</h2>
+    <p class="field-note" data-i18n="scheduleNote">Worker-side parameter (not a DMN/BPMN edit) — takes effect on the very next application that reaches payment.</p>
+    <div class="card">
+      <label for="admLeadDays" data-i18n="leadDaysLabel">Lead time before field visit (days)</label>
+      <input id="admLeadDays" type="number" step="1" min="0" />
+      <button onclick="applySchedule()" data-i18n="applyBtn">Apply</button>
+      <button class="secondary" onclick="loadSchedule()" data-i18n="reloadCurrentBtn">Reload Current</button>
+    </div>
+
+    <h2><span data-i18n="cicdHeading">CI/CD Pipeline — Promote to UAT</span> <span class="tag" style="background:#fef3c7;color:#92400e;" data-i18n="simulatedTag">SIMULATED — Phase 3</span></h2>
+    <p class="field-note" data-i18n="cicdNote">Disclosed per the demo script: this sandbox has a single environment, so the DEV→UAT promotion itself is simulated. The snapshot below is <strong>not</strong> fake — it's read live from the actual deployed DMN/BPMN and worker config, so it reflects whatever Phase 1/2 edits you just made.</p>
+    <div class="card">
+      <button onclick="snapshotPipeline()" data-i18n="snapshotBtn">1. Snapshot Current DEV Config</button>
+      <pre id="pipelineSnapshot" style="background:#f4f4f8;padding:.6rem;border-radius:4px;font-size:.78rem;overflow:auto;display:none;"></pre>
+
+      <div class="toggle-row">
+        <span class="toggle-switch"><input type="checkbox" id="pipelineApproved" /><span class="toggle-slider" onclick="document.getElementById('pipelineApproved').click()"></span></span>
+        <span class="toggle-label" data-i18n="approvalGateLabel">Approval Gate: I approve promoting this configuration to UAT</span>
+      </div>
+      <label for="pipelineApprover" data-i18n="approverNameLabel">Approver name</label>
+      <input id="pipelineApprover" placeholder="e.g. Ministry Solution Architect" />
+      <button onclick="promotePipeline()" data-i18n="promoteBtn">2. Promote to UAT</button>
+
+      <h3 data-i18n="versionLogHeading">Version Log</h3>
+      <table id="pipelineLogTable"><thead><tr><th data-i18n="deploymentIdCol">Deployment ID</th><th data-i18n="promotedAtCol">Promoted At</th><th data-i18n="approvedByCol">Approved By</th><th data-i18n="configSnapshotCol">Config Snapshot</th></tr></thead><tbody></tbody></table>
+    </div>
+
+    <h2 data-i18n="designerHeading">Process Designer</h2>
+    <div class="toolbar" style="justify-content:flex-start;margin-bottom:.5rem;">
+      <button id="designerModeSimpleBtn" class="active-lang" onclick="switchDesignerMode('simple')" data-i18n="modeSimpleBtn">Simple — drag &amp; drop</button>
+      <button id="designerModeAdvancedBtn" onclick="switchDesignerMode('advanced')" data-i18n="modeAdvancedBtn">Advanced — full BPMN editor</button>
+    </div>
+
+    <div id="designerModeSimple">
+      <p class="field-note" data-i18n="designerSimpleNote">Click a shape in the palette to drop it on the canvas, drag it anywhere, then drag from its <strong>right-edge dot</strong> to another shape to connect them — same as building a flowchart in PowerPoint. Click a shape to fill in its details. No gateways, no conditions, no XML. "Save &amp; Deploy" compiles exactly what you've drawn into real BPMN and redeploys it to Camunda.</p>
+      <div class="card">
+        <div style="display:flex;gap:.4rem;flex-wrap:wrap;margin-bottom:.5rem;">
+          <button class="small" onclick="canvasAddShape('start')" style="background:#166534;" data-i18n="shapeStartBtn">+ Start</button>
+          <button class="small" onclick="canvasAddShape('end')" style="background:#b91c1c;" data-i18n="shapeEndBtn">+ End</button>
+          <button class="small" onclick="canvasAddShape('task')" style="background:#1A5FA0;" data-i18n="shapeTaskBtn">+ Human Task</button>
+          <button class="small" onclick="canvasAddShape('automatic')" style="background:#4b5563;" data-i18n="shapeAutoBtn">+ Automatic Step</button>
+          <button class="small" onclick="canvasAddShape('approval')" style="background:#B8831A;" data-i18n="shapeApprovalBtn">+ Approval Step</button>
+          <button class="small" onclick="canvasAddShape('decision')" style="background:#7A1A8A;" data-i18n="shapeDecisionBtn">+ Rule Check</button>
+          <span style="flex:1;"></span>
+          <button onclick="saveCanvasProcess()" data-i18n="saveDeployBtn">Save &amp; Deploy</button>
+          <button class="secondary" onclick="loadCanvasProcess()" data-i18n="reloadSavedBtn">Reload Saved</button>
+        </div>
+        <div id="canvasStatus" class="field-note"></div>
+        <div class="g2" style="align-items:start;grid-template-columns: 1fr 280px;">
+          <div id="canvasContainer" style="position:relative;border:1px solid #ddd;border-radius:6px;background:#fafafa;height:560px;overflow:auto;" onmousemove="canvasContainerMouseMove(event)" onmouseup="canvasContainerMouseUp(event)" onmouseleave="canvasContainerMouseUp(event)">
+            <svg id="canvasSvg" style="position:absolute;top:0;left:0;pointer-events:none;">
+              <defs><marker id="canvasArrow" markerWidth="8" markerHeight="8" refX="7" refY="3" orient="auto"><path d="M0,0 L0,6 L8,3 z" fill="#607870" /></marker></defs>
+            </svg>
+          </div>
+          <div id="canvasPropertyPanel" class="card" style="min-height:200px;">
+            <div class="field-note" data-i18n="clickShapeNote">Click a shape to edit it here.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div id="designerModeAdvanced" style="display:none;">
+      <p class="field-note" data-i18n="advancedEditorNote">The real Camunda-native editing surface — <a href="https://github.com/bpmn-io/bpmn-js" target="_blank" rel="noopener">bpmn-js</a>, the same open-source library Camunda Modeler itself is built on. Full BPMN: parallel gateways, subprocesses, message events, anything the simple canvas doesn't support. This edits the live process directly — know what you're doing before you hit Deploy.</p>
+      <div class="card">
+        <div style="display:flex;gap:.5rem;margin-bottom:.5rem;">
+          <button onclick="deployAdvancedEditor()" data-i18n="deployDiagramBtn">Deploy This Diagram</button>
+          <button class="secondary" onclick="loadAdvancedEditor()" data-i18n="reloadLiveBtn">Reload Live Version</button>
+        </div>
+        <div id="advancedStatus" class="field-note"></div>
+        <div id="bpmnAdvancedContainer" style="border:1px solid #ddd;border-radius:6px;height:560px;background:#fff;"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= DASHBOARD ================= -->
+  <section class="tab-panel" id="tab-dashboard">
+    <p class="persona-note">Persona: <strong>Ministry Evaluation Committee</strong> — Phase 5 measurement demo. All numbers below are computed live from Directus + Camunda history, nothing is hardcoded.</p>
+    <h2 data-i18n="liveMetricsHeading">Live Transaction Metrics</h2>
+    <button class="small" onclick="loadDashboard()">Refresh Now</button>
+    <span class="field-note" id="dashUpdated"></span>
+    <div class="grid" id="dashCore"></div>
+
+    <h3>Self-Service Widget Builder</h3>
+    <div class="card">
+      <label for="widgetMetric">Metric</label>
+      <select id="widgetMetric"></select>
+      <label for="widgetLabel">Widget label (optional override)</label>
+      <input id="widgetLabel" placeholder="Leave blank to use the metric's default label" />
+      <button onclick="addWidget()">Add Widget to Dashboard</button>
+    </div>
+    <div class="grid" id="dashCustom"></div>
+  </section>
+
+  <h2>Activity Log</h2>
+  <div id="log"></div>
+
+<script>
+function log(msg) {
+  const el = document.getElementById('log');
+  el.textContent = `[${new Date().toLocaleTimeString()}] ${msg}\n` + el.textContent;
+}
+
+// ============================= TABS =============================
+
+const TABS = [
+  { id: 'applicant', label: 'Applicant' },
+  { id: 'specialist', label: 'A/V Classifications Specialist' },
+  { id: 'head', label: 'Head of Cinema Section' },
+  { id: 'admin', label: 'Admin' },
+  { id: 'dashboard', label: 'Dashboard' },
+];
+
+const TAB_LABELS_AR = {
+  applicant: 'مقدم الطلب',
+  specialist: 'أخصائي التصنيفات السمعية والبصرية',
+  head: 'رئيس قسم السينما',
+  admin: 'الإدارة',
+  dashboard: 'لوحة القيادة',
+};
+
+function renderTabs() {
+  const nav = document.getElementById('tabNav');
+  const lang = getLanguage();
+  nav.innerHTML = TABS.map(t => `<button id="navbtn-${t.id}" onclick="switchTab('${t.id}')">${lang === 'ar' ? TAB_LABELS_AR[t.id] : t.label}</button>`).join('');
+}
+
+function switchTab(id) {
+  for (const t of TABS) {
+    document.getElementById(`tab-${t.id}`).classList.toggle('active', t.id === id);
+    document.getElementById(`navbtn-${t.id}`).classList.toggle('active', t.id === id);
+  }
+  localStorage.setItem('omanActiveTab', id);
+  if (id === 'applicant') { loadFormSchema(); loadTasks('applicant'); loadApplications(); }
+  if (id === 'specialist') loadTasks('specialist');
+  if (id === 'head') loadTasks('head_of_section');
+  if (id === 'admin') { loadPricing(); loadEligibilityRule(); loadSla(); loadSchedule(); loadPipelineLog(); loadCanvasProcess(); }
+  if (id === 'dashboard') loadDashboard();
+}
+
+// ============================= i18n (Phase 1.3 demo) =============================
+// Scoped translation: page chrome (title, nav, main headings, key buttons) plus
+// full label translation for Directus-driven form fields — including fields
+// added live via the Admin tab's "Add Field" demo, so the RFP's "confirm the
+// new field renders correctly in both [languages]" step is directly testable.
+
+const I18N = {
+  en: {
+    mobileToggle: 'Mobile View',
+    pageTitle: 'Oman Info Platform — Cinema Film Screening License (demo)',
+    pageTagline: "Platform module: talks only to the Directus API (data) and Camunda API (process) via its own BFF. Neither backend is reached directly.",
+    submitAppHeading: 'Submit Application',
+    submitAppBtn: 'Submit Application',
+    payQueueHeading: 'My Task Queue — Pay Fee',
+    refreshBtn: 'Refresh',
+    applicationsHeading: 'Applications (Directus data)',
+    specialistQueueHeading: 'Task Queue — Field Visit & Evaluation',
+    headQueueHeading: 'Task Queue — Review',
+    addFieldHeading: 'Add a Form Field — live',
+    liveMetricsHeading: 'Live Transaction Metrics',
+    themeToggle: 'Dark / Light',
+    adminPersonaNote: 'Persona: Ministry Admin — Phase 1 configuration demo: live schema edits and live fee-logic edits, no code deploy or restart.',
+    reloadCurrentBtn: 'Reload Current',
+    addFieldNote: "Adds a real column + Directus field via POST /fields/license_applications. It shows up on the Applicant tab's form immediately.",
+    fieldKeyLabel: 'Field key (snake_case)',
+    fieldLabelEnLabel: 'Label / note shown on the form (English)',
+    fieldLabelArLabel: 'Label shown on the form (Arabic) — optional, confirms it renders correctly when toggled',
+    typeLabel: 'Type',
+    typeTextShort: 'Text (short)',
+    typeTextLong: 'Text (long)',
+    typeNumber: 'Number',
+    typeYesNo: 'Yes / No',
+    addFieldBtn: 'Add Field Live',
+    eligRuleHeading: 'Eligibility Rule — live',
+    eligRuleNote: 'Toggles which conditions the DMN table requires for eligibility, then re-deploys it — Camunda regenerates the decision table, no code, no restart. Test both scenarios instantly below without submitting a real application.',
+    reqCrLabel: 'Require valid Commercial Registration',
+    reqPriorLabel: 'Require valid prior Cinema Screening Practice License',
+    applyEligBtn: 'Apply Eligibility Rule',
+    retestHeading: 'Re-test Both Scenarios',
+    scenarioMet: 'Scenario: Meets Conditions',
+    scenarioNotMet: 'Scenario: Missing Prior License',
+    runTestBtn: 'Run Test',
+    feeConfigHeading: 'Fee Configuration — live',
+    feeConfigNote: "Reads and writes the actual deployed DMN decision table (cinema_eligibility_and_fee) via Camunda's REST API — changing it here changes what the next submitted application is charged, with no restart.",
+    baseFeeLabel: 'Base Fee (OMR)',
+    smeDiscountLabel: 'Riyada (SME) Discount %',
+    smeFinalFeeLabel: 'SME / Riyada Final Fee',
+    standardFeeLabel: 'Standard Final Fee',
+    feePreviewNote: 'Preview above recalculates instantly as you type. Nothing is live until you apply it.',
+    applyEngineBtn: 'Apply to Process Engine',
+    slaHeading: 'SLA Threshold — live',
+    slaNote: "Rewrites the boundary-timer duration on the deployed BPMN's Head of Section Review step and redeploys. Set it very low (e.g. 1 minute) to watch a real escalation fire during a demo instead of waiting an hour.",
+    slaMinutesLabel: 'Head of Section review SLA (minutes)',
+    scheduleHeading: 'Field Visit Scheduling — live',
+    scheduleNote: 'Worker-side parameter (not a DMN/BPMN edit) — takes effect on the very next application that reaches payment.',
+    leadDaysLabel: 'Lead time before field visit (days)',
+    applyBtn: 'Apply',
+    cicdHeading: 'CI/CD Pipeline — Promote to UAT',
+    simulatedTag: 'SIMULATED — Phase 3',
+    cicdNote: "Disclosed per the demo script: this sandbox has a single environment, so the DEV→UAT promotion itself is simulated. The snapshot below is not fake — it's read live from the actual deployed DMN/BPMN and worker config, so it reflects whatever Phase 1/2 edits you just made.",
+    snapshotBtn: '1. Snapshot Current DEV Config',
+    approvalGateLabel: 'Approval Gate: I approve promoting this configuration to UAT',
+    approverNameLabel: 'Approver name',
+    promoteBtn: '2. Promote to UAT',
+    versionLogHeading: 'Version Log',
+    deploymentIdCol: 'Deployment ID',
+    promotedAtCol: 'Promoted At',
+    approvedByCol: 'Approved By',
+    configSnapshotCol: 'Config Snapshot',
+    designerHeading: 'Process Designer',
+    modeSimpleBtn: 'Simple — drag & drop',
+    modeAdvancedBtn: 'Advanced — full BPMN editor',
+    designerSimpleNote: 'Click a shape in the palette to drop it on the canvas, drag it anywhere, then drag from its right-edge dot to another shape to connect them — same as building a flowchart in PowerPoint. Click a shape to fill in its details. No gateways, no conditions, no XML. "Save & Deploy" compiles exactly what you\'ve drawn into real BPMN and redeploys it to Camunda.',
+    shapeStartBtn: '+ Start',
+    shapeEndBtn: '+ End',
+    shapeTaskBtn: '+ Human Task',
+    shapeAutoBtn: '+ Automatic Step',
+    shapeApprovalBtn: '+ Approval Step',
+    shapeDecisionBtn: '+ Rule Check',
+    saveDeployBtn: 'Save & Deploy',
+    reloadSavedBtn: 'Reload Saved',
+    clickShapeNote: 'Click a shape to edit it here.',
+    advancedEditorNote: 'The real Camunda-native editing surface — bpmn-js, the same open-source library Camunda Modeler itself is built on. Full BPMN: parallel gateways, subprocesses, message events, anything the simple canvas doesn\'t support. This edits the live process directly — know what you\'re doing before you hit Deploy.',
+    deployDiagramBtn: 'Deploy This Diagram',
+    reloadLiveBtn: 'Reload Live Version',
+  },
+  ar: {
+    mobileToggle: 'عرض الجوال',
+    pageTitle: 'منصة عُمان للمعلومات — إجازة عرض فيلم سينمائي (تجريبي)',
+    pageTagline: 'وحدة المنصة: تتواصل فقط مع واجهة Directus (البيانات) وواجهة Camunda (سير العمل) عبر طبقة BFF الخاصة بها. لا يتم الوصول إلى أي من الواجهتين الخلفيتين مباشرة.',
+    submitAppHeading: 'تقديم الطلب',
+    submitAppBtn: 'إرسال الطلب',
+    payQueueHeading: 'قائمة مهامي — دفع الرسوم',
+    refreshBtn: 'تحديث',
+    applicationsHeading: 'الطلبات (بيانات Directus)',
+    specialistQueueHeading: 'قائمة المهام — الزيارة الميدانية والتقييم',
+    headQueueHeading: 'قائمة المهام — المراجعة',
+    addFieldHeading: 'إضافة حقل نموذج — مباشر',
+    liveMetricsHeading: 'مؤشرات المعاملات الحية',
+    themeToggle: 'داكن / فاتح',
+    adminPersonaNote: 'الشخصية: مسؤول الوزارة — عرض تجريبي لتهيئة المرحلة 1: تعديلات حية على المخطط وقواعد الرسوم، دون كتابة كود أو إعادة تشغيل.',
+    reloadCurrentBtn: 'إعادة تحميل الحالة الحالية',
+    addFieldNote: 'يضيف عمودًا وحقلًا حقيقيًا في Directus عبر POST /fields/license_applications. يظهر فورًا في نموذج تبويب مقدم الطلب.',
+    fieldKeyLabel: 'مفتاح الحقل (snake_case)',
+    fieldLabelEnLabel: 'التسمية / الملاحظة المعروضة في النموذج (بالإنجليزية)',
+    fieldLabelArLabel: 'التسمية المعروضة في النموذج (بالعربية) — اختياري، للتأكد من ظهورها بشكل صحيح عند التبديل',
+    typeLabel: 'النوع',
+    typeTextShort: 'نص (قصير)',
+    typeTextLong: 'نص (طويل)',
+    typeNumber: 'رقم',
+    typeYesNo: 'نعم / لا',
+    addFieldBtn: 'إضافة الحقل مباشرة',
+    eligRuleHeading: 'قاعدة الأهلية — مباشر',
+    eligRuleNote: 'يبدّل الشروط التي يتطلبها جدول DMN لتحقق الأهلية، ثم يعيد نشره — تعيد Camunda توليد جدول القرار، دون كتابة كود أو إعادة تشغيل. اختبر السيناريوهين فورًا أدناه دون تقديم طلب حقيقي.',
+    reqCrLabel: 'يتطلب سجلًا تجاريًا ساري المفعول',
+    reqPriorLabel: 'يتطلب رخصة ممارسة سابقة سارية لعرض الأفلام السينمائية',
+    applyEligBtn: 'تطبيق قاعدة الأهلية',
+    retestHeading: 'إعادة اختبار السيناريوهين',
+    scenarioMet: 'السيناريو: الشروط مستوفاة',
+    scenarioNotMet: 'السيناريو: الرخصة السابقة مفقودة',
+    runTestBtn: 'تشغيل الاختبار',
+    feeConfigHeading: 'إعداد الرسوم — مباشر',
+    feeConfigNote: 'يقرأ ويكتب جدول قرار DMN المنشور فعليًا (cinema_eligibility_and_fee) عبر واجهة Camunda البرمجية — تغييره هنا يغيّر الرسوم المفروضة على الطلب التالي مباشرة، دون إعادة تشغيل.',
+    baseFeeLabel: 'الرسم الأساسي (ريال عماني)',
+    smeDiscountLabel: 'نسبة خصم ريادة (المؤسسات الصغيرة والمتوسطة) %',
+    smeFinalFeeLabel: 'الرسم النهائي لحاملي بطاقة ريادة',
+    standardFeeLabel: 'الرسم النهائي القياسي',
+    feePreviewNote: 'المعاينة أعلاه تُحدَّث فورًا أثناء الكتابة. لا شيء يصبح ساري المفعول إلا بعد التطبيق.',
+    applyEngineBtn: 'تطبيق على محرك المعالجة',
+    slaHeading: 'حد اتفاقية مستوى الخدمة (SLA) — مباشر',
+    slaNote: 'يعيد كتابة مدة المؤقت الحدّي في خطوة "مراجعة رئيس القسم" ضمن BPMN المنشور ويعيد نشره. اضبطه على قيمة منخفضة جدًا (مثل دقيقة واحدة) لمشاهدة تصعيد حقيقي أثناء العرض بدلًا من انتظار ساعة كاملة.',
+    slaMinutesLabel: 'مدة SLA لمراجعة رئيس القسم (بالدقائق)',
+    scheduleHeading: 'جدولة الزيارة الميدانية — مباشر',
+    scheduleNote: 'معامل على جانب العامل الآلي (وليس تعديلًا في DMN/BPMN) — يسري مفعوله على الطلب التالي الذي يصل إلى مرحلة الدفع.',
+    leadDaysLabel: 'المهلة الزمنية قبل الزيارة الميدانية (بالأيام)',
+    applyBtn: 'تطبيق',
+    cicdHeading: 'خط أنابيب CI/CD — الترقية إلى بيئة UAT',
+    simulatedTag: 'محاكاة — المرحلة 3',
+    cicdNote: 'تمّ الإفصاح وفق نص العرض التجريبي: هذه البيئة التجريبية تحتوي بيئة واحدة فقط، لذا فإن الترقية من DEV إلى UAT ذاتها محاكاة. لكن اللقطة أدناه ليست وهمية — إنها تُقرأ مباشرة من إعدادات DMN/BPMN والعامل الآلي المنشورة فعليًا، فتعكس أي تعديلات أجريتها في المرحلتين 1 و2.',
+    snapshotBtn: '١. أخذ لقطة للإعدادات الحالية (DEV)',
+    approvalGateLabel: 'بوابة الموافقة: أوافق على ترقية هذا الإعداد إلى UAT',
+    approverNameLabel: 'اسم المعتمِد',
+    promoteBtn: '٢. الترقية إلى UAT',
+    versionLogHeading: 'سجل الإصدارات',
+    deploymentIdCol: 'معرّف النشر',
+    promotedAtCol: 'تاريخ الترقية',
+    approvedByCol: 'اعتمدها',
+    configSnapshotCol: 'لقطة الإعدادات',
+    designerHeading: 'مصمم سير العمل',
+    modeSimpleBtn: 'بسيط — سحب وإفلات',
+    modeAdvancedBtn: 'متقدم — محرر BPMN كامل',
+    designerSimpleNote: 'انقر على شكل من اللوحة لإسقاطه على المساحة، اسحبه إلى أي مكان، ثم اسحب من النقطة على حافته اليمنى إلى شكل آخر لربطهما — تمامًا كإنشاء مخطط انسيابي في PowerPoint. انقر على أي شكل لتعبئة تفاصيله. لا بوابات، لا شروط، لا XML. "حفظ ونشر" يحوّل تمامًا ما رسمته إلى BPMN حقيقي ويعيد نشره على Camunda.',
+    shapeStartBtn: '+ بداية',
+    shapeEndBtn: '+ نهاية',
+    shapeTaskBtn: '+ مهمة بشرية',
+    shapeAutoBtn: '+ خطوة آلية',
+    shapeApprovalBtn: '+ خطوة موافقة',
+    shapeDecisionBtn: '+ فحص قاعدة',
+    saveDeployBtn: 'حفظ ونشر',
+    reloadSavedBtn: 'إعادة تحميل المحفوظ',
+    clickShapeNote: 'انقر على أي شكل لتحريره هنا.',
+    advancedEditorNote: 'واجهة التحرير الأصلية لـ Camunda — bpmn-js، وهي نفس المكتبة مفتوحة المصدر التي بُني عليها برنامج Camunda Modeler ذاته. BPMN الكامل: بوابات متوازية، عمليات فرعية، أحداث الرسائل، وكل ما لا تدعمه اللوحة البسيطة. هذا يعدّل العملية الحية مباشرة — تأكد مما تفعله قبل الضغط على نشر.',
+    deployDiagramBtn: 'نشر هذا المخطط',
+    reloadLiveBtn: 'إعادة تحميل الإصدار الحي',
+  },
+};
+
+const AR_FIELD_LABELS_BASE = {
+  film_title: 'عنوان الفيلم',
+  classification: 'التصنيف',
+  applicant_name: 'اسم مقدم الطلب',
+  has_riyada_card: 'يحمل بطاقة ريادة (مؤسسات صغيرة ومتوسطة)',
+  valid_commercial_registration: 'سجل تجاري ساري المفعول',
+  valid_prior_practice_license: 'رخصة ممارسة سابقة سارية المفعول',
+  final_fee: 'الرسوم النهائية',
+  festival_submission_reference: 'رقم مرجع تقديم المهرجان',
+};
+
+function getArFieldLabels() {
+  try { return { ...AR_FIELD_LABELS_BASE, ...JSON.parse(localStorage.getItem('omanArFieldLabels') || '{}') }; }
+  catch { return AR_FIELD_LABELS_BASE; }
+}
+
+function getLanguage() {
+  return localStorage.getItem('omanLanguage') || 'en';
+}
+
+// Omani Rial: "OMR 10" in English, "10 ر.ع." in Arabic — the standard
+// abbreviation, and Arabic conventionally puts the amount before it.
+function omr(value) {
+  return getLanguage() === 'ar' ? `${value} ر.ع.` : `${value} OMR`;
+}
+
+function applyLanguage(lang) {
+  localStorage.setItem('omanLanguage', lang);
+  document.documentElement.lang = lang;
+  document.documentElement.dir = lang === 'ar' ? 'rtl' : 'ltr';
+  document.getElementById('langBtnEn').classList.toggle('active-lang', lang === 'en');
+  document.getElementById('langBtnAr').classList.toggle('active-lang', lang === 'ar');
+  document.querySelectorAll('[data-i18n]').forEach(el => {
+    const key = el.getAttribute('data-i18n');
+    if (I18N[lang][key]) el.textContent = I18N[lang][key];
+  });
+  const activeTab = localStorage.getItem('omanActiveTab') || 'applicant';
+  renderTabs();
+  for (const t of TABS) document.getElementById(`navbtn-${t.id}`).classList.toggle('active', t.id === activeTab);
+  if (document.getElementById('tab-applicant').classList.contains('active')) loadFormSchema();
+  // Re-render dynamic (JS-generated) content that isn't covered by static
+  // data-i18n tags, so switching language doesn't leave it stuck in English.
+  if (document.getElementById('tab-admin').classList.contains('active')) {
+    if (document.getElementById('admBaseFee').value) recalcPricingPreview();
+    if (typeof canvasShapes !== 'undefined' && canvasShapes.length) { renderCanvasAll(); renderCanvasPropertyPanel(); }
+  }
+}
+
+function toggleMobileView() {
+  document.body.classList.toggle('mobile-frame');
+  document.getElementById('mobileViewBtn').classList.toggle('active-lang', document.body.classList.contains('mobile-frame'));
+}
+
+function getTheme() {
+  return localStorage.getItem('omanTheme') || 'light';
+}
+function applyTheme(theme) {
+  localStorage.setItem('omanTheme', theme);
+  document.documentElement.setAttribute('data-theme', theme);
+  document.getElementById('themeToggleBtn').classList.toggle('active-lang', theme === 'dark');
+}
+function toggleTheme() {
+  applyTheme(getTheme() === 'dark' ? 'light' : 'dark');
+}
+
+// ============================= APPLICANT: dynamic form =============================
+
+let formSchema = [];
+
+// Maps a Directus field's `interface` to a rendered control.
+// Booleans use a custom toggle-switch component instead of a native checkbox —
+// swap this one function to plug in any other custom control (rating, signature, etc.)
+function renderField(f) {
+  const id = `f_${f.field}`;
+  const lang = getLanguage();
+  const labelText = lang === 'ar'
+    ? (getArFieldLabels()[f.field] ?? f.field.replace(/_/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase()))
+    : f.field.replace(/_/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase());
+  const note = f.note ? `<div class="field-note">${f.note}</div>` : '';
+
+  if (f.interface === 'boolean') {
+    return `
+      <label for="${id}">${labelText}</label>
+      <div class="toggle-row">
+        <span class="toggle-switch">
+          <input type="checkbox" id="${id}" />
+          <span class="toggle-slider" onclick="document.getElementById('${id}').click()"></span>
+        </span>
+        <span class="toggle-label">${f.options?.label ?? labelText}</span>
+      </div>
+      ${note}`;
+  }
+
+  if (f.interface === 'select-dropdown') {
+    const choices = (f.options?.choices ?? []).map(c => `<option value="${c.value}">${c.text}</option>`).join('');
+    return `<label for="${id}">${labelText}</label><select id="${id}">${choices}</select>${note}`;
+  }
+
+  if (f.interface === 'input-multiline') {
+    return `<label for="${id}">${labelText}</label><textarea id="${id}" rows="3"></textarea>${note}`;
+  }
+
+  // default: plain input (covers text/number)
+  const inputType = f.type === 'float' || f.type === 'integer' ? 'number' : 'text';
+  return `<label for="${id}">${labelText}</label><input id="${id}" type="${inputType}" />${note}`;
+}
+
+async function loadFormSchema() {
+  const res = await fetch('/api/form-schema/license_applications');
+  formSchema = await res.json();
+  const applicantFields = formSchema.filter(f => !['final_fee'].includes(f.field));
+  document.getElementById('dynamicForm').innerHTML = applicantFields.map(renderField).join('');
+  log(`Rendered ${applicantFields.length} fields dynamically from Directus schema`);
+}
+
+// Phase 3 demo: simulated CR + Civil Status + internal practice-license
+// lookups, auto-populating the submission form. Every result is clearly
+// labeled SIMULATED, matching the RFP's disclosure requirement.
+async function runSimulatedLookup() {
+  const crNumber = document.getElementById('lookupCr').value.trim();
+  const civilId = document.getElementById('lookupCivilId').value.trim();
+  const [cr, civil, prior] = await Promise.all([
+    fetch('/api/integrations/cr-lookup', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ crNumber }) }).then(r => r.json()),
+    fetch('/api/integrations/civil-status-lookup', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ civilId }) }).then(r => r.json()),
+    fetch('/api/integrations/practice-license-lookup', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ civilId }) }).then(r => r.json()),
+  ]);
+
+  const nameField = document.getElementById('f_applicant_name');
+  const crField = document.getElementById('f_valid_commercial_registration');
+  const priorField = document.getElementById('f_valid_prior_practice_license');
+  if (civil.applicantName && nameField) nameField.value = civil.applicantName;
+  if (crField) crField.checked = cr.valid;
+  if (priorField) priorField.checked = prior.hasValidLicense;
+
+  document.getElementById('lookupResult').innerHTML = `
+    <div class="card" style="background:#fffbeb;">
+      <div class="field-note"><strong>⚠ SIMULATED — ${cr.source}</strong>: ${cr.message}</div>
+      <div class="field-note"><strong>⚠ SIMULATED — ${civil.source}</strong>: ${civil.message}${civil.applicantName ? ' Name: ' + civil.applicantName : ''}</div>
+      <div class="field-note"><strong>⚠ SIMULATED — ${prior.source}</strong>: ${prior.message}</div>
+    </div>`;
+  log(`[SIMULATED] CR lookup: valid=${cr.valid} | Civil Status: valid=${civil.valid} | Practice License on file: ${prior.hasValidLicense}. Form auto-filled.`);
+}
+
+async function submitApplication() {
+  const body = {};
+  for (const f of formSchema) {
+    const el = document.getElementById(`f_${f.field}`);
+    if (!el) continue;
+    body[f.field] = f.interface === 'boolean' ? el.checked : el.value;
+  }
+  const res = await fetch('/api/applications', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
+  const data = await res.json();
+  if (!res.ok) { log('ERROR submitting: ' + JSON.stringify(data)); return; }
+  log(`Application #${data.id} submitted, Camunda process started (eligible: ${data.eligible}, fee: ${data.final_fee ?? '—'} OMR)`);
+  loadApplications();
+  loadTasks('applicant');
+}
+
+async function loadApplications() {
+  const res = await fetch('/api/applications');
+  const rows = await res.json();
+  const tbody = document.querySelector('#appsTable tbody');
+  tbody.innerHTML = '';
+  for (const r of rows) {
+    // Directus/Postgres returns booleans as 1/0/null through this driver, not JS true/false.
+    const eligibleTag = r.eligible === null || r.eligible === undefined ? '<span class="tag">—</span>'
+      : Number(r.eligible) === 1 ? '<span class="tag" style="background:#dcfce7;">Yes</span>'
+      : '<span class="tag" style="background:#fee2e2;">No</span>';
+    const slaTag = Number(r.sla_breached) === 1 ? '<span class="tag" style="background:#fee2e2;">⚠ Breached</span>' : '<span class="tag" style="background:#dcfce7;">OK</span>';
+    const qrCell = r.license_qr
+      ? `<span class="tag" style="background:#e0e7ff;font-family:monospace;cursor:pointer;" title="Click to view" onclick="alert('License QR payload:\\n\\n${r.license_qr}\\n\\n(rendered as a scannable QR image in production)')">🔗 View QR</span>`
+      : '—';
+    tbody.innerHTML += `<tr><td>${r.id}</td><td>${r.film_title ?? ''}</td><td>${r.applicant_name ?? ''}</td><td><span class="tag">${r.status}</span></td><td>${eligibleTag}</td><td>${r.final_fee ?? '—'}</td><td>${r.field_visit_date ?? '—'}</td><td>${slaTag}</td><td>${qrCell}</td></tr>`;
+  }
+  log(`Loaded ${rows.length} applications from Directus`);
+}
+
+// ============================= TASK QUEUES (role-scoped) =============================
+
+async function loadTasks(group) {
+  const res = await fetch('/api/tasks?group=' + group);
+  const tasks = await res.json();
+  const containerId = { applicant: 'applicantTasks', specialist: 'specialistTasks', head_of_section: 'headTasks' }[group];
+  const container = document.getElementById(containerId);
+  if (!res.ok) { container.textContent = 'Error: ' + JSON.stringify(tasks); return; }
+  if (tasks.length === 0) { container.textContent = 'No pending tasks.'; return; }
+
+  if (group === 'applicant') {
+    container.innerHTML = tasks.map(t => `
+      <div class="card">
+        <strong>${t.name}</strong> — application #${t.businessKey}<br/>
+        <small>task id: ${t.id}</small><br/>
+        <button class="small" onclick="completePayment('${t.id}', '${t.businessKey}')">Complete Mock Payment</button>
+      </div>`).join('');
+  } else if (group === 'specialist') {
+    container.innerHTML = tasks.map(t => `
+      <div class="card">
+        <strong>${t.name}</strong> — application #${t.businessKey}<br/>
+        <small>task id: ${t.id}</small>
+        <label for="notes_${t.id}">Field visit notes</label>
+        <textarea id="notes_${t.id}" rows="2" placeholder="On-site inspection findings...">On-site inspection completed, no issues found.</textarea>
+        <button class="small" onclick="completeSpecialistTask('${t.id}', '${t.businessKey}')">Submit Field Visit Evaluation</button>
+      </div>`).join('');
+  } else {
+    container.innerHTML = tasks.map(t => `
+      <div class="card">
+        <strong>${t.name}</strong> — application #${t.businessKey}<br/>
+        <small>task id: ${t.id}</small>
+        <label for="comments_${t.id}">Comments (required to send back)</label>
+        <textarea id="comments_${t.id}" rows="2" placeholder="What needs to be revisited before this can be approved?"></textarea>
+        <button class="small" onclick="completeReview('${t.id}', '${t.businessKey}', 'approve')">Approve</button>
+        <button class="small secondary" onclick="completeReview('${t.id}', '${t.businessKey}', 'comments')">Send Back with Comments</button>
+        <button class="small danger" onclick="completeReview('${t.id}', '${t.businessKey}', 'reject')">Reject</button>
+      </div>`).join('');
+  }
+  log(`Loaded ${tasks.length} tasks for group "${group}" from Camunda`);
+}
+
+async function completePayment(taskId, applicationId) {
+  await fetch(`/api/tasks/${taskId}/complete`, {
+    method: 'POST', headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ applicationId, applicationUpdate: { status: 'field_visit_scheduled' } })
+  });
+  log(`Mock payment completed for application #${applicationId}`);
+  loadTasks('applicant'); loadApplications();
+}
+
+async function completeSpecialistTask(taskId, applicationId) {
+  const notes = document.getElementById(`notes_${taskId}`)?.value || 'Evaluation completed on-site.';
+  await fetch(`/api/tasks/${taskId}/complete`, {
+    method: 'POST', headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ applicationId, applicationUpdate: { status: 'under_review', field_visit_notes: notes } })
+  });
+  log(`Field visit evaluation completed for application #${applicationId}`);
+  loadTasks('specialist'); loadApplications();
+}
+
+// Phase 2 demo: the revision loop. "comments" completes Task_HeadOfSectionReview
+// with outcome=comments, which Gateway_ReviewOutcome (Flow_10 in the BPMN)
+// routes straight back to Task_FieldVisitEvaluation — the Specialist sees the
+// task reappear in their queue, with the Head of Section's comments attached.
+async function completeReview(taskId, applicationId, outcome) {
+  if (outcome === 'comments') {
+    const comments = document.getElementById(`comments_${taskId}`)?.value.trim();
+    if (!comments) { alert('Add a comment before sending this back to the Specialist.'); return; }
+    await fetch(`/api/tasks/${taskId}/complete`, {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        variables: { outcome },
+        applicationId,
+        applicationUpdate: { status: 'revision_requested', review_outcome: outcome, review_comments: comments, revision_loop_used: true },
+      })
+    });
+    log(`Head of Section sent application #${applicationId} back to the Specialist: "${comments}"`);
+  } else {
+    const statusMap = { approve: 'approved', reject: 'rejected' };
+    await fetch(`/api/tasks/${taskId}/complete`, {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ variables: { outcome }, applicationId, applicationUpdate: { status: statusMap[outcome], review_outcome: outcome } })
+    });
+    log(`Head of Section review completed (${outcome}) for application #${applicationId}`);
+  }
+  loadTasks('head_of_section'); loadApplications();
+}
+
+// ============================= ADMIN =============================
+
+async function addFieldLive() {
+  const field = document.getElementById('admFieldKey').value.trim();
+  const label = document.getElementById('admFieldLabel').value.trim();
+  const labelAr = document.getElementById('admFieldLabelAr').value.trim();
+  const kind = document.getElementById('admFieldKind').value;
+  const res = await fetch('/api/admin/fields', {
+    method: 'POST', headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ field, label, kind })
+  });
+  const data = await res.json();
+  if (!res.ok) { log('ERROR adding field: ' + data.error); return; }
+  if (labelAr) {
+    const overrides = JSON.parse(localStorage.getItem('omanArFieldLabels') || '{}');
+    overrides[field] = labelAr;
+    localStorage.setItem('omanArFieldLabels', JSON.stringify(overrides));
+  }
+  log(`Field "${field}" added live to license_applications (${kind}) — reflected on the Applicant form now in both languages`);
+  document.getElementById('admFieldKey').value = '';
+  document.getElementById('admFieldLabel').value = '';
+  document.getElementById('admFieldLabelAr').value = '';
+  loadFormSchema();
+}
+
+async function loadEligibilityRule() {
+  const res = await fetch('/api/admin/eligibility-rule');
+  const r = await res.json();
+  if (!res.ok) { log('ERROR loading eligibility rule: ' + r.error); return; }
+  document.getElementById('admReqCr').checked = r.requireCommercialRegistration;
+  document.getElementById('admReqPrior').checked = r.requirePriorPracticeLicense;
+  log(`Current live eligibility rule: CR required = ${r.requireCommercialRegistration}, Prior License required = ${r.requirePriorPracticeLicense}`);
+}
+
+async function applyEligibilityRule() {
+  const requireCommercialRegistration = document.getElementById('admReqCr').checked;
+  const requirePriorPracticeLicense = document.getElementById('admReqPrior').checked;
+  if (!confirm(`Apply this eligibility rule live?\n\nRequire valid Commercial Registration: ${requireCommercialRegistration ? 'Yes' : 'No'}\nRequire valid prior Practice License: ${requirePriorPracticeLicense ? 'Yes' : 'No'}\n\nThis redeploys the decision table to Camunda immediately.`)) return;
+  const res = await fetch('/api/admin/eligibility-rule', {
+    method: 'POST', headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ requireCommercialRegistration, requirePriorPracticeLicense })
+  });
+  const data = await res.json();
+  if (!res.ok) { log('ERROR applying eligibility rule: ' + data.error); return; }
+  log(`Eligibility rule applied live: CR required = ${data.requireCommercialRegistration}, Prior License required = ${data.requirePriorPracticeLicense}. Redeployed to Camunda.`);
+}
+
+async function testEligibility(validCommercialRegistration, validPriorPracticeLicense) {
+  const targetId = validPriorPracticeLicense ? 'testMetResult' : 'testNotMetResult';
+  const res = await fetch('/api/admin/eligibility-test', {
+    method: 'POST', headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ validCommercialRegistration, validPriorPracticeLicense, hasRiyadaCard: false })
+  });
+  const data = await res.json();
+  if (!res.ok) { log('ERROR testing eligibility: ' + data.error); return; }
+  const eligibleWord = getLanguage() === 'ar' ? 'مؤهل' : 'Eligible';
+  const notEligibleWord = getLanguage() === 'ar' ? 'غير مؤهل' : 'Not Eligible';
+  document.getElementById(targetId).textContent = data.eligible ? `${eligibleWord} (${omr(data.finalFee)})` : notEligibleWord;
+  log(`Test evaluation (CR=${validCommercialRegistration}, PriorLicense=${validPriorPracticeLicense}): eligible=${data.eligible}`);
+}
+
+async function loadSla() {
+  const res = await fetch('/api/admin/sla');
+  const s = await res.json();
+  if (!res.ok) { log('ERROR loading SLA: ' + s.error); return; }
+  document.getElementById('admSlaMinutes').value = s.slaMinutes;
+  log(`Current live SLA threshold: ${s.slaMinutes} minute(s)`);
+}
+
+async function applySla() {
+  const slaMinutes = Number(document.getElementById('admSlaMinutes').value);
+  if (!confirm(`Apply this SLA threshold live?\n\nHead of Section review must complete within ${slaMinutes} minute(s), or it escalates automatically.\n\nThis redeploys the process to Camunda immediately — including for anyone currently mid-review.`)) return;
+  const res = await fetch('/api/admin/sla', {
+    method: 'POST', headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ slaMinutes })
+  });
+  const data = await res.json();
+  if (!res.ok) { log('ERROR applying SLA: ' + data.error); return; }
+  log(`SLA threshold applied live: ${data.slaMinutes} minute(s). Redeployed to Camunda — next Head of Section review uses this timer.`);
+}
+
+async function loadSchedule() {
+  const res = await fetch('/api/admin/schedule');
+  const s = await res.json();
+  document.getElementById('admLeadDays').value = s.fieldVisitLeadTimeDays;
+  log(`Current live field visit lead time: ${s.fieldVisitLeadTimeDays} day(s)`);
+}
+
+async function applySchedule() {
+  const fieldVisitLeadTimeDays = Number(document.getElementById('admLeadDays').value);
+  if (!confirm(`Apply this lead time live?\n\nField visits will be auto-scheduled ${fieldVisitLeadTimeDays} day(s) after payment, starting with the next application.`)) return;
+  const res = await fetch('/api/admin/schedule', {
+    method: 'POST', headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ fieldVisitLeadTimeDays })
+  });
+  const data = await res.json();
+  if (!res.ok) { log('ERROR applying schedule: ' + data.error); return; }
+  log(`Field visit lead time applied live: ${data.fieldVisitLeadTimeDays} day(s). Next auto-scheduled visit will recalculate using this value.`);
+}
+
+async function snapshotPipeline() {
+  const res = await fetch('/api/admin/pipeline/snapshot');
+  const snap = await res.json();
+  if (!res.ok) { log('ERROR snapshotting config: ' + snap.error); return; }
+  const pre = document.getElementById('pipelineSnapshot');
+  pre.style.display = 'block';
+  pre.textContent = JSON.stringify(snap, null, 2);
+  log('DEV config snapshot taken — review before approving promotion to UAT.');
+}
+
+async function promotePipeline() {
+  const approved = document.getElementById('pipelineApproved').checked;
+  const approvedBy = document.getElementById('pipelineApprover').value.trim();
+  if (!confirm(`Promote the current DEV configuration to UAT as "${approvedBy || 'Unspecified Approver'}"?\n\n(Simulated — this sandbox has one environment — but it will add a real entry to the version log below.)`)) return;
+  const res = await fetch('/api/admin/pipeline/promote', {
+    method: 'POST', headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ approved, approvedBy })
+  });
+  const data = await res.json();
+  if (!res.ok) { log('ERROR promoting: ' + data.error); return; }
+  log(`[SIMULATED] Promoted to UAT — deployment ${data.deploymentId}, approved by ${data.approvedBy}.`);
+  document.getElementById('pipelineApproved').checked = false;
+  loadPipelineLog();
+}
+
+async function loadPipelineLog() {
+  const res = await fetch('/api/admin/pipeline/log');
+  const entries = await res.json();
+  const tbody = document.querySelector('#pipelineLogTable tbody');
+  tbody.innerHTML = entries.map(e => `
+    <tr>
+      <td><code>${e.deploymentId}</code></td>
+      <td>${new Date(e.promotedAt).toLocaleString()}</td>
+      <td>${e.approvedBy}</td>
+      <td><details><summary>view</summary><pre style="font-size:.72rem;white-space:pre-wrap;">${JSON.stringify(e.snapshot, null, 2)}</pre></details></td>
+    </tr>`).join('') || '<tr><td colspan="4" class="field-note">No promotions yet.</td></tr>';
+}
+
+// ============================= PROCESS CANVAS =============================
+// PowerPoint-style: drag shapes onto a canvas, drag from a shape's edge dot
+// to another shape to connect them. No gateways, no conditions, no XML
+// shown to the user — the compiler infers a gateway whenever a shape has
+// more than one outgoing arrow, and uses each arrow's label as the
+// branch condition underneath.
+
+const CANVAS_PROCESS_KEY = 'cinema_film_screening_license';
+const CANVAS_SHAPE_DIMS = { start: [60, 60], end: [60, 60], task: [140, 80], automatic: [140, 80], approval: [140, 80], decision: [140, 80] };
+const CANVAS_SHAPE_COLOR = { start: '#166534', end: '#b91c1c', task: '#1A5FA0', automatic: '#4b5563', approval: '#B8831A', decision: '#7A1A8A' };
+const CANVAS_SHAPE_LABEL = { start: 'Start', end: 'End', task: 'Human Task', automatic: 'Automatic Step', approval: 'Approval Step', decision: 'Rule Check' };
+// Bilingual names for the seeded default process's shapes/labels — a real
+// admin typing their own shape names types in whatever language they want
+// (same as any Directus field label), so only the pre-seeded demo content
+// needs a translation table; anything else falls back to its own text.
+const CANVAS_SEED_NAME_AR = {
+  'Application Submitted': 'تم تقديم الطلب',
+  'Eligibility Check': 'فحص الأهلية',
+  'Rejected - Not Eligible': 'مرفوض - غير مؤهل',
+  'Applicant Pays Fee': 'يدفع مقدم الطلب الرسوم',
+  'Auto-schedule Field Visit': 'جدولة الزيارة الميدانية تلقائيًا',
+  'Field Visit & Evaluation': 'الزيارة الميدانية والتقييم',
+  'Head of Section Review': 'مراجعة رئيس القسم',
+  'Rejected': 'مرفوض',
+  'Issue License + QR': 'إصدار الرخصة + رمز QR',
+  'License Issued': 'تم إصدار الرخصة',
+};
+const CANVAS_SEED_LABEL_AR = { 'Eligible': 'مؤهل', 'Not Eligible': 'غير مؤهل', 'Comments': 'ملاحظات', 'Reject': 'رفض', 'Approve': 'موافقة' };
+const CANVAS_SHAPE_TYPE_AR = { start: 'بداية', end: 'نهاية', task: 'مهمة بشرية', automatic: 'خطوة آلية', approval: 'خطوة موافقة', decision: 'فحص قاعدة' };
+function canvasLocalizedTypeLabel(type) {
+  return getLanguage() === 'ar' ? CANVAS_SHAPE_TYPE_AR[type] : CANVAS_SHAPE_LABEL[type];
+}
+function canvasLocalizedName(text) {
+  return getLanguage() === 'ar' ? (CANVAS_SEED_NAME_AR[text] || text) : text;
+}
+function canvasLocalizedLabel(text) {
+  return getLanguage() === 'ar' ? (CANVAS_SEED_LABEL_AR[text] || text) : text;
+}
+
+let canvasShapes = [];
+let canvasConnections = [];
+let canvasAutomaticActions = [];
+let canvasSelectedId = null;
+let canvasDragging = null;      // { id, offsetX, offsetY }
+let canvasConnectingFrom = null; // shape id, while dragging out a new connector
+let canvasTempLine = null;       // { x1, y1, x2, y2 } while drawing a connector
+let canvasDraggingBend = null;   // connection id, while dragging its route bend-point
+let canvasNextNum = 1;
+
+async function loadCanvasProcess() {
+  const [canvasRes, actionsRes] = await Promise.all([
+    fetch(`/api/admin/process-canvas/${CANVAS_PROCESS_KEY}`),
+    fetch('/api/admin/process-canvas-actions'),
+  ]);
+  const canvas = await canvasRes.json();
+  canvasAutomaticActions = await actionsRes.json();
+  canvasShapes = canvas.shapes;
+  canvasConnections = canvas.connections;
+  canvasSelectedId = null;
+  renderCanvasPropertyPanel();
+  renderCanvasAll();
+  log(`Loaded process canvas "${canvas.processName}" (${canvasShapes.length} shapes, ${canvasConnections.length} arrows)`);
+}
+
+function canvasAddShape(type) {
+  const id = `shape_${canvasNextNum++}`;
+  const base = { id, type, name: `New ${CANVAS_SHAPE_LABEL[type]}`, x: 60 + (canvasShapes.length % 6) * 40, y: 60 + Math.floor(canvasShapes.length / 6) * 120 };
+  if (type === 'task') base.candidateGroup = '';
+  if (type === 'automatic') base.action = '';
+  if (type === 'decision') { base.decisionKey = ''; base.resultVar = 'result'; }
+  if (type === 'approval') { base.candidateGroup = ''; base.timer = null; }
+  canvasShapes.push(base);
+  canvasSelectedId = id;
+  renderCanvasPropertyPanel();
+  renderCanvasAll();
+}
+
+function canvasRemoveShape(id) {
+  const s = canvasShapes.find((x) => x.id === id);
+  if (!s) return;
+  const affectedArrows = canvasConnections.filter((c) => c.from === id || c.to === id).length;
+  const warning = affectedArrows
+    ? `Delete "${s.name}"? This will also remove ${affectedArrows} arrow${affectedArrows > 1 ? 's' : ''} connected to it. This isn't live until you click "Save & Deploy."`
+    : `Delete "${s.name}"? This isn't live until you click "Save & Deploy."`;
+  if (!confirm(warning)) return;
+  canvasShapes = canvasShapes.filter((x) => x.id !== id);
+  canvasConnections = canvasConnections.filter((c) => c.from !== id && c.to !== id);
+  if (canvasSelectedId === id) canvasSelectedId = null;
+  renderCanvasPropertyPanel();
+  renderCanvasAll();
+}
+
+function canvasSelectShape(id) {
+  canvasSelectedId = id;
+  renderCanvasPropertyPanel();
+  renderCanvasAll();
+}
+
+// --- dragging a shape ---
+function canvasShapeMouseDown(ev, id) {
+  if (ev.target.classList.contains('canvas-handle') || ev.target.classList.contains('canvas-delete')) return;
+  const container = document.getElementById('canvasContainer');
+  const rect = container.getBoundingClientRect();
+  const shape = canvasShapes.find((s) => s.id === id);
+  canvasDragging = { id, offsetX: ev.clientX + container.scrollLeft - rect.left - shape.x, offsetY: ev.clientY + container.scrollTop - rect.top - shape.y };
+  canvasSelectShape(id);
+  ev.preventDefault();
+}
+
+// --- drawing a new connector ---
+function canvasHandleMouseDown(ev, id) {
+  canvasConnectingFrom = id;
+  ev.stopPropagation();
+  ev.preventDefault();
+}
+
+function canvasContainerMouseMove(ev) {
+  const container = document.getElementById('canvasContainer');
+  const rect = container.getBoundingClientRect();
+  const x = ev.clientX + container.scrollLeft - rect.left;
+  const y = ev.clientY + container.scrollTop - rect.top;
+
+  if (canvasDragging) {
+    const shape = canvasShapes.find((s) => s.id === canvasDragging.id);
+    shape.x = Math.max(0, x - canvasDragging.offsetX);
+    shape.y = Math.max(0, y - canvasDragging.offsetY);
+    // Move the existing element directly instead of destroying/recreating
+    // every shape div on each pixel of movement — cheaper and avoids
+    // dropping mid-drag DOM references.
+    const el = document.querySelector(`.canvas-shape[data-shape-id="${shape.id}"]`);
+    if (el) { el.style.left = shape.x + 'px'; el.style.top = shape.y + 'px'; }
+    renderCanvasSvg();
+  } else if (canvasConnectingFrom) {
+    const from = canvasShapes.find((s) => s.id === canvasConnectingFrom);
+    const [w, h] = CANVAS_SHAPE_DIMS[from.type];
+    canvasTempLine = { x1: from.x + w, y1: from.y + h / 2, x2: x, y2: y };
+    renderCanvasSvg();
+  } else if (canvasDraggingBend) {
+    const conn = canvasConnections.find((c) => c.id === canvasDraggingBend);
+    if (conn) { conn.bend = { x, y }; renderCanvasSvg(); }
+  }
+}
+
+function canvasContainerMouseUp(ev) {
+  // Only re-render if something actually happened (a drag or a connector
+  // was in progress). Re-rendering on every mouseup — including a plain
+  // click on the delete/handle buttons, which never set canvasDragging —
+  // destroys and recreates the DOM before the browser's own 'click' event
+  // (which fires after mouseup) can reach the element, silently eating
+  // the click. This was hiding the delete button entirely.
+  const wasDragging = !!canvasDragging;
+  const wasConnecting = !!canvasConnectingFrom;
+  const wasBending = !!canvasDraggingBend;
+  if (canvasConnectingFrom) {
+    const container = document.getElementById('canvasContainer');
+    const rect = container.getBoundingClientRect();
+    const x = ev.clientX + container.scrollLeft - rect.left;
+    const y = ev.clientY + container.scrollTop - rect.top;
+    const target = canvasShapes.find((s) => {
+      const [w, h] = CANVAS_SHAPE_DIMS[s.type];
+      return x >= s.x && x <= s.x + w && y >= s.y && y <= s.y + h;
+    });
+    if (target && target.id !== canvasConnectingFrom) {
+      const existingOut = canvasConnections.filter((c) => c.from === canvasConnectingFrom);
+      const required = existingOut.length >= 1;
+      const promptText = required
+        ? 'This shape now has more than one arrow out — give this arrow a short label (e.g. "Approve", "Eligible", "Reject"):'
+        : 'Label for this arrow (optional — leave blank for none, e.g. "Approve"):';
+      const label = prompt(promptText, '');
+      if (label === null) { canvasConnectingFrom = null; canvasTempLine = null; renderCanvasSvg(); return; }
+      if (required && !label.trim()) {
+        alert('This shape now has more than one arrow out, so every arrow needs a label. The arrow was not created — try again.');
+        canvasConnectingFrom = null; canvasTempLine = null; renderCanvasSvg(); return;
+      }
+      canvasConnections.push({ id: `conn_${canvasNextNum++}`, from: canvasConnectingFrom, to: target.id, label: label.trim() || undefined });
+    }
+  }
+  canvasDragging = null;
+  canvasConnectingFrom = null;
+  canvasTempLine = null;
+  canvasDraggingBend = null;
+  if (wasDragging || wasConnecting || wasBending) renderCanvasAll();
+}
+
+function canvasEditConnectionLabel(id) {
+  const conn = canvasConnections.find((c) => c.id === id);
+  const input = prompt('Label for this arrow (optional — leave blank for none):', conn.label || '');
+  if (input === null) return;
+  conn.label = input.trim() || undefined;
+  renderCanvasAll();
+}
+
+function canvasDeleteConnection(id) {
+  if (!confirm('Delete this arrow? This isn\'t live until you click "Save & Deploy."')) return;
+  canvasConnections = canvasConnections.filter((c) => c.id !== id);
+  renderCanvasAll();
+}
+
+// --- dragging a connection's route bend-point ---
+function canvasBendMouseDown(ev, id) {
+  canvasDraggingBend = id;
+  ev.stopPropagation();
+  ev.preventDefault();
+}
+
+// --- rendering ---
+function renderCanvasAll() {
+  renderCanvasShapes();
+  renderCanvasSvg();
+}
+
+function renderCanvasShapes() {
+  const container = document.getElementById('canvasContainer');
+  // Remove old shape elements (keep the svg)
+  container.querySelectorAll('.canvas-shape').forEach((el) => el.remove());
+  canvasShapes.forEach((s) => {
+    const [w, h] = CANVAS_SHAPE_DIMS[s.type];
+    const isRound = s.type === 'start' || s.type === 'end';
+    const el = document.createElement('div');
+    el.className = 'canvas-shape';
+    el.dataset.shapeId = s.id;
+    el.style.cssText = `position:absolute;left:${s.x}px;top:${s.y}px;width:${w}px;height:${h}px;background:${CANVAS_SHAPE_COLOR[s.type]};color:#fff;border-radius:${isRound ? '50%' : '10px'};display:flex;align-items:center;justify-content:center;text-align:center;font-size:11px;padding:6px;cursor:grab;user-select:none;box-shadow:0 2px 6px rgba(0,0,0,.2);${s.id === canvasSelectedId ? 'outline:3px solid #4338ca;outline-offset:2px;' : ''}`;
+    el.textContent = canvasLocalizedName(s.name);
+    el.onmousedown = (ev) => canvasShapeMouseDown(ev, s.id);
+    el.onclick = (ev) => { if (!canvasDragging) canvasSelectShape(s.id); };
+
+    const del = document.createElement('span');
+    del.className = 'canvas-delete';
+    del.textContent = '✕';
+    del.style.cssText = 'position:absolute;top:-10px;right:-10px;background:#fff;color:#b91c1c;border:2px solid #b91c1c;border-radius:50%;width:24px;height:24px;font-size:13px;font-weight:700;display:flex;align-items:center;justify-content:center;cursor:pointer;box-shadow:0 1px 4px rgba(0,0,0,.35);z-index:2;';
+    del.onclick = (ev) => { ev.stopPropagation(); canvasRemoveShape(s.id); };
+    el.appendChild(del);
+
+    if (s.type !== 'end') {
+      const handle = document.createElement('span');
+      handle.className = 'canvas-handle';
+      handle.title = 'Drag to another shape to connect';
+      handle.style.cssText = `position:absolute;${isRound ? 'right:-6px;top:calc(50% - 6px);' : 'right:-7px;top:calc(50% - 7px);'}width:14px;height:14px;background:#fff;border:2px solid #4338ca;border-radius:50%;cursor:crosshair;`;
+      handle.onmousedown = (ev) => canvasHandleMouseDown(ev, s.id);
+      el.appendChild(handle);
+    }
+    container.appendChild(el);
+  });
+}
+
+function canvasCenter(s) {
+  const [w, h] = CANVAS_SHAPE_DIMS[s.type];
+  return { cx: s.x + w / 2, cy: s.y + h / 2, rightX: s.x + w, midY: s.y + h / 2, x: s.x, y: s.y, w, h };
+}
+
+function renderCanvasSvg() {
+  const svg = document.getElementById('canvasSvg');
+  const container = document.getElementById('canvasContainer');
+  const maxX = Math.max(1200, ...canvasShapes.map((s) => s.x + 200));
+  const maxY = Math.max(560, ...canvasShapes.map((s) => s.y + 200));
+  svg.setAttribute('width', maxX);
+  svg.setAttribute('height', maxY);
+
+  let lines = '';
+  canvasConnections.forEach((c) => {
+    const from = canvasShapes.find((s) => s.id === c.from);
+    const to = canvasShapes.find((s) => s.id === c.to);
+    if (!from || !to) return;
+    const a = canvasCenter(from), b = canvasCenter(to);
+    const x1 = a.rightX, y1 = a.midY, x2 = b.x, y2 = b.cy;
+    // Route through a draggable bend point — defaults to the midpoint, but
+    // the user can drag it anywhere to route the arrow around other shapes.
+    const bend = c.bend || { x: (x1 + x2) / 2, y: (y1 + y2) / 2 };
+    lines += `<polyline points="${x1},${y1} ${bend.x},${bend.y} ${x2},${y2}" fill="none" stroke="#607870" stroke-width="2" marker-end="url(#canvasArrow)" style="pointer-events:auto;cursor:pointer;" onclick="canvasEditConnectionLabel('${c.id}')" />`;
+
+    // Draggable bend handle — always visible, drag to reroute the arrow.
+    lines += `<circle cx="${bend.x}" cy="${bend.y}" r="5" fill="#fff" stroke="#4338ca" stroke-width="2" style="pointer-events:auto;cursor:move;" onmousedown="canvasBendMouseDown(event,'${c.id}')"><title>Drag to reroute this arrow</title></circle>`;
+
+    // Always-visible delete badge — no need to delete a whole shape just
+    // to remove one arrow, and no need to guess a hidden text command.
+    const dx = bend.x, dy = bend.y - 16;
+    lines += `<circle cx="${dx}" cy="${dy}" r="8" fill="#fff" stroke="#b91c1c" stroke-width="2" style="pointer-events:auto;cursor:pointer;" onclick="canvasDeleteConnection('${c.id}')" /><text x="${dx}" y="${dy + 4}" text-anchor="middle" font-size="10" font-weight="700" fill="#b91c1c" style="pointer-events:none;">✕</text>`;
+
+    if (c.label) {
+      const label = canvasLocalizedLabel(c.label);
+      const mx = bend.x, my = bend.y + 16;
+      lines += `<rect x="${mx - label.length * 3.2 - 4}" y="${my - 9}" width="${label.length * 6.4 + 8}" height="16" fill="#fff" stroke="#607870" rx="3" style="pointer-events:auto;cursor:pointer;" onclick="canvasEditConnectionLabel('${c.id}')" /><text x="${mx}" y="${my + 3}" text-anchor="middle" font-size="10" fill="#1A2B27" style="pointer-events:none;">${label}</text>`;
+    }
+  });
+  if (canvasTempLine) {
+    const t = canvasTempLine;
+    lines += `<line x1="${t.x1}" y1="${t.y1}" x2="${t.x2}" y2="${t.y2}" stroke="#4338ca" stroke-width="2" stroke-dasharray="4,3" />`;
+  }
+  svg.innerHTML = `<defs><marker id="canvasArrow" markerWidth="8" markerHeight="8" refX="7" refY="3" orient="auto"><path d="M0,0 L0,6 L8,3 z" fill="#607870" /></marker></defs>${lines}`;
+}
+
+function renderCanvasPropertyPanel() {
+  const panel = document.getElementById('canvasPropertyPanel');
+  const s = canvasShapes.find((x) => x.id === canvasSelectedId);
+  if (!s) { panel.innerHTML = `<div class="field-note">${I18N[getLanguage()].clickShapeNote}</div>`; return; }
+
+  let fields = '';
+  if (s.type === 'task') {
+    fields = `<label>Who performs this?</label><input value="${s.candidateGroup || ''}" placeholder="e.g. applicant" oninput="canvasUpdateShape('${s.id}','candidateGroup',this.value)" />`;
+  } else if (s.type === 'automatic') {
+    const opts = canvasAutomaticActions.map((a) => `<option value="${a.value}" ${s.action === a.value ? 'selected' : ''}>${a.label}</option>`).join('');
+    fields = `<label>What happens automatically?</label><select onchange="canvasUpdateShape('${s.id}','action',this.value)"><option value="">Choose...</option>${opts}</select>`;
+  } else if (s.type === 'decision') {
+    fields = `<label>Rule to check (DMN key)</label><input value="${s.decisionKey || ''}" placeholder="cinema_eligibility_and_fee" oninput="canvasUpdateShape('${s.id}','decisionKey',this.value)" /><div class="field-note">Needs exactly 2 outgoing arrows, labeled "Eligible" and "Not Eligible".</div>`;
+  } else if (s.type === 'approval') {
+    fields = `
+      <label>Who approves this?</label><input value="${s.candidateGroup || ''}" placeholder="e.g. head_of_section" oninput="canvasUpdateShape('${s.id}','candidateGroup',this.value)" />
+      <div class="field-note">Draw an arrow to each possible outcome (e.g. Approve / Comments / Reject) and label each one.</div>
+      <div class="toggle-row">
+        <span class="toggle-switch"><input type="checkbox" id="canvasTimer_${s.id}" ${s.timer ? 'checked' : ''} onclick="canvasToggleTimer('${s.id}', this.checked)" /><span class="toggle-slider" onclick="document.getElementById('canvasTimer_${s.id}').click()"></span></span>
+        <span class="toggle-label">Escalate if nobody responds in time</span>
+      </div>
+      ${s.timer ? `<div style="display:flex;gap:.4rem;"><input type="number" min="1" value="${s.timer.duration}" style="width:70px;" oninput="canvasUpdateTimer('${s.id}','duration',this.value)" /><select onchange="canvasUpdateTimer('${s.id}','unit',this.value)"><option value="minutes" ${s.timer.unit === 'minutes' ? 'selected' : ''}>minutes</option><option value="hours" ${s.timer.unit === 'hours' ? 'selected' : ''}>hours</option><option value="days" ${s.timer.unit === 'days' ? 'selected' : ''}>days</option></select></div>` : ''}`;
+  }
+
+  panel.innerHTML = `
+    <span class="tag" style="background:${CANVAS_SHAPE_COLOR[s.type]};color:#fff;">${canvasLocalizedTypeLabel(s.type)}</span>
+    <label>Name</label><input value="${s.name.replace(/"/g, '&quot;')}" oninput="canvasUpdateShape('${s.id}','name',this.value)" />
+    ${fields}`;
+}
+
+function canvasUpdateShape(id, field, value) {
+  const s = canvasShapes.find((x) => x.id === id);
+  s[field] = value;
+  renderCanvasShapes();
+}
+function canvasToggleTimer(id, enabled) {
+  const s = canvasShapes.find((x) => x.id === id);
+  s.timer = enabled ? { duration: 60, unit: 'minutes', onTimeoutAction: 'escalate-sla-breach' } : null;
+  renderCanvasPropertyPanel();
+}
+function canvasUpdateTimer(id, field, value) {
+  const s = canvasShapes.find((x) => x.id === id);
+  s.timer[field] = field === 'duration' ? Number(value) : value;
+}
+
+async function saveCanvasProcess() {
+  if (!confirm(`Deploy this process live?\n\n${canvasShapes.length} shape(s), ${canvasConnections.length} arrow(s). This redeploys "${CANVAS_PROCESS_KEY}" to Camunda immediately — new applications will use this version; already-running ones keep their original.`)) return;
+  const res = await fetch(`/api/admin/process-canvas/${CANVAS_PROCESS_KEY}`, {
+    method: 'POST', headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ processName: 'Cinema Film Screening License', shapes: canvasShapes, connections: canvasConnections })
+  });
+  const data = await res.json();
+  const status = document.getElementById('canvasStatus');
+  if (!data.ok) {
+    status.style.color = '#b91c1c';
+    status.textContent = 'Could not save: ' + (data.validationErrors || [data.error]).join(' ');
+    log('ERROR saving process canvas: ' + (data.validationErrors || [data.error]).join(' '));
+    return;
+  }
+  status.style.color = '#166534';
+  status.textContent = `Saved and deployed as version ${data.version}.`;
+  log(`Process canvas saved & redeployed live — Camunda version ${data.version}. New applications use this immediately; already-running ones keep their original version.`);
+}
+
+// ============================= ADVANCED EDITOR (bpmn-js) =============================
+// The real Camunda-native editing surface, embedded directly — not a
+// lookalike. Requires camunda-bpmn-moddle so Camunda-specific attributes
+// (candidateGroups, external task topics, decisionRef, timers) round-trip
+// correctly through import/export instead of being silently dropped.
+
+let bpmnModeler = null;
+let camundaModdleDescriptor = null;
+
+async function ensureBpmnModeler() {
+  if (bpmnModeler) return bpmnModeler;
+  if (!camundaModdleDescriptor) {
+    camundaModdleDescriptor = await fetch('https://unpkg.com/camunda-bpmn-moddle@7/resources/camunda.json').then((r) => r.json());
+  }
+  bpmnModeler = new BpmnJS({ container: '#bpmnAdvancedContainer', moddleExtensions: { camunda: camundaModdleDescriptor } });
+  return bpmnModeler;
+}
+
+async function switchDesignerMode(mode) {
+  document.getElementById('designerModeSimple').style.display = mode === 'simple' ? 'block' : 'none';
+  document.getElementById('designerModeAdvanced').style.display = mode === 'advanced' ? 'block' : 'none';
+  document.getElementById('designerModeSimpleBtn').classList.toggle('active-lang', mode === 'simple');
+  document.getElementById('designerModeAdvancedBtn').classList.toggle('active-lang', mode === 'advanced');
+  if (mode === 'advanced') await loadAdvancedEditor();
+}
+
+async function loadAdvancedEditor() {
+  const status = document.getElementById('advancedStatus');
+  status.style.color = '';
+  status.textContent = 'Loading live diagram...';
+  try {
+    const modeler = await ensureBpmnModeler();
+    const res = await fetch(`/api/admin/process-xml/${CANVAS_PROCESS_KEY}`);
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error);
+    await modeler.importXML(data.xml);
+    modeler.get('canvas').zoom('fit-viewport');
+    status.textContent = 'Loaded the currently deployed process. Edit freely, then Deploy.';
+    log('Advanced Editor (bpmn-js) loaded the live BPMN diagram.');
+  } catch (err) {
+    status.style.color = '#b91c1c';
+    status.textContent = 'Could not load diagram: ' + err.message;
+  }
+}
+
+async function deployAdvancedEditor() {
+  const status = document.getElementById('advancedStatus');
+  if (!confirm(`Deploy this diagram live?\n\nThis redeploys "${CANVAS_PROCESS_KEY}" to Camunda immediately from the BPMN editor. Make sure you know what you changed — this is the full-power editor with no plain-language guardrails.`)) return;
+  try {
+    const modeler = await ensureBpmnModeler();
+    const { xml } = await modeler.saveXML({ format: true });
+    const res = await fetch(`/api/admin/process-xml/${CANVAS_PROCESS_KEY}`, {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ xml })
+    });
+    const data = await res.json();
+    if (!res.ok || !data.ok) throw new Error(data.error || 'deploy failed');
+    status.style.color = '#166534';
+    status.textContent = `Deployed as version ${data.version}.`;
+    log(`Advanced Editor deployed the BPMN diagram directly — Camunda version ${data.version}.`);
+  } catch (err) {
+    status.style.color = '#b91c1c';
+    status.textContent = 'Could not deploy: ' + err.message;
+    log('ERROR deploying from Advanced Editor: ' + err.message);
+  }
+}
+
+
+function recalcPricingPreview() {
+  const baseFee = Number(document.getElementById('admBaseFee').value) || 0;
+  const discount = Number(document.getElementById('admSmeDiscount').value) || 0;
+  const smeFinal = Math.round(baseFee * (1 - discount / 100) * 100) / 100;
+  document.getElementById('admSmePreview').textContent = omr(smeFinal);
+  document.getElementById('admStandardPreview').textContent = omr(baseFee);
+}
+
+async function loadPricing() {
+  const res = await fetch('/api/admin/pricing');
+  const p = await res.json();
+  if (!res.ok) { log('ERROR loading pricing: ' + p.error); return; }
+  document.getElementById('admBaseFee').value = p.baseFee;
+  document.getElementById('admSmeDiscount').value = p.smeDiscountPct;
+  recalcPricingPreview();
+  log(`Current live pricing: base fee ${p.baseFee} OMR, Riyada discount ${p.smeDiscountPct}% (SME fee ${p.smeFinalFee} OMR)`);
+}
+
+async function applyPricing() {
+  const baseFee = Number(document.getElementById('admBaseFee').value);
+  const smeDiscountPct = Number(document.getElementById('admSmeDiscount').value);
+  const smePreview = document.getElementById('admSmePreview').textContent;
+  const stdPreview = document.getElementById('admStandardPreview').textContent;
+  if (!confirm(`Apply this fee change live?\n\nStandard fee: ${stdPreview}\nSME/Riyada fee: ${smePreview}\n\nThis redeploys the decision table to Camunda immediately — the very next submitted application will be charged this amount.`)) return;
+  const res = await fetch('/api/admin/pricing', {
+    method: 'POST', headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ baseFee, smeDiscountPct })
+  });
+  const data = await res.json();
+  if (!res.ok) { log('ERROR applying pricing: ' + data.error); return; }
+  log(`Pricing applied live: base fee now ${data.baseFee} OMR, Riyada discount ${data.smeDiscountPct}% → SME fee ${data.smeFinalFee} OMR, standard fee ${data.standardFinalFee} OMR. Redeployed to Camunda — next submission uses this immediately.`);
+}
+
+// ============================= DASHBOARD =============================
+
+const WIDGET_METRICS = [
+  { key: 'requestsReceived', label: 'Requests Received', fmt: 'number' },
+  { key: 'eligiblePct', label: '% Meeting Conditions', fmt: 'percent' },
+  { key: 'slaCompletionPct', label: 'SLA Completion Rate', fmt: 'percent' },
+  { key: 'approved', label: 'Approved', fmt: 'number' },
+  { key: 'rejected', label: 'Rejected', fmt: 'number' },
+  { key: 'revisionLoopCount', label: 'Went Through Revision Loop', fmt: 'number' },
+  { key: 'classificationBreakdown', label: 'Requests by Film Classification', fmt: 'breakdown' },
+  { key: 'avgFinalFee', label: 'Average Final Fee', fmt: 'currency' },
+  { key: 'pendingApplicant', label: 'Pending — Applicant (Pay Fee)', fmt: 'number' },
+  { key: 'pendingSpecialist', label: 'Pending — Specialist Queue', fmt: 'number' },
+  { key: 'pendingHeadOfSection', label: 'Pending — Head of Section Queue', fmt: 'number' },
+  { key: 'slaBreaches', label: 'SLA Breaches (escalated)', fmt: 'number' },
+  { key: 'pendingEvaluation', label: 'Pending Eligibility Evaluation', fmt: 'number' },
+];
+
+function formatMetric(fmt, value) {
+  if (fmt === 'breakdown') {
+    const entries = Object.entries(value || {});
+    if (!entries.length) return '<span class="field-note">No data yet</span>';
+    return entries.map(([k, v]) => `<div style="display:flex;justify-content:space-between;font-size:.85rem;"><span>${k}</span><strong>${v}</strong></div>`).join('');
+  }
+  if (value === null || value === undefined) return '—';
+  if (fmt === 'percent') return `${value}%`;
+  if (fmt === 'currency') return omr(value);
+  return String(value);
+}
+
+function kpiTile(label, value, badge, removeKey) {
+  const badgeHtml = badge ? `<span class="badge ${badge.ok ? 'ok' : 'bad'}">${badge.text}</span>` : '';
+  const removeHtml = removeKey ? `<button class="remove" onclick="removeWidget(${removeKey})">remove</button>` : '';
+  return `<div class="kpi">${badgeHtml}<div class="label">${label}</div><div class="value">${value}</div>${removeHtml}</div>`;
+}
+
+let lastMetrics = null;
+
+async function loadDashboard() {
+  const res = await fetch('/api/dashboard/metrics');
+  const m = await res.json();
+  if (!res.ok) { log('ERROR loading dashboard: ' + m.error); return; }
+  lastMetrics = m;
+  document.getElementById('dashUpdated').textContent = `Last updated ${new Date(m.generatedAt).toLocaleTimeString()}`;
+
+  const eligibleBadge = m.eligiblePct === null ? null : { ok: m.eligiblePct >= m.eligibleTarget, text: `target ≥ ${m.eligibleTarget}%` };
+  const slaBadge = m.slaCompletionPct === null ? null : { ok: m.slaCompletionPct >= m.slaTarget, text: `target ≥ ${m.slaTarget}%` };
+
+  document.getElementById('dashCore').innerHTML = [
+    kpiTile(`Requests Received (${m.requestsReceivedPeriod})`, formatMetric('number', m.requestsReceived)),
+    kpiTile(`% Meeting Conditions (${m.eligiblePctPeriod})`, formatMetric('percent', m.eligiblePct), eligibleBadge),
+    kpiTile(`SLA Completion Rate (${m.slaCompletionPctPeriod})`, formatMetric('percent', m.slaCompletionPct), slaBadge),
+    kpiTile('Approved', formatMetric('number', m.approved)),
+    kpiTile('Rejected', formatMetric('number', m.rejected)),
+    kpiTile('Went Through Revision Loop', formatMetric('number', m.revisionLoopCount)),
+    kpiTile('Average Final Fee', formatMetric('currency', m.avgFinalFee)),
+  ].join('');
+
+  renderWidgets();
+  log(`Dashboard refreshed: ${m.requestsReceived} requests, ${formatMetric('percent', m.eligiblePct)} meeting conditions, ${formatMetric('percent', m.slaCompletionPct)} SLA completion`);
+}
+
+function loadWidgetOptions() {
+  const sel = document.getElementById('widgetMetric');
+  sel.innerHTML = WIDGET_METRICS.map(w => `<option value="${w.key}">${w.label}</option>`).join('');
+}
+
+function getWidgets() {
+  try { return JSON.parse(localStorage.getItem('omanDashboardWidgets') || '[]'); }
+  catch { return []; }
+}
+function saveWidgets(widgets) {
+  localStorage.setItem('omanDashboardWidgets', JSON.stringify(widgets));
+}
+
+function addWidget() {
+  const key = document.getElementById('widgetMetric').value;
+  const customLabel = document.getElementById('widgetLabel').value.trim();
+  const widgets = getWidgets();
+  widgets.push({ key, label: customLabel || null, id: Date.now() });
+  saveWidgets(widgets);
+  document.getElementById('widgetLabel').value = '';
+  renderWidgets();
+  log(`Widget added: ${customLabel || WIDGET_METRICS.find(w => w.key === key)?.label}`);
+}
+
+function removeWidget(id) {
+  saveWidgets(getWidgets().filter(w => w.id !== id));
+  renderWidgets();
+}
+
+function renderWidgets() {
+  const widgets = getWidgets();
+  const el = document.getElementById('dashCustom');
+  if (!lastMetrics || widgets.length === 0) { el.innerHTML = ''; return; }
+  el.innerHTML = widgets.map(w => {
+    const meta = WIDGET_METRICS.find(x => x.key === w.key) || { label: w.key, fmt: 'number' };
+    return kpiTile(w.label || meta.label, formatMetric(meta.fmt, lastMetrics[w.key]), null, w.id);
+  }).join('');
+}
+
+// ============================= INIT =============================
+
+applyTheme(getTheme());
+applyLanguage(getLanguage());
+loadWidgetOptions();
+const startTab = localStorage.getItem('omanActiveTab') || 'applicant';
+switchTab(TABS.some(t => t.id === startTab) ? startTab : 'applicant');
+
+setInterval(() => {
+  if (document.getElementById('tab-dashboard').classList.contains('active')) loadDashboard();
+}, 15000);
+</script>
+</body>
+</html>

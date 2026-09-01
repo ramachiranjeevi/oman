@@ -1,0 +1,13 @@
+<ng-template #template>
+  <li #elementRef [attr.role]="listModel.listItemRole" [key2click]="{ processEsc: false, disableTabStop: model.disableTabStop }" [visible]="listModel.isItemVisible(model)" [class]="class" 
+  [attr.id]="elementId" [attr.aria-selected]="ariaSelected" [attr.aria-checked]="ariaChecked" (click)="click($event)" (pointerdown)="pointerdown($event)">
+    <ng-container *ngIf="model.needSeparator">
+    <div [class]="listModel.cssClasses.itemSeparator"></div>
+    </ng-container>
+    <div [class]="listModel.cssClasses.itemBody" [style]="itemStyle" [attr.title]="model.getTooltip()"
+    (mouseover)="listModel.onItemHover(model)"
+    (mouseleave)="listModel.onItemLeave(model)">
+    <ng-template [component]="{ name: itemComponent, data: itemComponentData }"></ng-template>
+    </div>
+  </li>
+</ng-template>

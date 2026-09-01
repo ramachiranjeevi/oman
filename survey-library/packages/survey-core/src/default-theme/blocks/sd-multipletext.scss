@@ -1,0 +1,58 @@
+@use "../variables.scss" as *;
+
+.sd-multipletext {
+  width: 100%;
+  table-layout: fixed;
+  border-spacing: 0;
+  height: 1px;
+}
+
+.sd-multipletext__cell {
+  height: 100%;
+}
+
+.sd-multipletext__cell:not(:first-of-type) {
+  padding-inline-start: var(--sjs2-spacing-x200);
+}
+
+.sd-multipletext__item-container {
+  display: flex;
+  align-items: flex-start;
+  height: 100%;
+}
+.sd-multipletext__item {
+  flex-grow: 1;
+  display: flex;
+  gap: var(--sjs2-spacing-x050);
+}
+
+.sd-question__content--multipletext .sd-multipletext__item-container {
+  position: relative;
+}
+
+.sd-multipletext__item-container--error {
+  background-color: $red-light;
+}
+
+.sd-multipletext__cell {
+  padding-inline-start: 0;
+  padding-inline-end: 0;
+  padding-bottom: var(--sjs2-spacing-x100);
+  padding-top: var(--sjs2-spacing-x100);
+}
+
+.sd-multipletext__cell--error-bottom,
+.sd-multipletext__row:first-of-type .sd-multipletext__cell {
+  padding-top: 0;
+}
+
+.sd-multipletext__cell--error-top,
+.sd-multipletext__row:last-of-type .sd-multipletext__cell {
+  padding-bottom: 0;
+}
+
+.sd-multipletext__cell--error {
+  .sd-question__erbox {
+    margin: 0;
+  }
+}

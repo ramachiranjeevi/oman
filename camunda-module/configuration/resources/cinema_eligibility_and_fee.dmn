@@ -1,0 +1,70 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<definitions xmlns="https://www.omg.org/spec/DMN/20191111/MODEL/"
+             xmlns:camunda="http://camunda.org/schema/1.0/dmn"
+             id="Definitions_eligibility" name="Cinema Eligibility and Fee" namespace="http://oman-info.gov.om/dmn">
+
+  <decision id="cinema_eligibility_and_fee" name="Cinema Eligibility and Fee" camunda:historyTimeToLive="180">
+    <decisionTable id="DecisionTable_1" hitPolicy="FIRST">
+      <input id="Input_ValidCR" label="Valid Commercial Registration">
+        <inputExpression id="InputExpr_1" typeRef="boolean">
+          <text>validCommercialRegistration</text>
+        </inputExpression>
+      </input>
+      <input id="Input_ValidPriorLicense" label="Valid Prior Practice License">
+        <inputExpression id="InputExpr_2" typeRef="boolean">
+          <text>validPriorPracticeLicense</text>
+        </inputExpression>
+      </input>
+      <input id="Input_HasRiyada" label="Holds Riyada (SME) Card">
+        <inputExpression id="InputExpr_3" typeRef="boolean">
+          <text>hasRiyadaCard</text>
+        </inputExpression>
+      </input>
+
+      <output id="Output_Eligible" label="Eligible" name="eligible" typeRef="boolean" />
+      <output id="Output_BaseFee" label="Base Fee (OMR)" name="baseFee" typeRef="double" />
+      <output id="Output_DiscountPct" label="Discount %" name="discountPct" typeRef="double" />
+      <output id="Output_FinalFee" label="Final Fee (OMR)" name="finalFee" typeRef="double" />
+
+      <rule id="Rule_NotEligible">
+        <inputEntry id="In_1_1"><text>false</text></inputEntry>
+        <inputEntry id="In_1_2"><text>-</text></inputEntry>
+        <inputEntry id="In_1_3"><text>-</text></inputEntry>
+        <outputEntry id="Out_1_1"><text>false</text></outputEntry>
+        <outputEntry id="Out_1_2"><text>0</text></outputEntry>
+        <outputEntry id="Out_1_3"><text>0</text></outputEntry>
+        <outputEntry id="Out_1_4"><text>0</text></outputEntry>
+      </rule>
+
+      <rule id="Rule_NotEligible2">
+        <inputEntry id="In_2_1"><text>-</text></inputEntry>
+        <inputEntry id="In_2_2"><text>false</text></inputEntry>
+        <inputEntry id="In_2_3"><text>-</text></inputEntry>
+        <outputEntry id="Out_2_1"><text>false</text></outputEntry>
+        <outputEntry id="Out_2_2"><text>0</text></outputEntry>
+        <outputEntry id="Out_2_3"><text>0</text></outputEntry>
+        <outputEntry id="Out_2_4"><text>0</text></outputEntry>
+      </rule>
+
+      <rule id="Rule_EligibleSme">
+        <inputEntry id="In_3_1"><text>true</text></inputEntry>
+        <inputEntry id="In_3_2"><text>true</text></inputEntry>
+        <inputEntry id="In_3_3"><text>true</text></inputEntry>
+        <outputEntry id="Out_3_1"><text>true</text></outputEntry>
+        <outputEntry id="Out_3_2"><text>10</text></outputEntry>
+        <outputEntry id="Out_3_3"><text>50</text></outputEntry>
+        <outputEntry id="Out_3_4"><text>5</text></outputEntry>
+      </rule>
+
+      <rule id="Rule_EligibleStandard">
+        <inputEntry id="In_4_1"><text>true</text></inputEntry>
+        <inputEntry id="In_4_2"><text>true</text></inputEntry>
+        <inputEntry id="In_4_3"><text>false</text></inputEntry>
+        <outputEntry id="Out_4_1"><text>true</text></outputEntry>
+        <outputEntry id="Out_4_2"><text>10</text></outputEntry>
+        <outputEntry id="Out_4_3"><text>0</text></outputEntry>
+        <outputEntry id="Out_4_4"><text>10</text></outputEntry>
+      </rule>
+    </decisionTable>
+  </decision>
+</definitions>

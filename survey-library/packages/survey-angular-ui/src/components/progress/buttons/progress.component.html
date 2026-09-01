@@ -1,0 +1,51 @@
+<div [class]="model.getRootCss(container)" [style.maxWidth]="model.progressWidth"
+role="tablist" [attr.aria-label]="model.progressBarAriaLabel"
+(keydown)="model.onKeyDown($event)"
+>
+  <div [class]="survey.css.progressButtonsContainer" role="presentation">
+    <div
+      [class]="survey.css.progressButtonsListContainer" role="presentation">
+      <ul [class]="survey.css.progressButtonsList" role="presentation">
+        <li
+          *ngFor="let page of model.visiblePages; index as index"
+          [class]="model.getListElementCss(index)"
+          [attr.data-page-number]="model.getItemNumber(page)"
+          role="presentation">
+          <div *ngIf="model.showItemTitles"
+            [class]="survey.css.progressButtonsPageTitle"
+            [title]="page.renderedNavigationTitle"
+            (click)="model.isListElementClickable(index) ? model.clickListElement(page) : null"
+          >
+            <sv-ng-string [model]="page.locNavigationTitle"></sv-ng-string>
+          </div>
+          <div *ngIf="model.showItemDescriptions"
+            [class]="survey.css.progressButtonsPageDescription"
+            [title]="page.navigationDescription"
+            (click)="model.isListElementClickable(index) ? model.clickListElement(page) : null"
+          >
+            {{ page.navigationDescription }}
+          </div>
+          <button [class]="survey.css.progressButtonsButton"
+            (click)="model.isListElementClickable(index) ? model.clickListElement(page) : undefined"
+            role="tab"
+            type="button"
+            [attr.aria-selected]="model.isPageSelected(index)"
+            [attr.aria-label]="model.getButtonAriaLabel(page)"
+            [attr.tabindex]="model.getTabIndex(index)"
+            [attr.data-page-index]="index"
+          >
+            <ng-container *ngIf="model.showItemNumbers">{{ model.getItemNumber(page) }}</ng-container>
+            <ng-container *ngIf="!model.showItemNumbers && model.isListElementPassed(index)">
+              <svg [class]="survey.css.progressButtonsCheckIcon">
+                <use [attr.xlink:href]="'#icon-' + survey.css.progressButtonsCheckIconId"></use>
+              </svg>
+            </ng-container>
+            <ng-container *ngIf="!model.showItemNumbers && !model.isListElementPassed(index)">
+              <div [class]="survey.css.progressButtonsDot"></div>
+            </ng-container>
+          </button>
+        </li>
+      </ul>
+    </div>
+  </div>
+</div>

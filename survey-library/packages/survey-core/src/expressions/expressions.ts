@@ -1,0 +1,897 @@
+import { HashTable, Helpers, createDate } from "../helpers";
+import { FunctionFactory } from "../functionsfactory";
+import { ProcessValue } from "../conditions/conditionProcessValue";
+import { settings } from "../settings";
+import { ExpressionErrorType, IExpressionError } from "./expressionError";
+
+export interface AsyncFunctionItem {
+  operand?: FunctionOperand;
+  parent?: AsyncFunctionItem;
+  children?: Array<AsyncFunctionItem>;
+}
+
+export abstract class Operand {
+  private static counter = 1;
+  private _id: number = Operand.counter ++;
+  public get id(): number { return this._id; }
+  public toString(func: (op: Operand) => string = undefined): string {
+    return "";
+  }
+  public abstract getType(): string;
+  public abstract evaluate(processValue?: ProcessValue): any;
+  public abstract setVariables(variables: Array<string>): any;
+  public hasFunction(noParamsOnly?: boolean): boolean {
+    return false;
+  }
+  public hasAsyncFunction(): boolean { return false; }
+  public addToAsyncList(list: Array<AsyncFunctionItem>): void {}
+  public addOperandsToList(list: Array<Operand>): void {
+    list.push(this);
+    this.addChildrenToList(list);
+  }
+  public isEqual(op: Operand): boolean {
+    return !!op && op.getType() === this.getType() && this.isContentEqual(op);
+  }
+  public isConstant(): boolean {
+    return false;
+  }
+  // Validates the operand as the entire condition. The result of a condition built from constants only
+  // is known upfront, a single boolean constant ("true"/"false") is the one meaningful case.
+  public addConditionSemanticErrors(errors: Array<IExpressionError>): void {
+    if (this.isConstant()) {
+      if (!this.isBooleanConstant()) {
+        this.addSemanticError(errors);
+      }
+    } else {
+      this.addConditionErrors(errors);
+    }
+  }
+  // Validates the operand as a part of a condition. Reports fragments whose result is known upfront:
+  // a constant branch in and/or, a comparison of two constants and an operand compared with itself.
+  // Function parameters are not inspected - a constant argument there can be intentional.
+  public addConditionErrors(errors: Array<IExpressionError>): void {}
+  protected abstract isContentEqual(op: Operand): boolean;
+  protected areOperatorsEquals(op1: Operand, op2: Operand): boolean {
+    return !op1 && !op2 || !!op1 && op1.isEqual(op2);
+  }
+  protected addChildrenToList(list: Array<Operand>): void {}
+  protected isBooleanConstant(): boolean {
+    return false;
+  }
+  protected isOperandConstant(op: Operand): boolean {
+    // a null operand is the "null"/"undefined" literal
+    return !op || op.isConstant();
+  }
+  protected addSemanticError(errors: Array<IExpressionError>): void {
+    errors.push({ errorType: ExpressionErrorType.SemanticError });
+  }
+}
+
+export class BinaryOperand extends Operand {
+  private consumer: Function;
+  private isArithmeticValue: boolean;
+  constructor(
+    private operatorName: string,
+    private left: any = null,
+    private right: any = null,
+    isArithmeticOp: boolean = false
+  ) {
+    super();
+    this.isArithmeticValue = isArithmeticOp;
+    if (isArithmeticOp) {
+      this.consumer = OperandMaker.binaryFunctions["arithmeticOp"](
+        operatorName
+      );
+    } else {
+      this.consumer = getBinaryOperatorFunc(operatorName);
+    }
+
+    if (this.consumer == null) {
+      OperandMaker.throwInvalidOperatorError(operatorName);
+    }
+  }
+  private get requireStrictCompare(): boolean {
+    return this.getIsOperandRequireStrict(this.left) ||
+    this.getIsOperandRequireStrict(this.right);
+  }
+  private getIsOperandRequireStrict(op: any): boolean {
+    return !!op && op.requireStrictCompare;
+  }
+  public getType(): string {
+    return "binary";
+  }
+  public get isArithmetic(): boolean {
+    return this.isArithmeticValue;
+  }
+  public get isConjunction(): boolean {
+    return this.operatorName == "or" || this.operatorName == "and";
+  }
+  public get conjunction(): string {
+    return this.isConjunction ? this.operatorName : "";
+  }
+  public get operator(): string {
+    return this.operatorName;
+  }
+  public get leftOperand() {
+    return this.left;
+  }
+  public get rightOperand() {
+    return this.right;
+  }
+  protected isContentEqual(op: Operand): boolean {
+    const bOp = <BinaryOperand>op;
+    return bOp.operator === this.operator &&
+      this.areOperatorsEquals(this.left, bOp.left) &&
+      this.areOperatorsEquals(this.right, bOp.right);
+  }
+  private evaluateParam(x: any, processValue?: ProcessValue): any {
+    return x == null ? null : x.evaluate(processValue);
+  }
+
+  public evaluate(processValue?: ProcessValue): any {
+    return this.consumer.call(
+      this,
+      this.evaluateParam(this.left, processValue),
+      this.evaluateParam(this.right, processValue),
+      this.requireStrictCompare
+    );
+  }
+
+  public toString(func: (op: Operand) => string = undefined): string {
+    if (!!func) {
+      var res = func(this);
+      if (!!res) return res;
+    }
+    return (
+      "(" +
+      OperandMaker.safeToString(this.left, func) +
+      " " +
+      OperandMaker.operatorToString(this.operatorName) +
+      " " +
+      OperandMaker.safeToString(this.right, func) +
+      ")"
+    );
+  }
+
+  public setVariables(variables: Array<string>) {
+    if (this.left != null)this.left.setVariables(variables);
+    if (this.right != null)this.right.setVariables(variables);
+  }
+  public hasFunction(noParamsOnly?: boolean): boolean {
+    return (
+      (!!this.left && this.left.hasFunction(noParamsOnly)) ||
+      (!!this.right && this.right.hasFunction(noParamsOnly))
+    );
+  }
+  protected addChildrenToList(list: Array<Operand>): void {
+    if (!!this.left)this.left.addOperandsToList(list);
+    if (!!this.right)this.right.addOperandsToList(list);
+  }
+  public hasAsyncFunction(): boolean {
+    return (
+      (!!this.left && this.left.hasAsyncFunction()) ||
+      (!!this.right && this.right.hasAsyncFunction())
+    );
+  }
+  public addToAsyncList(list: Array<AsyncFunctionItem>) {
+    if (!!this.left)this.left.addToAsyncList(list);
+    if (!!this.right)this.right.addToAsyncList(list);
+  }
+  public isConstant(): boolean {
+    return this.isOperandConstant(this.left) && this.isOperandConstant(this.right);
+  }
+  public addConditionSemanticErrors(errors: Array<IExpressionError>): void {
+    super.addConditionSemanticErrors(errors);
+    // pure arithmetic at the root ({q1} + 1) never produces a boolean result
+    if (this.isArithmetic && !this.isConjunction && !this.isConstant()) {
+      this.addSemanticError(errors);
+    }
+  }
+  public addConditionErrors(errors: Array<IExpressionError>): void {
+    const left: Operand = this.left;
+    const right: Operand = this.right;
+    if (this.isConjunction) {
+      [left, right].forEach((side: Operand) => {
+        if (this.isOperandConstant(side)) {
+          this.addSemanticError(errors);
+        } else {
+          side.addConditionErrors(errors);
+        }
+      });
+    } else if (!this.isArithmetic) {
+      if (this.isOperandConstant(left) && this.isOperandConstant(right)) {
+        this.addSemanticError(errors);
+      } else if (!!left && !!right && left.isEqual(right) && !left.hasFunction()) {
+        this.addSemanticError(errors);
+      } else {
+        this.addOperandsConditionErrors(errors);
+      }
+    } else {
+      this.addOperandsConditionErrors(errors);
+    }
+  }
+  private addOperandsConditionErrors(errors: Array<IExpressionError>): void {
+    if (!!this.left)this.left.addConditionErrors(errors);
+    if (!!this.right)this.right.addConditionErrors(errors);
+  }
+}
+
+export class UnaryOperand extends Operand {
+  private consumer: Function;
+  constructor(private expressionValue: Operand, private operatorName: string) {
+    super();
+    this.consumer = getUnaryOperatorFunc(operatorName);
+    if (this.consumer == null) {
+      OperandMaker.throwInvalidOperatorError(operatorName);
+    }
+  }
+  public get operator(): string {
+    return this.operatorName;
+  }
+  public get expression(): Operand {
+    return this.expressionValue;
+  }
+  public getType(): string {
+    return "unary";
+  }
+  public toString(func: (op: Operand) => string = undefined): string {
+    if (!!func) {
+      var res = func(this);
+      if (!!res) return res;
+    }
+    const opName = OperandMaker.operatorToString(this.operator);
+    const exp = this.expression.toString(func);
+    return this.isRigtOperator ? exp + " " + opName : opName + " " + exp;
+  }
+  private get isRigtOperator(): boolean {
+    const st = this.operatorName.toLowerCase();
+    return st === "notempty" || st === "empty";
+  }
+  protected isContentEqual(op: Operand): boolean {
+    const uOp = <UnaryOperand>op;
+    return uOp.operator == this.operator && this.areOperatorsEquals(this.expression, uOp.expression);
+  }
+  public hasFunction(noParamsOnly?: boolean): boolean {
+    return this.expression.hasFunction(noParamsOnly);
+  }
+  protected addChildrenToList(list: Array<Operand>): void {
+    this.expression.addOperandsToList(list);
+  }
+  public hasAsyncFunction(): boolean {
+    return this.expression.hasAsyncFunction();
+  }
+  public addToAsyncList(list: Array<AsyncFunctionItem>): void {
+    this.expression.addToAsyncList(list);
+  }
+  public evaluate(processValue?: ProcessValue): boolean {
+    let value = this.expression.evaluate(processValue);
+    return this.consumer.call(this, value);
+  }
+  public setVariables(variables: Array<string>) {
+    this.expression.setVariables(variables);
+  }
+  public isConstant(): boolean {
+    return this.isOperandConstant(this.expression);
+  }
+  public addConditionErrors(errors: Array<IExpressionError>): void {
+    if (this.isOperandConstant(this.expression)) {
+      this.addSemanticError(errors);
+    } else {
+      this.expression.addConditionErrors(errors);
+    }
+  }
+}
+
+export class ArrayOperand extends Operand {
+  constructor(public values: Array<Operand>) {
+    super();
+  }
+  public getType(): string {
+    return "array";
+  }
+  public toString(func: (op: Operand) => string = undefined, noBrackets?: boolean): string {
+    if (!!func) {
+      const res = func(this);
+      if (!!res) return res;
+    }
+
+    let res = this.values
+      .map(function(el: Operand) {
+        return el.toString(func);
+      })
+      .join(", ");
+
+    return !noBrackets ? "[" + res + "]" : res;
+  }
+
+  public evaluate(processValue?: ProcessValue): Array<any> {
+    return this.values.map(function(el: Operand) {
+      return el.evaluate(processValue);
+    });
+  }
+
+  public setVariables(variables: Array<string>) {
+    this.values.forEach((el) => {
+      el.setVariables(variables);
+    });
+  }
+
+  public hasFunction(noParamsOnly?: boolean): boolean {
+    return this.values.some((operand) => operand.hasFunction(noParamsOnly));
+  }
+  protected addChildrenToList(list: Array<Operand>): void {
+    this.values.forEach((el) => {
+      el.addOperandsToList(list);
+    });
+  }
+  public hasAsyncFunction(): boolean {
+    return this.values.some((operand) => operand.hasAsyncFunction());
+  }
+  public addToAsyncList(list: Array<AsyncFunctionItem>): void {
+    this.values.forEach((operand) => operand.addToAsyncList(list));
+  }
+  protected isContentEqual(op: Operand): boolean {
+    const aOp = <ArrayOperand>op;
+    if (aOp.values.length !== this.values.length) return false;
+    for (var i = 0; i < this.values.length; i ++) {
+      if (!aOp.values[i].isEqual(this.values[i])) return false;
+    }
+    return true;
+  }
+  public isConstant(): boolean {
+    return this.values.every((val: Operand) => this.isOperandConstant(val));
+  }
+  public addConditionErrors(errors: Array<IExpressionError>): void {
+    this.values.forEach((val: Operand) => {
+      if (!!val) {
+        val.addConditionErrors(errors);
+      }
+    });
+  }
+}
+
+export class Const extends Operand {
+  constructor(private value: any) {
+    super();
+  }
+  public getType(): string {
+    return "const";
+  }
+  public toString(func: (op: Operand) => string = undefined): string {
+    if (!!func) {
+      var res = func(this);
+      if (!!res) return res;
+    }
+    return this.value === "" ? "''" : this.value.toString();
+  }
+  public get correctValue(): any {
+    return this.getCorrectValue(this.value);
+  }
+  public get requireStrictCompare(): boolean { return false; }
+  public evaluate(): any {
+    return this.getCorrectValue(this.value);
+  }
+
+  public setVariables(variables: Array<string>): void {}
+  protected getCorrectValue(value: any): any {
+    if (!value || typeof value != "string") return value;
+    if (OperandMaker.isBooleanValue(value)) return value.toLowerCase() === "true";
+    if (
+      value.length > 1 &&
+      this.isQuote(value[0]) &&
+      this.isQuote(value[value.length - 1])
+    )
+      return value.substring(1, value.length - 1);
+    if (Helpers.isNumber(value)) {
+      if (value[0] === "0" && value.indexOf("0x") != 0) {
+        const len = value.length;
+        const hasPoint = len > 1 && (value[1] === "." || value[1] === ",");
+        if (!hasPoint && len > 1 || hasPoint && len < 2) return value;
+      }
+      return Helpers.getNumber(value);
+    }
+    return value;
+  }
+  public isBoolean(): boolean {
+    if (!this.value || typeof this.value != "string") return this.value === true || this.value === false;
+    return OperandMaker.isBooleanValue(this.value);
+  }
+  public isConstant(): boolean {
+    return true;
+  }
+  protected isBooleanConstant(): boolean {
+    return this.isBoolean();
+  }
+  protected isContentEqual(op: Operand): boolean {
+    const cOp = <Const>op;
+    return cOp.value == this.value;
+  }
+  private isQuote(ch: string): boolean {
+    return ch == "'" || ch == '"';
+  }
+}
+
+export class Variable extends Const {
+  public static get DisableConversionChar(): string { return settings.expressionDisableConversionChar; }
+  public static set DisableConversionChar(val: string) { settings.expressionDisableConversionChar = val; }
+  private valueInfo: any = {};
+  private useValueAsItIs: boolean = false;
+  private returnOriginalValue: boolean = false;
+  constructor(private variableName: string) {
+    super(variableName);
+    if (
+      !!this.variableName &&
+      this.variableName.length > 1 &&
+      this.variableName[0] === Variable.DisableConversionChar
+    ) {
+      this.variableName = this.variableName.substring(1);
+      this.useValueAsItIs = true;
+    }
+  }
+  public get requireStrictCompare(): boolean {
+    return this.valueInfo.strictCompare === true;
+  }
+  public getType(): string {
+    return "variable";
+  }
+  public toString(func: (op: Operand) => string = undefined): string {
+    if (!!func) {
+      var res = func(this);
+      if (!!res) return res;
+    }
+    var prefix = this.useValueAsItIs ? Variable.DisableConversionChar : "";
+    return settings.expressionVariableDelimiters.start + prefix + this.variableName + settings.expressionVariableDelimiters.end;
+  }
+  public get variable(): string {
+    return this.variableName;
+  }
+  // Requests the original (unfiltered) value from the process value context, bypassing the
+  // default unwrapping applied to questions like a checkbox with valuePropertyName.
+  public setReturnOriginalValue(val: boolean): void {
+    this.returnOriginalValue = val;
+  }
+  public evaluate(processValue?: ProcessValue): any {
+    this.valueInfo.name = this.variableName;
+    this.valueInfo.isOriginalValue = this.returnOriginalValue;
+    processValue.getValueInfo(this.valueInfo);
+    if (!this.valueInfo.hasValue) {
+      return this.returnJSONObject(this.variableName);
+    }
+    let val = this.valueInfo.value;
+    if (this.valueInfo.onProcessValue) {
+      val = this.valueInfo.onProcessValue(val);
+    }
+    return this.getCorrectValue(val);
+  }
+  public setVariables(variables: Array<string>) {
+    variables.push(this.variableName);
+  }
+  public isConstant(): boolean {
+    return false;
+  }
+  protected isBooleanConstant(): boolean {
+    return false;
+  }
+  protected getCorrectValue(value: any): any {
+    if (this.useValueAsItIs) return value;
+    return super.getCorrectValue(value);
+  }
+  protected isContentEqual(op: Operand): boolean {
+    const vOp = <Variable>op;
+    return vOp.variable == this.variable;
+  }
+  private returnJSONObject(name: string): any {
+    if (!name || name.length < 2 || name.indexOf(":") < 1) return null;
+    try {
+      return JSON.parse("{" + name + "}");
+    } catch{
+      return null;
+    }
+  }
+}
+
+export class FunctionOperand extends Operand {
+  constructor(private originalValue: string, private parameters: ArrayOperand) {
+    super();
+    if (Array.isArray(parameters) && parameters.length === 0) {
+      this.parameters = new ArrayOperand([]);
+    }
+  }
+  public getType(): string {
+    return "function";
+  }
+  public get functionName(): string {
+    return this.originalValue;
+  }
+  public get paramValues(): Array<Operand> {
+    return this.parameters.values;
+  }
+  public evaluate(processValue?: ProcessValue): any {
+    const asyncVal = this.getAsynValue(processValue);
+    if (!!asyncVal) return asyncVal.value;
+    return this.evaluateCore(processValue);
+  }
+  private markOriginalValueParams(): void {
+    const indexes = FunctionFactory.Instance.getOriginalValueParams(this.functionName);
+    if (!Array.isArray(indexes) || indexes.length === 0) return;
+    const values = this.parameters.values;
+    for (let i = 0; i < indexes.length; i++) {
+      const operand: any = values[indexes[i]];
+      if (operand && typeof operand.setReturnOriginalValue === "function") {
+        operand.setReturnOriginalValue(true);
+      }
+    }
+  }
+  private evaluateCore(processValue?: ProcessValue): any {
+    let properties = processValue.properties;
+    this.markOriginalValueParams();
+    const parameters = this.parameters.evaluate(processValue);
+    if (this.isAsyncFunction()) {
+      const id = this.id;
+      const asyncValues = processValue.asyncValues;
+      const onComplete = processValue.onCompleteAsyncFunc;
+      if (!!asyncValues && !!onComplete) {
+        const item = this;
+        properties = Helpers.createCopy(processValue.properties);
+        properties.returnResult = (result: any) => {
+          asyncValues[id] = { value: result };
+          onComplete(item);
+        };
+      }
+    }
+    const res = FunctionFactory.Instance.run(this.functionName, parameters, properties, this.parameters.values);
+    if (res instanceof Promise) {
+      res.then((value) => {
+        properties.returnResult(value);
+      });
+      return undefined;
+    }
+    return res;
+  }
+  public toString(func: (op: Operand) => string = undefined): string {
+    if (!!func) {
+      var res = func(this);
+      if (!!res) return res;
+    }
+
+    return this.originalValue + "(" + this.parameters.toString(func, true) + ")";
+  }
+  public setVariables(variables: Array<string>): void {
+    this.parameters.setVariables(variables);
+  }
+  public isReady(proccessValue: ProcessValue): boolean {
+    return !!this.getAsynValue(proccessValue);
+  }
+  protected addChildrenToList(list: Array<Operand>): void {
+    this.parameters.addOperandsToList(list);
+  }
+  private getAsynValue(proccessValue: ProcessValue): any {
+    return proccessValue.asyncValues[this.id];
+  }
+  public hasFunction(noParamsOnly?: boolean): boolean {
+    if (noParamsOnly === true) {
+      if (this.paramValues.length === 0) return true;
+      const paramVars: string[] = [];
+      this.parameters.setVariables(paramVars);
+      return paramVars.length === 0;
+    }
+    return true;
+  }
+  public hasAsyncFunction(): boolean {
+    return this.isAsyncFunction() || this.parameters.hasAsyncFunction();
+  }
+  private isAsyncFunction(): boolean {
+    return FunctionFactory.Instance.isAsyncFunction(this.originalValue);
+  }
+  public addToAsyncList(list: Array<AsyncFunctionItem>): void {
+    let item: AsyncFunctionItem = undefined;
+    if (this.isAsyncFunction()) {
+      item = { operand: this };
+    }
+    if (this.parameters.hasAsyncFunction()) {
+      const children = new Array<AsyncFunctionItem>();
+      this.parameters.addToAsyncList(children);
+      children.forEach(child => child.parent = item);
+      if (!item) {
+        item = {};
+      }
+      item.children = children;
+    }
+    if (item) {
+      list.push(item);
+    }
+  }
+  protected isContentEqual(op: Operand): boolean {
+    const fOp = <FunctionOperand>op;
+    return fOp.originalValue == this.originalValue && this.areOperatorsEquals(fOp.parameters, this.parameters);
+  }
+}
+
+export class OperandMaker {
+  static throwInvalidOperatorError(op: string): void {
+    throw new Error("Invalid operator: '" + op + "'");
+  }
+
+  static safeToString(operand: Operand, func: (op: Operand) => string): string {
+    return operand == null ? "" : operand.toString(func);
+  }
+
+  static toOperandString(value: any): any {
+    if (
+      !!value &&
+      !Helpers.isNumber(value) &&
+      !OperandMaker.isBooleanValue(value)
+    )
+      value = "'" + value + "'";
+    return value;
+  }
+  // Takes any value, not only a string: a legacy trigger may carry a real boolean
+  // in its "value", and quoting it would change the expression it runs.
+  static isBooleanValue(value: any): boolean {
+    if (typeof value === "boolean") return true;
+    if (typeof value !== "string") return false;
+    const lower = value.toLowerCase();
+    return lower === "true" || lower === "false";
+  }
+  static countDecimals(value: number): number {
+    if (Helpers.isNumber(value) && Math.floor(value) !== value) {
+      const strs = value.toString().split(".");
+      return strs.length > 1 && strs[1].length || 0;
+    }
+    return 0;
+  }
+  static plusMinus(a: number, b: number, res: number): number {
+    const digitsA = OperandMaker.countDecimals(a);
+    const digitsB = OperandMaker.countDecimals(b);
+    if (digitsA > 0 || digitsB > 0) {
+      const digits = Math.max(digitsA, digitsB);
+      res = parseFloat(res.toFixed(digits));
+    }
+    return res;
+  }
+
+  static unaryFunctions: HashTable<Function> = {
+    empty: function(value: any): boolean {
+      return Helpers.isValueEmpty(value);
+    },
+    notempty: function(value: any): boolean {
+      return !OperandMaker.unaryFunctions.empty(value);
+    },
+    negate: function(value: boolean): boolean {
+      return !value;
+    },
+  };
+
+  static binaryFunctions: HashTable<Function> = {
+    arithmeticOp(operatorName: string) {
+      const convertForArithmeticOp = (val: any, second: any): any => {
+        if (!Helpers.isValueEmpty(val)) return val;
+        if (typeof second === "number") return 0;
+        if (typeof val === "string") return val;
+        if (typeof second === "string") return "";
+        if (Array.isArray(second)) return [];
+        return 0;
+      };
+      return function(a: any, b: any): any {
+        a = convertForArithmeticOp(a, b);
+        b = convertForArithmeticOp(b, a);
+        let consumer = getBinaryOperatorFunc(operatorName);
+        return consumer == null ? null : consumer.call(this, a, b);
+      };
+    },
+    and: function(a: boolean, b: boolean): boolean {
+      return a && b;
+    },
+    or: function(a: boolean, b: boolean): boolean {
+      return a || b;
+    },
+    plus: function(a: any, b: any): any {
+      return Helpers.sumAnyValues(a, b);
+    },
+    minus: function(a: number, b: number): number {
+      return Helpers.correctAfterPlusMinis(a, b, a - b);
+    },
+    mul: function(a: number, b: number): number {
+      return Helpers.correctAfterMultiple(a, b, a * b);
+    },
+    div: function(a: number, b: number): number {
+      if (!b) return null;
+      return a / b;
+    },
+    mod: function(a: number, b: number): number {
+      if (!b) return null;
+      return a % b;
+    },
+    power: function(a: number, b: number): number {
+      return Math.pow(a, b);
+    },
+    greater: function(left: any, right: any): boolean {
+      if (left == null || right == null) return false;
+      left = OperandMaker.convertValForDateCompare(left, right);
+      right = OperandMaker.convertValForDateCompare(right, left);
+      return left > right;
+    },
+    less: function(left: any, right: any): boolean {
+      if (left == null || right == null) return false;
+      left = OperandMaker.convertValForDateCompare(left, right);
+      right = OperandMaker.convertValForDateCompare(right, left);
+      return left < right;
+    },
+    greaterorequal: function(left: any, right: any): boolean {
+      if (OperandMaker.binaryFunctions.equal(left, right)) return true;
+      return OperandMaker.binaryFunctions.greater(left, right);
+    },
+    lessorequal: function(left: any, right: any): boolean {
+      if (OperandMaker.binaryFunctions.equal(left, right)) return true;
+      return OperandMaker.binaryFunctions.less(left, right);
+    },
+    equal: function(left: any, right: any, strictCompare?: boolean): boolean {
+      left = OperandMaker.convertValForDateCompare(left, right);
+      right = OperandMaker.convertValForDateCompare(right, left);
+      return OperandMaker.isTwoValueEquals(left, right, strictCompare !== true);
+    },
+    notequal: function(left: any, right: any, strictCompare?: boolean): boolean {
+      return !OperandMaker.binaryFunctions.equal(left, right, strictCompare);
+    },
+    contains: function(left: any, right: any): boolean {
+      return OperandMaker.binaryFunctions.containsCore(left, right, true);
+    },
+    notcontains: function(left: any, right: any): boolean {
+      if (!left && !Helpers.isValueEmpty(right)) return true;
+      return OperandMaker.binaryFunctions.containsCore(left, right, false);
+    },
+    anyof: function(left: any, right: any): boolean {
+      if (Helpers.isValueEmpty(left) && Helpers.isValueEmpty(right))
+        return true;
+      if (
+        Helpers.isValueEmpty(left) ||
+        (!Array.isArray(left) && left.length === 0)
+      )
+        return false;
+      if (Helpers.isValueEmpty(right)) return true;
+      if (!Array.isArray(left))
+        return OperandMaker.binaryFunctions.contains(right, left);
+      if (!Array.isArray(right))
+        return OperandMaker.binaryFunctions.contains(left, right);
+      for (var i = 0; i < right.length; i++) {
+        if (OperandMaker.binaryFunctions.contains(left, right[i])) return true;
+      }
+      return false;
+    },
+    noneof: function(left: any, right: any): boolean {
+      return !OperandMaker.binaryFunctions.anyof(left, right);
+    },
+    allof: function(left: any, right: any): boolean {
+      if (!left && !Helpers.isValueEmpty(right)) return false;
+      if (!Array.isArray(right))
+        return OperandMaker.binaryFunctions.contains(left, right);
+      for (var i = 0; i < right.length; i++) {
+        if (!OperandMaker.binaryFunctions.contains(left, right[i]))
+          return false;
+      }
+      return true;
+    },
+    containsCore: function(left: any, right: any, isContains: any): boolean {
+      if (Array.isArray(left) && !left.length) return !isContains;
+      if (!left && left !== 0 && left !== false) return false;
+      if (!left.length) {
+        left = left.toString();
+      }
+      if (typeof left === "string" || left instanceof String) {
+        if (!right) return false;
+        right = right.toString();
+        if (!settings.comparator.caseSensitive) {
+          left = left.toLowerCase();
+          right = right.toLowerCase();
+        }
+        var found = left.indexOf(right) > -1;
+        return isContains ? found : !found;
+      }
+      var rightArray = Array.isArray(right) ? right : [right];
+      for (var rIndex = 0; rIndex < rightArray.length; rIndex++) {
+        var i = 0;
+        right = rightArray[rIndex];
+        for (; i < left.length; i++) {
+          if (OperandMaker.isTwoValueEquals(left[i], right)) break;
+        }
+        if (i == left.length) return !isContains;
+      }
+      return isContains;
+    },
+  };
+
+  static isTwoValueEquals(x: any, y: any, ignoreOrder: boolean = true): boolean {
+    if (x === "undefined") x = undefined;
+    if (y === "undefined") y = undefined;
+    return Helpers.isTwoValueEquals(x, y, ignoreOrder);
+  }
+  static operatorToString(operatorName: string): string {
+    let opStr = OperandMaker.signs[operatorName];
+    return opStr == null ? operatorName : opStr;
+  }
+  static convertValForDateCompare(val: any, second: any): any {
+    if (second instanceof Date && typeof val === "string") {
+      const res = createDate("expression-operand", val);
+      second.setMilliseconds(0);
+      if (second.getHours() > 0 || second.getMinutes() > 0 || second.getSeconds() > 0) return res;
+      res.setHours(0, 0, 0);
+      return res;
+    }
+    if (typeof second === "string" && val instanceof Date) {
+      if (second.length < 17) {
+        val.setSeconds(0, 0);
+      }
+      if (second.length < 14) {
+        val.setMinutes(0, 0);
+      }
+      if (second.length < 11) {
+        val.setHours(0, 0);
+      }
+    }
+    return val;
+  }
+  static signs: HashTable<string> = {
+    less: "<",
+    lessorequal: "<=",
+    greater: ">",
+    greaterorequal: ">=",
+    equal: "==",
+    notequal: "!=",
+    plus: "+",
+    minus: "-",
+    mul: "*",
+    div: "/",
+    and: "and",
+    or: "or",
+    power: "^",
+    mod: "%",
+    negate: "!",
+  };
+}
+
+// binaryFunctions carries two internal helpers next to the operators themselves:
+// "arithmeticOp" builds an operator function, "containsCore" is shared by
+// contains/notcontains. Neither is a condition operator and neither is reachable
+// through the functions below.
+const internalBinaryFunctionNames = ["arithmeticOp", "containsCore"];
+
+// The operators the grammar parses as arithmetic (grammar.pegjs builds these with
+// isArithmeticOp = true, see BinaryOperand). They run through the "arithmeticOp"
+// wrapper, which normalizes empty operands before applying the function - calling
+// the raw function instead would silently disagree with the runtime.
+const arithmeticOperatorNames = ["and", "or", "plus", "minus", "mul", "div", "mod", "power"];
+
+function getBinaryOperatorFunc(operatorName: string): Function {
+  if (!operatorName || typeof operatorName !== "string") return undefined;
+  if (internalBinaryFunctionNames.indexOf(operatorName) > -1) return undefined;
+  // binaryFunctions is an object literal, so an operator name taken from JSON must
+  // not resolve through Object.prototype ("constructor", ...)
+  if (!Object.prototype.hasOwnProperty.call(OperandMaker.binaryFunctions, operatorName)) return undefined;
+  const res = OperandMaker.binaryFunctions[operatorName];
+  return typeof res === "function" ? res : undefined;
+}
+
+function getUnaryOperatorFunc(operatorName: string): Function {
+  if (!operatorName || typeof operatorName !== "string") return undefined;
+  if (!Object.prototype.hasOwnProperty.call(OperandMaker.unaryFunctions, operatorName)) return undefined;
+  const res = OperandMaker.unaryFunctions[operatorName];
+  return typeof res === "function" ? res : undefined;
+}
+
+export function hasBinaryOperator(operatorName: string): boolean {
+  return !!getBinaryOperatorFunc(operatorName);
+}
+
+// Applies a condition operator exactly as the expression runtime does, without
+// building an expression. Arithmetic operators return their computed value, the
+// rest return a boolean. Throws on an unknown operator, like BinaryOperand does.
+export function runBinaryOperator(operatorName: string, left: any, right: any): any {
+  const func = getBinaryOperatorFunc(operatorName);
+  if (!func) {
+    OperandMaker.throwInvalidOperatorError(operatorName);
+  }
+  if (arithmeticOperatorNames.indexOf(operatorName) > -1) {
+    return OperandMaker.binaryFunctions.arithmeticOp(operatorName)(left, right);
+  }
+  return func(left, right);
+}

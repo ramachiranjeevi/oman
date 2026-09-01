@@ -1,0 +1,36 @@
+{
+  "compilerOptions": {
+    "target": "ES2019",
+    "module": "ES2020",
+    "lib": [
+      "DOM",
+      "ES2019"
+    ],
+    "sourceMap": true,
+    "noImplicitAny": true,
+    "importHelpers": false,
+    "experimentalDecorators": true,
+    "moduleResolution": "node",
+    "allowSyntheticDefaultImports": true,
+    "jsx": "react",
+    "baseUrl": ".",
+    "paths": {
+      "survey-core": [
+        "./src/entries/core.ts"
+      ],
+      "@coreIconsV1": [
+        "packages/survey-core/src/iconsV1"
+      ],
+      "@coreIconsV2": [
+        "packages/survey-core/src/iconsV2"
+      ]
+    }
+  },
+  "exclude": [
+    "src/entries/**/*.ts"
+  ],
+  "include": [
+    "src/**/*.ts",
+    "packages/survey-core/entries/chunks/core-wo-model.ts"
+  ]
+}

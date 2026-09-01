@@ -1,0 +1,164 @@
+import { registerMarkupTests } from "./helper";
+
+registerMarkupTests(
+  [
+    {
+      name: "Test mutlipletext question markup",
+      json: {
+        elements: [
+          {
+            type: "multipletext",
+            name: "multipletext",
+            title: "Multipletext",
+            titleLocation: "hidden",
+            colCount: 2,
+            items: [
+              {
+                name: "item1",
+                title: "Text 1"
+              },
+              {
+                name: "item2",
+                title: "Text 2"
+              },
+              {
+                name: "item3",
+                title: "Text 3"
+              },
+              {
+                name: "item4",
+                title: "Text 4"
+              },
+            ],
+          },
+        ]
+      },
+      snapshot: "multipletext",
+      removeIds: true
+    },
+    {
+      name: "Test mutlipletext readonly",
+      json: {
+        elements: [
+          {
+            type: "multipletext",
+            name: "multipletext",
+            title: "Multipletext",
+            titleLocation: "hidden",
+            readOnly: true,
+            colCount: 2,
+            items: [
+              {
+                name: "item1",
+                title: "Text 1"
+              },
+              {
+                name: "item2",
+                title: "Text 2"
+              },
+              {
+                name: "item3",
+                title: "Text 3"
+              },
+              {
+                name: "item4",
+                title: "Text 4"
+              },
+            ],
+          },
+        ]
+      },
+      snapshot: "multipletext-readonly",
+      removeIds: true
+    },
+    {
+      name: "Test mutlipletext disabled",
+      json: {
+        elements: [
+          {
+            type: "multipletext",
+            name: "multipletext",
+            title: "Multipletext",
+            titleLocation: "hidden",
+            colCount: 2,
+            items: [
+              {
+                name: "item1",
+                title: "Text 1"
+              },
+              {
+                name: "item2",
+                title: "Text 2"
+              },
+              {
+                name: "item3",
+                title: "Text 3"
+              },
+              {
+                name: "item4",
+                title: "Text 4"
+              },
+            ],
+          },
+        ]
+      },
+      initSurvey: (survey) => survey.setDesignMode(true),
+      snapshot: "multipletext-disabled",
+      removeIds: true
+    },
+    {
+      name: "Test mutlipletext question markup error top",
+      json: {
+        elements: [
+          {
+            type: "multipletext",
+            name: "multipletext",
+            title: "Multipletext",
+            titleLocation: "hidden",
+            colCount: 2,
+            items: [
+              {
+                name: "item1",
+                isRequired: true,
+                title: "Text 1"
+              },
+            ],
+          },
+        ]
+      },
+      initSurvey(survey) {
+        survey.tryComplete();
+      },
+      snapshot: "multipletext-error-top-v2",
+      removeIds: true
+    },
+    {
+      name: "Test mutlipletext question markup error bottom",
+      json: {
+        elements: [
+          {
+            type: "multipletext",
+            name: "multipletext",
+            title: "Multipletext",
+            itemErrorLocation: "bottom",
+            titleLocation: "hidden",
+            colCount: 2,
+            items: [
+              {
+                name: "item1",
+                isRequired: true,
+                title: "Text 1"
+              },
+            ],
+          },
+        ]
+      },
+      initSurvey(survey) {
+        survey.tryComplete();
+      },
+      snapshot: "multipletext-error-bottom-v2",
+      removeIds: true
+    },
+  ]
+);
+

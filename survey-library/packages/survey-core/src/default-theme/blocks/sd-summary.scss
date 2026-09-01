@@ -1,0 +1,117 @@
+@use "../variables.scss" as *;
+@use "../mixins.scss" as mixins;
+@use "../typography-mixins.scss" as *;
+
+.sd-summary {
+  border-radius: var(--sjs2-radius-x050);
+  background: var(--sjs2-color-bg-basic-primary);
+  box-shadow: var(--sjs2-border-effect-surface-default);
+  overflow: hidden;
+}
+
+.sd-summary-row {
+  display: flex;
+  padding: var(--sjs2-spacing-x100) var(--sjs2-spacing-x200);
+  align-items: flex-start;
+  gap: var(--sjs2-spacing-x400);
+  flex: 1 0 0;
+  align-self: stretch;
+
+  border-bottom: var(--sjs2-border-width-x100) solid var(--sjs2-color-border-basic-secondary);
+  background: var(--sjs2-color-bg-basic-primary);
+}
+
+.sd-summary-row__content {
+  display: flex;
+  padding: var(--sjs2-spacing-x050) var(--sjs2-spacing-x000);
+  align-items: flex-start;
+  gap: var(--sjs2-spacing-x400);
+  flex: 1 0 0;
+
+  color: var(--sjs2-color-fg-basic-primary);
+  @include sjs2--typography--default;
+}
+
+.sd-summary-row__actions {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--sjs2-spacing-x100);
+  opacity: 0;
+  transition: opacity $transition-duration;
+}
+
+.sd-summary-row:hover,
+.sd-question--mobile {
+  .sd-summary-row__actions {
+    opacity: 1;
+  }
+}
+
+.sd-summary-row-action {
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  appearance: none;
+  display: flex;
+  padding: 0;
+  box-sizing: border-box;
+  border: none;
+  background-color: transparent;
+  cursor: pointer;
+  color: unset;
+
+  font-family: $font-family;
+  overflow-x: hidden;
+  white-space: nowrap;
+
+  display: flex;
+  padding: var(--sjs2-spacing-x100);
+  justify-content: center;
+  align-items: center;
+  gap: var(--sjs2-spacing-x100);
+
+  border-radius: var(--sjs2-radius-round);
+  transition: background-color $transition-duration;
+  &:hover,
+  &:focus {
+    outline: none;
+    background-color: var(--sjs2-color-bg-brand-secondary);
+  }
+
+  //pressed state
+  &:active,
+  &.svc-toolbar__item--pressed {
+    opacity: 0.5;
+  }
+
+  //checked state
+  &.svc-toolbar__item--active {
+    outline: none;
+  }
+
+  //disabled state
+  &:disabled {
+    opacity: 0.25;
+    cursor: default;
+  }
+
+  .sv-svg-icon {
+    width: var(--sjs2-size-x200);
+    height: var(--sjs2-size-x200);
+  }
+}
+
+.sd-summary-row-action--edit {
+  use {
+    fill: var(--sjs2-color-bg-brand-primary);
+  }
+}
+.sd-summary-row-action--delete {
+  &:hover,
+  &:focus {
+    outline: none;
+    background-color: var(--sjs2-color-bg-alert-secondary);
+  }
+  use {
+    fill: var(--sjs2-color-bg-alert-primary);
+  }
+}

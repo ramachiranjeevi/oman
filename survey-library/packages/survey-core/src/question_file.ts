@@ -1,0 +1,1413 @@
+import { IPlainDataOptions, ISurvey, ISurveyImpl, ISurveyFileCallbacks } from "./base-interfaces";
+import { IQuestionPlainData, Question } from "./question";
+import { Serializer } from "./jsonobject";
+import { property, propertyArray } from "./decorators";
+import { QuestionFactory } from "./questionfactory";
+import { ComputedUpdater, Base } from "./base";
+import { EventBase } from "./event";
+import { UploadingFileError, ExceedSizeError, ExceedFilesCountError } from "./error";
+import { SurveyError } from "./survey-error";
+import { CssClassBuilder } from "./utils/cssClassBuilder";
+import { classesToSelector, isElementVisible } from "./utils/dom-utils";
+import { confirmActionAsync } from "./utils/confirm-dialog";
+import { detectIEOrEdge } from "./utils/browser";
+import { loadFileFromBase64 } from "./utils/file-utils";
+import { ActionContainer } from "./actions/container";
+import { Action, IActionAppearance } from "./actions/action";
+import { Helpers } from "./helpers";
+import { Camera } from "./utils/camera";
+import { LocalizableString } from "./localizablestring";
+import { settings } from "./settings";
+import { getRenderedSize } from "./utils/utils";
+import { DomDocumentHelper, DomWindowHelper } from "./global_variables_utils";
+import { AnimationTab, IAnimationConsumer } from "./utils/animation";
+
+export function dataUrl2File(dataUrl: string, fileName: string, type: string) {
+  const str = atob(dataUrl.split(",")[1]);
+  const buffer = new Uint8Array(str.split("").map(c => c.charCodeAt(0))).buffer;
+  return new File([buffer], fileName, { type: type });
+}
+const customCategory = settings.customFileCategoryName;
+/**
+ * A base class for question types that support file upload: `QuestionFileModel` and `QuestionSignaturePadModel`.
+ */
+export class QuestionFileModelBase extends Question {
+  @property() public isUploading: boolean = false;
+  @property({ defaultValue: "empty" }) currentState: string;
+  /**
+   * An event that is raised after the upload state has changed.
+   *
+   * Parameters:
+   *
+   * - `sender`: `SurveyModel`\
+   * A survey instance that raised the event.
+   * - `options.state`: `string`\
+   * The current upload state: `"empty"`, `"loading"`, `"loaded"`, or `"error"`.
+   */
+  public onUploadStateChanged: EventBase<QuestionFileModelBase> = this.addEvent<
+    QuestionFileModelBase
+  >();
+  public onStateChanged: EventBase<QuestionFileModelBase> = this.addEvent<
+    QuestionFileModelBase
+  >();
+  protected stateChanged(state: string) {
+    if (this.currentState == state) {
+      return;
+    }
+    if (state === "loading") {
+      this.isUploading = true;
+    }
+    if (state === "loaded") {
+      this.isUploading = false;
+    }
+    if (state === "error") {
+      this.isUploading = false;
+    }
+    this.currentState = state;
+    this.onStateChanged.fire(this, { state: state });
+    this.onUploadStateChanged.fire(this, { state: state });
+  }
+  public get showLoadingIndicator(): boolean {
+    return this.isUploading;
+  }
+  /**
+   * Specifies whether to store file or signature content as text in `SurveyModel`'s [`data`](https://surveyjs.io/form-library/documentation/surveymodel#data) property.
+   *
+   * If you disable this property, implement `SurveyModel`'s [`onUploadFiles`](https://surveyjs.io/form-library/documentation/surveymodel#onUploadFiles) event handler to specify how to store file content.
+   *
+   * [File Upload Demo](https://surveyjs.io/form-library/examples/file-upload/ (linkStyle))
+   *
+   * [Signature Pad Demo](https://surveyjs.io/form-library/examples/upload-signature-pad-data-to-server/ (linkStyle))
+   */
+  @property() storeDataAsText: boolean;
+  /**
+   * Enable this property if you want to wait until files are uploaded to complete the survey.
+   *
+   * Default value: `false`
+   *
+   * [File Upload Demo](https://surveyjs.io/form-library/examples/file-upload/ (linkStyle))
+   *
+   * [Signature Pad Demo](https://surveyjs.io/form-library/examples/upload-signature-pad-data-to-server/ (linkStyle))
+   */
+  @property() waitForUpload: boolean;
+  public get fileCallbacks(): ISurveyFileCallbacks {
+    return this.survey as ISurveyFileCallbacks;
+  }
+
+  public clearValue(keepComment?: boolean, fromUI?: boolean): void {
+    this.clearOnDeletingContainer();
+    super.clearValue(keepComment, fromUI);
+  }
+  public clearOnDeletingContainer() {
+    if (!this.fileCallbacks) return;
+    this.fileCallbacks.clearFiles(this, this.name, this.value, null, () => { });
+  }
+  protected onCheckForErrors(errors: Array<SurveyError>, isOnValueChanged: boolean, fireCallback: boolean): void {
+    super.onCheckForErrors(errors, isOnValueChanged, fireCallback);
+    if (this.isUploading && this.waitForUpload) {
+      errors.push(
+        new UploadingFileError(
+          this.getLocalizationString("uploadingFile"),
+          this
+        )
+      );
+    }
+  }
+  protected uploadFiles(files: File[], sourceType?: string) {
+    if (this.fileCallbacks) {
+      this.errors = [];
+      this.stateChanged("loading");
+      this.fileCallbacks.uploadFiles(this, this.name, files, (arg1: any, arg2: any) => {
+        if (Array.isArray(arg1)) {
+          this.setValueFromResult(arg1);
+          if (Array.isArray(arg2)) {
+            arg2.forEach(error => this.errors.push(new UploadingFileError(error, this)));
+            this.stateChanged("error");
+          }
+        }
+        if (arg1 === "success" && Array.isArray(arg2)) {
+          this.setValueFromResult(arg2);
+        }
+        if (arg1 === "error") {
+          if (typeof (arg2) === "string") {
+            this.errors.push(new UploadingFileError(arg2, this));
+          }
+          if (Array.isArray(arg2) && arg2.length > 0) {
+            arg2.forEach(error => this.errors.push(new UploadingFileError(error, this)));
+          }
+          this.stateChanged("error");
+        }
+        this.stateChanged("loaded");
+      }, sourceType);
+    }
+  }
+  protected loadPreview(newValue: any): void { }
+  protected onChangeQuestionValue(newValue: any): void {
+    super.onChangeQuestionValue(newValue);
+    this.stateChanged(this.isEmpty() ? "empty" : "loaded");
+  }
+
+  protected getIsQuestionReady(): boolean {
+    return super.getIsQuestionReady() && !this.isFileLoading;
+  }
+  private isFileLoadingValue: boolean;
+  protected get isFileLoading(): boolean { return this.isFileLoadingValue; }
+  protected set isFileLoading(val: boolean) {
+    this.isFileLoadingValue = val;
+    this.updateIsReady();
+  }
+}
+
+export class QuestionFilePage extends Base {
+  @propertyArray({}) public items: Array<any>;
+  constructor(private question: QuestionFileModel, private index: number) {
+    super();
+  }
+  protected getIdPrefix(): string { return "sv_sfp"; }
+  public getSurvey(isLive: boolean = false): ISurvey {
+    return this.question ? this.question.getSurvey(isLive) : null;
+  }
+  get css(): string {
+    return this.question.cssClasses.page;
+  }
+}
+
+/**
+ * A class that describes the File Upload question type.
+ *
+ * [View Demo](https://surveyjs.io/form-library/examples/file-upload/ (linkStyle))
+ */
+export class QuestionFileModel extends QuestionFileModelBase {
+  @property() isDragging: boolean = false;
+  @propertyArray({}) public previewValue: any[];
+  @propertyArray({}) public pages: QuestionFilePage[];
+
+  navigationDirection: "left" | "right" | "left-delete";
+  @property({ defaultValue: 0, onSet: (val, target) =>{
+    target.updateRenderedPages();
+  } }) indexToShow: number;
+  @property({
+    defaultValue: 1, onSet: (_, target) => {
+      target.updateFileNavigator();
+    }
+  }) pageSize: number;
+  @property({ defaultValue: false }) containsMultiplyFiles: boolean;
+  @property() allowCameraAccess: boolean;
+  /**
+   * Specifies the source of uploaded files.
+   *
+   * Possible values:
+   *
+   * - `"file"` (default) - Allows respondents to select a local file.
+   * - `"camera"` - Allows respondents to capture and upload a photo.
+   * - `"file-camera"` - Allows respondents to select a local file or capture a photo.
+   *
+   * [View Demo](https://surveyjs.io/form-library/examples/photo-capture/ (linkStyle))
+   * @see filePlaceholder
+   * @see photoPlaceholder
+   * @see fileOrPhotoPlaceholder
+   */
+  @property({
+    onSet: (val: string, obj: QuestionFileModel) => {
+      if (!obj.isLoadingFromJson) {
+        obj.updateCurrentMode();
+      }
+    }
+  }) sourceType: string;
+
+  protected prevFileAction: Action;
+  protected nextFileAction: Action;
+  protected fileIndexAction: Action;
+
+  get fileNavigatorVisible(): boolean {
+    const showLoadingIndicator = this.showLoadingIndicator;
+    const isPlayingVideo = this.isPlayingVideo;
+    const containsMultipleFiles = this.containsMultiplyFiles;
+    const needToShowFileNavigator = this.pageSize < this.previewValue.length;
+    return !showLoadingIndicator && !isPlayingVideo && containsMultipleFiles && needToShowFileNavigator;
+  }
+  private get pagesCount() {
+    return Math.ceil(this.previewValue.length / this.pageSize);
+  }
+
+  get actionsContainerVisible(): boolean {
+    const showLoadingIndicator = this.showLoadingIndicator;
+    const isPlayingVideo = this.isPlayingVideo;
+    return !showLoadingIndicator && !isPlayingVideo;
+  }
+
+  constructor(name: string) {
+    super(name);
+    this.createNewArray("acceptedCategories", undefined, (val) => {
+      if (val === customCategory) {
+        this.acceptedTypes = undefined;
+      }
+    });
+    this.actionsContainerValue = this.createActionsContainer();
+  }
+  protected onPropertyValueChanged(name: string, oldValue: any, newValue: any): void {
+    super.onPropertyValueChanged(name, oldValue, newValue);
+    if (name === "acceptedTypes") {
+      this.updateAcceptedCategories();
+    }
+    if (name === "acceptedCategories") {
+      if (!Array.isArray(newValue) || newValue.indexOf(customCategory) < 0) {
+        this.acceptedTypes = undefined;
+      }
+    }
+  }
+  private actionsContainerValue: ActionContainer;
+  public get actionsContainer(): ActionContainer {
+    if (this.actionsContainerValue.actions.length === 0) {
+      this.actionsContainerValue.actions = this.createContainerActions();
+    }
+    return this.actionsContainerValue;
+  }
+
+  private fileNavigatorValue: ActionContainer;
+  public get fileNavigator(): ActionContainer {
+    if (!this.fileNavigatorValue) {
+      this.fileNavigatorValue = this.createActionsContainer();
+      this.fileNavigatorValue.actions = this.createFileNavigatorActions();
+    }
+    return this.fileNavigatorValue;
+  }
+
+  private createActionsContainer(): ActionContainer {
+    const container = new ActionContainer();
+    container.setActionsAppearance({ style: "neutral", mode: "quaternary-surface", size: "small" });
+    container.locOwner = this;
+    return container;
+  }
+
+  protected createContainerActions(): Array<Action> {
+    const chooseFileAction = new Action({
+      iconName: "icon-choosefile",
+      id: "sv-file-choose-file",
+      iconSize: "auto",
+      innerCss: <string>(new ComputedUpdater<string>(() => new CssClassBuilder().append(this.cssClasses.chooseFile).append(this.cssClasses.chooseFileDisabled, this.isInputReadOnly).toString()) as any),
+      data: { question: this },
+      locTitle: this.locChooseButtonText,
+      appearance: new ComputedUpdater<Partial<IActionAppearance>>(() => { return this.isAnswered ? { style: "brand" } : { style: "brand", mode: "secondary", size: "small" }; }) as any,
+      showTitle: <boolean>(new ComputedUpdater<boolean>(() => { return !this.isAnswered; }) as any),
+      enabledIf: () => !this.isInputReadOnly,
+      visible: <boolean>(new ComputedUpdater<boolean>(() => {
+        const isDesignMode = this.isDesignMode;
+        const isCamera = this.sourceType === "camera";
+        return !isDesignMode && this.hasFileUI || isDesignMode && !isCamera;
+      }) as any),
+      component: "sv-file-choose-btn"
+    });
+    const startCameraAction = new Action({
+      iconName: "icon-takepicture_24x24",
+      id: "sv-file-start-camera",
+      iconSize: "auto",
+      locTitle: this.locTakePhotoCaption,
+      appearance: new ComputedUpdater<Partial<IActionAppearance>>(() => { return this.isAnswered ? { style: "brand" } : { style: "brand", mode: "secondary", size: "small" }; }) as any,
+      visible: <boolean>(new ComputedUpdater<boolean>(() => {
+        const isDesignMode = this.isDesignMode;
+        const isFile = this.sourceType === "file";
+        return !isDesignMode && this.hasVideoUI || isDesignMode && !isFile;
+      }) as any),
+      showTitle: <boolean>(new ComputedUpdater<boolean>(() => !this.isAnswered) as any),
+      enabledIf: () => !this.isInputReadOnly,
+      action: () => {
+        this.startVideo();
+      }
+    });
+    const cleanAction = new Action({
+      iconName: "icon-clear",
+      id: "sv-file-clean",
+      iconSize: "auto",
+      locTitle: this.locClearButtonCaption,
+      showTitle: false,
+      appearance: { style: "alert" },
+      enabledIf: () => !this.isInputReadOnly,
+      visible: <boolean>(new ComputedUpdater<boolean>(() => this.isAnswered) as any),
+      innerCss: <string>(new ComputedUpdater<string>(() => this.cssClasses.removeButton) as any),
+      action: () => {
+        this.doClean();
+      }
+    });
+    return [chooseFileAction, startCameraAction, cleanAction];
+  }
+  protected createFileNavigatorActions(): Array<Action> {
+    this.fileIndexAction = new Action({
+      id: "fileIndex",
+      css: "sv-action--file-index",
+      title: this.getFileIndexCaption(),
+      enabled: false
+    });
+    this.prevFileAction = new Action({
+      id: "prevPage",
+      iconSize: 16,
+      action: () => {
+        this.navigationDirection = "left";
+        this.indexToShow = this.previewValue.length && ((this.indexToShow - 1 + this.pagesCount) % this.pagesCount) || 0;
+        this.updateFileIndexActionTitle();
+      }
+    });
+    this.nextFileAction = new Action({
+      id: "nextPage",
+      iconSize: 16,
+      action: () => {
+        this.navigationDirection = "right";
+        this.indexToShow = this.previewValue.length && ((this.indexToShow + 1) % this.pagesCount) || 0;
+        this.updateFileIndexActionTitle();
+      }
+    });
+    this.updateFileNavigatorActionsCss(this.cssClasses);
+    return [this.prevFileAction, this.fileIndexAction, this.nextFileAction];
+  }
+  private updateFileIndexActionTitle(): void {
+    if (this.fileIndexAction) {
+      this.fileIndexAction.title = this.getFileIndexCaption();
+    }
+  }
+  private closeCameraActionValue: Action;
+  public get closeCameraAction(): Action {
+    if (!this.closeCameraActionValue) {
+      this.closeCameraActionValue = new Action({
+        iconName: "icon-closecamera",
+        id: "sv-file-close-camera",
+        iconSize: "auto",
+        innerCss: <string>(new ComputedUpdater<string>(() => new CssClassBuilder().append(this.cssClasses.closeCameraButton).toString()) as any),
+        appearance: { style: "brand", mode: "quaternary-surface", size: "medium" },
+        action: () => {
+          this.stopVideo();
+        }
+      });
+    }
+    return this.closeCameraActionValue;
+  }
+  private takePictureActionValue: Action;
+  public get takePictureAction(): Action {
+    if (!this.takePictureActionValue) {
+      this.takePictureActionValue = new Action({
+        iconName: "icon-takepicture",
+        id: "sv-file-take-picture",
+        iconSize: "auto",
+        innerCss: <string>(new ComputedUpdater<string>(() => new CssClassBuilder().append(this.cssClasses.takePictureButton).toString()) as any),
+        locTitle: this.locTakePhotoCaption,
+        showTitle: false,
+        appearance: { style: "alert", size: "large", mode: "primary" },
+        action: () => {
+          this.snapPicture();
+        }
+      });
+    }
+    return this.takePictureActionValue;
+
+  }
+  private changeCameraActionValue: Action;
+  public get changeCameraAction(): Action {
+    if (!this.changeCameraActionValue) {
+      this.changeCameraActionValue = new Action({
+        iconName: "icon-changecamera",
+        id: "sv-file-change-camera",
+        iconSize: "auto",
+        innerCss: <string>(new ComputedUpdater<string>(() => new CssClassBuilder().append(this.cssClasses.changeCameraButton).toString()) as any),
+        visible: <boolean>(new ComputedUpdater<boolean>(() => this.canFlipCamera()) as any),
+        appearance: { style: "brand", mode: "quaternary-surface", size: "medium" },
+        action: () => {
+          this.flipCamera();
+        }
+      });
+    }
+    return this.changeCameraActionValue;
+  }
+
+  public get videoId(): string { return this.renderedId + "_video"; }
+  public get hasVideoUI(): boolean { return this.currentMode !== "file"; }
+  public get hasFileUI(): boolean { return this.currentMode !== "camera"; }
+  private videoStream: MediaStream;
+  public startVideo(): void {
+    if (this.currentMode === "file" || this.isDesignMode || this.isPlayingVideo) return;
+    this.setIsPlayingVideo(true);
+    setTimeout(() => {
+      this.startVideoInCamera();
+    }, 0);
+  }
+  private get videoHtmlElement() {
+    return this.rootElement?.querySelector(`#${this.videoId}`) as HTMLVideoElement;
+  }
+  private startVideoInCamera(): void {
+    this.camera.startVideo(this.videoHtmlElement, (stream: MediaStream) => {
+      this.videoStream = stream;
+      if (!stream) {
+        this.stopVideo();
+      }
+    }, getRenderedSize(this.imageWidth), getRenderedSize(this.imageHeight));
+  }
+  public stopVideo(): void {
+    this.setIsPlayingVideo(false);
+    this.closeVideoStream();
+  }
+  public snapPicture(): void {
+    if (!this.isPlayingVideo) return;
+    const blobCallback = (blob: Blob | null): void => {
+      if (blob) {
+        const file = new File([blob], "snap_picture.png", { type: "image/png" });
+        this.loadFiles([file], "camera");
+      }
+    };
+    this.camera.snap(this.videoHtmlElement, blobCallback);
+    this.stopVideo();
+  }
+  @property() private canFlipCameraValue: boolean = undefined;
+  public canFlipCamera(): boolean {
+    if (this.canFlipCameraValue === undefined) {
+      this.canFlipCameraValue = this.camera.canFlip((res: boolean) => {
+        this.canFlipCameraValue = res;
+      });
+    }
+    return this.canFlipCameraValue;
+  }
+  public flipCamera(): void {
+    if (!this.canFlipCamera()) return;
+    this.closeVideoStream();
+    this.camera.flip();
+    this.startVideoInCamera();
+  }
+  private closeVideoStream(): void {
+    if (!!this.videoStream) {
+      this.videoStream.getTracks().forEach(track => {
+        track.stop();
+      });
+      this.videoStream = undefined;
+    }
+  }
+  public onHidingContent(): void {
+    super.onHidingContent();
+    this.stopVideo();
+  }
+  private updateFileNavigatorActionsCss(cssClasses: any): void {
+    if (this.prevFileAction) {
+      this.prevFileAction.iconName = cssClasses.leftIconId;
+    }
+    if (this.nextFileAction) {
+      this.nextFileAction.iconName = cssClasses.rightIconId;
+    }
+  }
+  protected updateElementCssCore(cssClasses: any): void {
+    super.updateElementCssCore(cssClasses);
+    this.updateFileNavigatorActionsCss(cssClasses);
+    this.updateCurrentMode();
+  }
+  private getFileIndexCaption(): string {
+    return this.getLocalizationFormatString("indexText", this.indexToShow + 1, this.pagesCount);
+  }
+  private updateFileNavigator() {
+    this.updatePages();
+    this.navigationDirection = undefined;
+    this.indexToShow = this.previewValue.length && ((this.indexToShow + this.pagesCount) % this.pagesCount) || 0;
+    this.updateFileIndexActionTitle();
+  }
+  private updateRenderedPages() {
+    if (this.pages && this.pages[this.indexToShow]) {
+      this.renderedPages = [this.pages[this.indexToShow]];
+    }
+  }
+  private updatePages() {
+    this.blockAnimations();
+    let currentPage: QuestionFilePage;
+    this.pages = [];
+    this.renderedPages = [];
+    this.previewValue.forEach((val, index) => {
+      if (index % this.pageSize == 0) {
+        currentPage = new QuestionFilePage(this, this.pages.length);
+        this.pages.push(currentPage);
+      }
+      currentPage.items.push(val);
+    });
+    this.releaseAnimations();
+    this.updateRenderedPages();
+  }
+  private prevPreviewLength = 0;
+  private previewValueChanged() {
+    this.navigationDirection = undefined;
+    if (this.previewValue.length !== this.prevPreviewLength) {
+      if (this.previewValue.length > 0) {
+        if (this.prevPreviewLength > this.previewValue.length) {
+          if (this.indexToShow >= this.pagesCount && this.indexToShow > 0) {
+            this.indexToShow = this.pagesCount - 1;
+            this.navigationDirection = "left-delete";
+          }
+        } else {
+          this.indexToShow = Math.floor(this.prevPreviewLength / this.pageSize);
+        }
+      } else {
+        this.indexToShow = 0;
+      }
+    }
+    this.updatePages();
+    this.updateFileIndexActionTitle();
+    this.containsMultiplyFiles = this.previewValue.length > 1;
+    if (this.previewValue.length > 0 && !this.calculatedGapBetweenItems && !this.calculatedItemWidth) {
+      setTimeout(() => {
+        this.processResponsiveness(0, this._width);
+      }, 1);
+    }
+    this.prevPreviewLength = this.previewValue.length;
+  }
+
+  public getType(): string {
+    return "file";
+  }
+
+  protected onChangeQuestionValue(newValue: any): void {
+    super.onChangeQuestionValue(newValue);
+    if (!this.isLoadingFromJson) {
+      this.loadPreview(newValue);
+    }
+  }
+
+  /**
+   * Disable this property only to implement a custom preview.
+   *
+   * [View Demo](https://surveyjs.io/form-library/examples/file-custom-preview/ (linkStyle))
+   * @see allowImagesPreview
+   */
+  @property() showPreview: boolean;
+  /**
+   * Specifies whether users can upload multiple files.
+   *
+   * Default value: `false`
+   *
+   * [View Demo](https://surveyjs.io/form-library/examples/file-upload/ (linkStyle))
+   * @see maxFiles
+   */
+  @property() allowMultiple: boolean;
+  /**
+   * The height of the following images:
+   *
+   * - [Images in the preview](#allowImagesPreview)
+   * - [Photos taken using the camera](#sourceType)
+   * - Uploaded images in a [generated PDF form](https://surveyjs.io/pdf-generator/documentation/overview)
+   *
+   * > The sizes of previewed images are limited by the height and width of the preview area in single file upload mode or that of a thumbnail area in [multiple file upload mode](#allowMultiple).
+   * @see imageWidth
+   */
+  @property() imageHeight: string;
+  /**
+   * The width of the following images:
+   *
+   * - [Images in the preview](#allowImagesPreview)
+   * - [Photos taken using the camera](#sourceType)
+   * - Uploaded images in a [generated PDF form](https://surveyjs.io/pdf-generator/documentation/overview)
+   *
+   * > The sizes of previewed images are limited by the height and width of the preview area in single file upload mode or that of a thumbnail area in [multiple file upload mode](#allowMultiple).
+   * @see imageHeight
+   */
+  @property() imageWidth: string;
+  /**
+   * An array of predefined file category names used to control which files users can upload.
+   *
+   * Supported categories:
+   *
+   * | Category name | File types |
+   * | ------------- | ---------- |
+   * | `"image"` | .png, .jpg, .jpeg, .gif, .bmp, .tiff, .svg |
+   * | `"video"` | .mp4, .avi, .mov, .wmv, .flv, .mkv, .webm |
+   * | `"audio"` | .mp3, .wav, .aac, .ogg, .wma, .flac |
+   * | `"document"` | .pdf, .doc, .docx, .xls, .xlsx, .ppt, .pptx, .txt, .rtf, .odt |
+   * | `"archive"` | .zip, .rar, .7z, .tar, .gz |
+   *
+   * To allow specific file extensions, use the [`acceptedTypes`](https://surveyjs.io/form-library/documentation/api-reference/file-model#acceptedTypes) property. This property can be used together with `acceptedCategories` to define a combined set of allowed files.
+   *
+   * To add or remove file extensions within a category, modify the [`acceptedFileCategories`](https://surveyjs.io/form-library/documentation/api-reference/settings#acceptedFileCategories) object in the global settings.
+   * @since 2.3.16
+   */
+  @property() acceptedCategories: Array<string>;
+
+  private updateAcceptedCategories(): void {
+    if (this.acceptedTypes && this.acceptedCategories.indexOf(customCategory) < 0) {
+      this.acceptedCategories.push(customCategory);
+    }
+  }
+  /**
+   * An [`accept`](https://www.w3schools.com/tags/att_input_accept.asp) attribute value for the underlying `<input>` element.
+   *
+   * [View Demo](https://surveyjs.io/form-library/examples/store-file-names-in-survey-results/ (linkStyle))
+   * @see acceptedCategories
+   */
+  @property() acceptedTypes: string;
+
+  public get renderedAcceptedTypes(): string {
+    const res = [];
+    this.acceptedCategories.forEach(category => {
+      const categoryTypes = settings.acceptedFileCategories[category];
+      if (!!categoryTypes) {
+        res.push(...categoryTypes);
+      }
+    });
+    const addTypes = (types: Array<string>) => {
+      types.forEach(type => {
+        if (type && res.indexOf(type) < 0) {
+          res.push(type);
+        }
+      });
+    };
+    if (Array.isArray(this.acceptedTypes)) {
+      addTypes(this.acceptedTypes);
+    } else {
+      addTypes((this.acceptedTypes || "").split(","));
+    }
+    return res.length > 0 ? res.join(",") : undefined;
+  }
+  /**
+   * Specifies whether to show a preview of image files.
+   */
+  @property() allowImagesPreview: boolean;
+  /**
+   * Maximum allowed file size, measured in bytes.
+   *
+   * Default value: 0 (unlimited)
+   *
+   * [View Demo](https://surveyjs.io/form-library/examples/file-upload/ (linkStyle))
+   * @see maxFiles
+   */
+  @property() maxSize: number;
+  /**
+   * Maximum number of files a user can upload. Applies only if [`allowMultiple`](https://surveyjs.io/form-library/documentation/api-reference/file-model#allowMultiple) is `true`.
+   *
+   * Default value: 1000
+   * @see maxSize
+   * @since 2.3.14
+   */
+  @property() maxFiles: number;
+
+  public chooseFile(event: MouseEvent): void {
+    if (!this.rootElement) return;
+
+    const inputElement = this.rootElement.querySelector(`#${this.inputId}`) as HTMLInputElement;
+    if (!inputElement) return;
+
+    event.preventDefault();
+    event.stopImmediatePropagation();
+    if (inputElement) {
+      if (this.fileCallbacks) {
+        this.fileCallbacks.chooseFiles(inputElement, files => this.loadFiles(files, "file"), { element: this, elementType: this.getType(), propertyName: this.name });
+      } else {
+        inputElement.click();
+      }
+    }
+  }
+  /**
+   * Specifies whether users should confirm file deletion.
+   *
+   * Default value: `true`
+   * @since 3.0.0
+   */
+  @property() confirmDelete: boolean = true;
+
+  /**
+   * @deprecated Use the [`confirmDelete`](#confirmDelete) property instead.
+   */
+  public get needConfirmRemoveFile(): boolean {
+    return this.confirmDelete;
+  }
+  public set needConfirmRemoveFile(val) {
+    this.confirmDelete = val;
+  }
+
+  public getConfirmRemoveMessage(fileName: string): string {
+    return (<any>this.confirmRemoveMessage).format(fileName);
+  }
+  @property({ localizable: { defaultStr: "confirmRemoveFile" } }) confirmRemoveMessage: string;
+  @property({ localizable: { defaultStr: "confirmRemoveAllFiles" } }) confirmRemoveAllMessage: string;
+  @property({ localizable: { defaultStr: "noFileChosen" } }) noFileChosenCaption: string;
+  @property({ localizable: { defaultStr: "chooseFileCaption" } }) chooseButtonCaption: string;
+  @property({ localizable: { defaultStr: true } }) takePhotoCaption: string;
+  @property({ localizable: { defaultStr: "replaceFileCaption" } }) replaceButtonCaption: string;
+  @property({ localizable: { defaultStr: true } }) removeFileCaption: string;
+  @property({ localizable: { defaultStr: "loadingFile" } }) loadingFileTitle: string;
+  @property({ localizable: { defaultStr: "chooseFile" } }) chooseFileTitle: string;
+  @property({ localizable: { defaultStr: "clearCaption" } }) clearButtonCaption: string;
+  /**
+   * A placeholder text displayed when the File Upload question doesn't contain any files or photos to upload. Applies only when [`sourceType`](#sourceType) value is `"file-camera"`.
+   * @see filePlaceholder
+   * @see photoPlaceholder
+   */
+  @property({ localizable: { defaultStr: true } }) fileOrPhotoPlaceholder: string;
+  /**
+   * A placeholder text displayed when the File Upload question doesn't contain any photos to upload. Applies only when the [`sourceType`](#sourceType) value is `"camera"`.
+   * @see filePlaceholder
+   * @see fileOrPhotoPlaceholder
+   */
+  @property({ localizable: { defaultStr: true } }) photoPlaceholder: string;
+  /**
+   * A placeholder text displayed when the File Upload question doesn't contain any files to upload. Applies only when the [`sourceType`](#sourceType) value is `"file"`.
+   * @see photoPlaceholder
+   * @see fileOrPhotoPlaceholder
+   */
+  @property({ localizable: { defaultStr: true } }) filePlaceholder: string;
+
+  @property() locRenderedPlaceholderValue: LocalizableString;
+  public get locRenderedPlaceholder(): LocalizableString {
+    if (this.locRenderedPlaceholderValue === undefined) {
+      this.locRenderedPlaceholderValue = <LocalizableString><unknown>(new ComputedUpdater<LocalizableString>(() => {
+        const isReadOnly = this.isReadOnly;
+        const hasFileUI = (!this.isDesignMode && this.hasFileUI) || (this.isDesignMode && this.sourceType != "camera");
+        const hasVideoUI = (!this.isDesignMode && this.hasVideoUI) || (this.isDesignMode && this.sourceType != "file");
+        let renderedPlaceholder: LocalizableString;
+        if (isReadOnly) {
+          renderedPlaceholder = this.locNoFileChosenCaption;
+        } else if (hasFileUI && hasVideoUI) {
+          renderedPlaceholder = this.locFileOrPhotoPlaceholder;
+        } else if (hasFileUI) {
+          renderedPlaceholder = this.locFilePlaceholder;
+        } else {
+          renderedPlaceholder = this.locPhotoPlaceholder;
+        }
+        return renderedPlaceholder;
+      }));
+    }
+    return this.locRenderedPlaceholderValue;
+  }
+  public get currentMode(): string {
+    return this.getPropertyValue("currentMode", this.sourceType);
+  }
+  public get isPlayingVideo(): boolean {
+    return this.getPropertyValue("isPlayingVideo", false);
+  }
+  private setIsPlayingVideo(show: boolean): void {
+    this.setPropertyValue("isPlayingVideo", show);
+  }
+  private updateCurrentMode(): void {
+    if (!this.isDesignMode && this.survey) {
+      if (this.sourceType !== "file") {
+        this.camera.hasCamera((res: boolean) => {
+          this.setPropertyValue("currentMode", res ? this.sourceType : "file");
+        });
+      } else {
+        this.setPropertyValue("currentMode", this.sourceType);
+      }
+    }
+  }
+  get inputTitle(): string {
+    if (this.isUploading) return this.loadingFileTitle;
+    if (this.isEmpty()) return this.chooseFileTitle;
+    return " ";
+  }
+
+  public get locChooseButtonText(): LocalizableString {
+    return this.isEmpty() || this.allowMultiple ? this.locChooseButtonCaption : this.locReplaceButtonCaption;
+  }
+
+  public get chooseButtonText() {
+    return this.isEmpty() || this.allowMultiple ? this.chooseButtonCaption : this.replaceButtonCaption;
+  }
+
+  @property() isClearingFiles: boolean = false;
+
+  public clear(doneCallback?: () => void) {
+    if (!this.fileCallbacks) return;
+    this.containsMultiplyFiles = false;
+    this.isClearingFiles = true;
+    this.fileCallbacks.clearFiles(
+      this,
+      this.name,
+      this.value,
+      null,
+      (status, data) => {
+        if (status === "success") {
+          this.value = undefined;
+          this.errors = [];
+          !!doneCallback && doneCallback();
+          this.indexToShow = 0;
+          this.updateFileIndexActionTitle();
+          this.isClearingFiles = false;
+        }
+      }
+    );
+  }
+  public get renderCapture(): string {
+    return this.allowCameraAccess ? "user" : undefined;
+  }
+
+  get multipleRendered() {
+    return this.allowMultiple ? "multiple" : undefined;
+  }
+  public get showFileDecorator(): boolean {
+    const isPlayingVideo = this.isPlayingVideo;
+    const showLoadingIndicator = this.showLoadingIndicator;
+    return !isPlayingVideo && !showLoadingIndicator;
+  }
+  public get showDragAreaPlaceholder() {
+    return !this.isAnswered;
+  }
+  public get showLoadingIndicator(): boolean {
+    return this.isUploading || this.isClearingFiles;
+  }
+  public get allowShowPreview(): boolean {
+    const isShowLoadingIndicator = this.showLoadingIndicator;
+    const isPlayingVideo = this.isPlayingVideo;
+    return !isShowLoadingIndicator && !isPlayingVideo;
+  }
+  public get showPreviewContainer(): boolean {
+    return this.previewValue && this.previewValue.length > 0;
+  }
+  defaultImage(data: any) {
+    return !this.canPreviewImage(data) && !!this.cssClasses.defaultImage;
+  }
+
+  /**
+   * Removes a file with a specified name.
+   */
+  public removeFile(name: string) {
+    this.removeFileByContent(this.value.filter((f: any) => f.name === name)[0]);
+  }
+  protected removeFileByContent(content: any) {
+    if (!this.fileCallbacks) return;
+    this.isClearingFiles = true;
+    this.fileCallbacks.clearFiles(
+      this,
+      this.name,
+      this.value,
+      content.name,
+      (status, data) => {
+        if (status === "success") {
+          var oldValue = this.value;
+          if (Array.isArray(oldValue)) {
+            this.value = oldValue.filter((f) => !Helpers.isTwoValueEquals(f, content, true, false, false));
+          } else {
+            this.value = undefined;
+          }
+          this.isClearingFiles = false;
+        }
+      }
+    );
+  }
+
+  protected setValueFromResult(arg: any) {
+    this.value = (this.value || []).concat(
+      arg.map((r: any) => {
+        return {
+          name: r.file.name,
+          type: r.file.type,
+          content: r.content,
+        };
+      })
+    );
+  }
+  /**
+   * Loads multiple files into the question.
+   * @param files An array of [File](https://developer.mozilla.org/en-US/docs/Web/API/File) objects.
+   */
+  public loadFiles(files: File[], sourceType?: string) {
+    if (!this.survey) {
+      return;
+    }
+    this.errors = [];
+    if (!this.allFilesOk(files)) {
+      return;
+    }
+
+    var loadFilesProc = () => {
+      this.stateChanged("loading");
+      var content = <Array<any>>[];
+      if (this.storeDataAsText) {
+        files.forEach((file) => {
+          let fileReader = new FileReader();
+          fileReader.onload = (e) => {
+            content = content.concat([
+              { name: file.name, type: file.type, content: fileReader.result },
+            ]);
+            if (content.length === files.length) {
+              this.value = (this.value || []).concat(content);
+            }
+          };
+          fileReader.readAsDataURL(file);
+        });
+      } else {
+        this.uploadFiles(files, sourceType);
+      }
+    };
+    if (this.allowMultiple) {
+      loadFilesProc();
+    } else {
+      this.clear(loadFilesProc);
+    }
+  }
+  private cameraValue: Camera;
+
+  protected get camera(): Camera {
+    if (!this.cameraValue) {
+      this.cameraValue = new Camera();
+    }
+    return this.cameraValue;
+  }
+  public canPreviewImage(fileItem: any): boolean {
+    return this.allowImagesPreview && !!fileItem && this.isFileImage(fileItem);
+  }
+  private prevLoadedPreviewValue: any;
+  protected loadPreview(newValue: any): void {
+    if (this.showPreview && this.prevLoadedPreviewValue === newValue) return;
+    this.previewValue.splice(0, this.previewValue.length);
+    if (!this.showPreview || !newValue) return;
+    this.prevLoadedPreviewValue = newValue;
+    var newValues = Array.isArray(newValue)
+      ? newValue
+      : !!newValue
+        ? [newValue]
+        : [];
+
+    if (this.storeDataAsText) {
+      newValues.forEach((value) => {
+        var content = value.content || value;
+        this.previewValue.push(
+          {
+            name: value.name,
+            type: value.type,
+            content: content,
+          },
+        );
+      });
+      this.previewValueChanged();
+    } else {
+      if (!!this._previewLoader) {
+        this._previewLoader.dispose();
+      }
+      this.isFileLoading = true;
+      this._previewLoader = new FileLoader(this, (status, loaded) => {
+        if (status !== "error") {
+          loaded.forEach((val) => {
+            this.previewValue.push(val);
+          });
+          this.previewValueChanged();
+        }
+        this.isFileLoading = false;
+        this._previewLoader.dispose();
+        this._previewLoader = undefined;
+      });
+      this._previewLoader.load(newValues);
+    }
+  }
+  private allFilesOk(files: File[]): boolean {
+    var errorLength = this.errors ? this.errors.length : 0;
+    files = files || [];
+    const curFiles = Array.isArray(this.value) ? this.value.length : 0;
+    if (this.maxFiles > 0 && this.maxFiles < files.length + curFiles) {
+      this.errors.push(new ExceedFilesCountError(this.maxFiles, this));
+    }
+    files.forEach((file) => {
+      if (this.maxSize > 0 && file.size > this.maxSize) {
+        this.errors.push(new ExceedSizeError(this.maxSize, this));
+      }
+    });
+    return errorLength === this.errors.length;
+  }
+  private isFileImage(file: {
+    content: string,
+    name?: string,
+    type?: string,
+  }): boolean {
+    if (!file || !file.content || !file.content.substring) return false;
+    const imagePrefix = "data:image";
+    var subStr = file.content && file.content.substring(0, imagePrefix.length);
+    subStr = subStr && subStr.toLowerCase();
+    var result =
+      subStr === imagePrefix ||
+      (!!file.type && file.type.toLowerCase().indexOf("image/") === 0);
+    return result;
+  }
+  public getPlainData(
+    options: IPlainDataOptions = {
+      includeEmpty: true,
+    }
+  ): IQuestionPlainData {
+    var questionPlainData = super.getPlainData(options);
+    if (!!questionPlainData && !this.isEmpty()) {
+      questionPlainData.isNode = false;
+      var values = Array.isArray(this.value) ? this.value : [this.value];
+      questionPlainData.data = values.map((dataValue, index) => {
+        return {
+          name: index,
+          title: "File",
+          value: (dataValue.content && dataValue.content) || dataValue,
+          displayValue: (dataValue.name && dataValue.name) || dataValue,
+          getString: (val: any) => this.getValueAsString(val),
+          isNode: false,
+        };
+      });
+    }
+    return questionPlainData;
+  }
+  public getImageWrapperCss(data: any): string {
+    return new CssClassBuilder().append(this.cssClasses.imageWrapper).append(this.cssClasses.imageWrapperDefaultImage, this.defaultImage(data)).toString();
+  }
+  protected getActionsContainerCss(css: any): string {
+    return new CssClassBuilder()
+      .append(css.actionsContainer)
+      .append(css.actionsContainerAnswered, this.isAnswered)
+      .toString();
+  }
+  private removeFileButtonMap: Map<Object, Action> = new Map<Object, Action>();
+  public getRemoveFileButton(item: any): Action {
+    if (!item) return null;
+    if (!this.removeFileButtonMap.has(item)) {
+      this.removeFileButtonMap.set(item, new Action({
+        iconName: new ComputedUpdater<string>(() => this.cssClasses.removeFileSvgIconId) as any,
+        locTitle: this.locRemoveFileCaption,
+        innerCss: <string>(new ComputedUpdater<string>(() => new CssClassBuilder().append(this.cssClasses.removeFileButton).toString()) as any),
+        showTitle: false,
+        action: () => { this.doRemoveFile(item); },
+        iconSize: "auto",
+        appearance: { style: "neutral", mode: "quaternary-surface", size: "x-small", showBorder: true },
+      }));
+    }
+    return this.removeFileButtonMap.get(item);
+  }
+  public getReadOnlyFileCss(): string {
+    return new CssClassBuilder()
+      .append("form-control")
+      .append(this.cssClasses.placeholderInput)
+      .toString();
+  }
+  public get fileRootCss(): string {
+    return new CssClassBuilder()
+      .append(this.cssClasses.root)
+      .append(this.cssClasses.rootDisabled, this.isDisabledStyle)
+      .append(this.cssClasses.rootReadOnly, this.isReadOnlyStyle)
+      .append(this.cssClasses.rootPreview, this.isPreviewStyle)
+      .append(this.cssClasses.rootDragging, this.isDragging)
+      .append(this.cssClasses.rootAnswered, this.isAnswered)
+      .append(this.cssClasses.single, !this.allowMultiple)
+      .append(this.cssClasses.singleImage, !this.allowMultiple && this.isAnswered && this.canPreviewImage(this.value[0]))
+      .append(this.cssClasses.mobile, this.isMobile)
+      .toString();
+  }
+  public getFileDecoratorCss(): string {
+    return new CssClassBuilder()
+      .append(this.cssClasses.fileDecorator)
+      .append(this.cssClasses.onError, this.hasCssError())
+      .append(this.cssClasses.fileDecoratorDrag, this.isDragging)
+      .toString();
+  }
+
+  private onChange(src: any) {
+    if (!DomWindowHelper.isFileReaderAvailable()) return;
+    if (!src || !src.files || src.files.length < 1) return;
+    let files = [];
+    let allowCount = this.allowMultiple ? src.files.length : 1;
+    for (let i = 0; i < allowCount; i++) {
+      files.push(src.files[i]);
+    }
+    src.value = "";
+    this.loadFiles(files);
+  }
+  private updateActionsContainerCss(css: any, classes: any): void {
+    const container = this.actionsContainerValue;
+    container.cssClasses = css.actionBar;
+    container.containerCss = classes.actionsContainer;
+  }
+  protected calcCssClasses(css: any): any {
+    const classes = super.calcCssClasses(css);
+    this.updateActionsContainerCss(css, classes);
+    return classes;
+  }
+  public onSurveyLoad(): void {
+    super.onSurveyLoad();
+    this.updateAcceptedCategories();
+    this.updateCurrentMode();
+    this.loadPreview(this.value);
+  }
+  protected needResponsiveness(): boolean {
+    return this.supportResponsiveness();
+  }
+  protected supportResponsiveness(): boolean {
+    return true;
+  }
+  protected getObservedElementSelector(): string {
+    return classesToSelector(this.cssClasses.dragArea);
+  }
+  private getFileListSelector(): string {
+    return classesToSelector(this.cssClasses.fileList);
+  }
+
+  @propertyArray() private _renderedPages: Array<QuestionFilePage> = [];
+
+  public get renderedPages(): Array<QuestionFilePage> {
+    return this._renderedPages;
+  }
+  public set renderedPages(val: Array<QuestionFilePage>) {
+    this.pagesAnimation.sync(val);
+  }
+
+  private getPagesAnimationOptions(): IAnimationConsumer<[QuestionFilePage]> {
+    return {
+      getEnterOptions: (page: QuestionFilePage) => {
+        const pageClass = this.cssClasses.page;
+        return { cssClass: pageClass ? new CssClassBuilder()
+          .append(`${pageClass}--enter-from-left`, this.navigationDirection == "left" || this.navigationDirection == "left-delete")
+          .append(`${pageClass}--enter-from-right`, this.navigationDirection == "right").toString() : ""
+        };
+      },
+      getLeaveOptions: (page: QuestionFilePage) => {
+        const pageClass = this.cssClasses.page;
+        return {
+          cssClass: pageClass ? new CssClassBuilder()
+            .append(`${pageClass}--leave-to-left`, this.navigationDirection == "right")
+            .append(`${pageClass}--leave-to-right`, this.navigationDirection == "left").toString() : ""
+        };
+      },
+      getAnimatedElement: (page: QuestionFilePage) => {
+        return this.rootElement?.querySelector(`#${page.id}`);
+      },
+      isAnimationEnabled: () => {
+        return this.animationAllowed && !!this.rootElement;
+      },
+      getRerenderEvent: () => {
+        return this.onElementRerendered;
+      }
+    };
+  }
+  private pagesAnimation = new AnimationTab<QuestionFilePage>(this.getPagesAnimationOptions(), (val) => {
+    this._renderedPages = val;
+  }, () => this.renderedPages);
+
+  private calcAvailableItemsCount = (availableWidth: number, itemWidth: number, gap: number): number => {
+    let itemsCount = Math.floor(availableWidth / (itemWidth + gap));
+    if ((itemsCount + 1) * (itemWidth + gap) - gap <= availableWidth) itemsCount++;
+    return itemsCount;
+  };
+  private calculatedGapBetweenItems: number;
+  private calculatedItemWidth: number;
+  private _width: number;
+  public triggerResponsiveness(hard?: boolean): void {
+    if (hard) {
+      this.calculatedGapBetweenItems = undefined;
+      this.calculatedItemWidth = undefined;
+    }
+    super.triggerResponsiveness();
+  }
+  protected processResponsiveness(_: number, availableWidth: number): boolean {
+    this._width = availableWidth;
+    if (this.rootElement) {
+      if ((!this.calculatedGapBetweenItems || !this.calculatedItemWidth) && this.allowMultiple) {
+        const fileListSelector = this.getFileListSelector();
+        const fileListElement = fileListSelector ? this.rootElement.querySelector(this.getFileListSelector()) : undefined;
+        if (fileListElement) {
+          const visiblePage = fileListElement.querySelector(classesToSelector(this.cssClasses.page));
+          if (visiblePage) {
+            const firstVisibleItem = visiblePage.querySelector(classesToSelector(this.cssClasses.previewItem));
+            this.calculatedGapBetweenItems = Math.ceil(Number.parseFloat(DomDocumentHelper.getComputedStyle(visiblePage)?.gap));
+            if (firstVisibleItem) {
+              this.calculatedItemWidth = Math.ceil(Number.parseFloat(DomDocumentHelper.getComputedStyle(firstVisibleItem)?.width));
+            }
+          }
+        }
+      }
+    }
+    if (this.calculatedGapBetweenItems && this.calculatedItemWidth) {
+      this.pageSize = Math.max(this.calcAvailableItemsCount(availableWidth, this.calculatedItemWidth, this.calculatedGapBetweenItems), 1);
+      return true;
+    }
+    return false;
+  }
+
+  //#region
+  // web-based methods
+  private rootElement: HTMLElement;
+  private canDragDrop(): boolean { return !this.isInputReadOnly && this.currentMode !== "camera" && !this.isPlayingVideo; }
+  public afterRenderQuestionElement(el: HTMLElement): void {
+    super.afterRenderQuestionElement(el);
+    this.rootElement = el;
+  }
+  public beforeDestroyQuestionElement(el: HTMLElement): void {
+    super.beforeDestroyQuestionElement(el);
+    this.stopVideo();
+    this.rootElement = undefined;
+  }
+  private dragCounter: number = 0;
+  onDragEnter = (event: any) => {
+    if (this.canDragDrop()) {
+      event.preventDefault();
+      this.isDragging = true;
+      this.dragCounter++;
+    }
+  };
+  onDragOver = (event: any) => {
+    if (!this.canDragDrop()) {
+      event.returnValue = false;
+      return false;
+    }
+    event.dataTransfer.dropEffect = "copy";
+    event.preventDefault();
+  };
+  onDrop = (event: any) => {
+    if (this.canDragDrop()) {
+      this.isDragging = false;
+      this.dragCounter = 0;
+      event.preventDefault();
+      let src = event.dataTransfer;
+      this.onChange(src);
+    }
+  };
+  onDragLeave = (event: any) => {
+    if (this.canDragDrop()) {
+      this.dragCounter--;
+      if (this.dragCounter === 0) {
+        this.isDragging = false;
+      }
+    }
+  };
+  doChange = (event: any) => {
+    var src = event.target || event.srcElement;
+    this.onChange(src);
+  };
+  doClean = () => {
+    if (this.confirmDelete) {
+      confirmActionAsync({
+        message: this.confirmRemoveAllMessage,
+        funcOnYes: () => { this.clearFilesCore(); },
+        locale: this.getLocale(),
+        rootElement: this.survey.rootElement,
+        cssClass: this.cssClasses.confirmDialog
+      });
+      return;
+    }
+    this.clearFilesCore();
+  };
+  private clearFilesCore(): void {
+    if (this.rootElement) {
+      const input = this.rootElement.querySelectorAll("input")[0];
+      if (input) {
+        input.value = "";
+      }
+    }
+    this.clear();
+  }
+  doRemoveFile(data: any) {
+    if (this.confirmDelete) {
+      confirmActionAsync({
+        message: this.getConfirmRemoveMessage(data.name),
+        funcOnYes: () => { this.removeFileCore(data); },
+        locale: this.getLocale(),
+        rootElement: this.survey.rootElement,
+        cssClass: this.cssClasses.confirmDialog
+      });
+      return;
+    }
+    this.removeFileCore(data);
+  }
+  private removeFileCore(data: any): void {
+    const previewIndex = this.previewValue.indexOf(data);
+    this.removeFileByContent(previewIndex === -1 ? data : this.value[previewIndex]);
+    this.removeFileButtonMap.delete(data);
+  }
+  doDownloadFileFromContainer = (event: MouseEvent) => {
+    event.stopPropagation();
+    const currentTarget = event.currentTarget as HTMLElement;
+    if (currentTarget && currentTarget.getElementsByTagName) {
+      const link = currentTarget.getElementsByTagName("a")[0];
+      link?.click();
+    }
+  };
+  doDownloadFile = (event: any, data: any) => {
+    event.stopPropagation();
+    if (detectIEOrEdge()) {
+      event.preventDefault();
+      loadFileFromBase64(data.content, data.name);
+    }
+  };
+  //#endregion
+  public dispose(): void {
+    this.cameraValue = undefined;
+    this.closeVideoStream();
+    super.dispose();
+  }
+}
+Serializer.addClass(
+  "file",
+  [
+    { name: "showCommentArea:switch", visible: true },
+    { name: "showPreview:boolean", default: true, visible: false },
+    "allowMultiple:boolean",
+    {
+      name: "allowImagesPreview:boolean",
+      default: true,
+      dependsOn: "showPreview",
+      visibleIf: (obj: any) => {
+        return !!obj.showPreview;
+      },
+    },
+    "imageHeight",
+    "imageWidth",
+    { name: "acceptedCategories:set", choices: () => {
+      const res = [];
+      for (let key in settings.acceptedFileCategories) res.push(key);
+      res.push(customCategory);
+      return res;
+    },
+    onSerializeValue: (obj) => {
+      const res = [];
+      obj.acceptedCategories.forEach((category: string) => {
+        if (!!settings.acceptedFileCategories[category]) {
+          res.push(category);
+        }
+      });
+      return res;
+    } },
+    { name: "acceptedTypes", dependsOn: "acceptedCategories", visibleIf: (obj: any) => {
+      return obj.acceptedCategories.indexOf(customCategory) > -1;
+    } },
+    { name: "storeDataAsText:boolean", default: true },
+    { name: "waitForUpload:boolean", default: false },
+    { name: "maxSize:number", default: 0 },
+    { name: "maxFiles:number", default: 1000, visibleIf: (obj): boolean => obj.allowMultiple },
+    { name: "defaultValue", visible: false },
+    { name: "correctAnswer", visible: false },
+    { name: "validators", visible: false },
+    { name: "confirmDelete:boolean", default: true },
+    { name: "sourceType", choices: ["file", "camera", "file-camera"], default: "file" },
+    { name: "fileOrPhotoPlaceholder:text", serializationProperty: "locFileOrPhotoPlaceholder" },
+    { name: "photoPlaceholder:text", serializationProperty: "locPhotoPlaceholder" },
+    { name: "filePlaceholder:text", serializationProperty: "locFilePlaceholder" },
+    { name: "allowCameraAccess:switch", visible: false },
+  ],
+  function () {
+    return new QuestionFileModel("");
+  },
+  "question"
+);
+QuestionFactory.Instance.registerQuestion("file", (name) => {
+  return new QuestionFileModel(name);
+});
+
+export class FileLoader {
+  constructor(private fileQuestion: QuestionFileModelBase, private callback: (status: string, files: any[]) => void) {
+  }
+  loaded: any[] = [];
+  load(files: Array<any>): void {
+    let downloadedCount = 0;
+    this.loaded = new Array(files.length);
+    files.forEach((value, index) => {
+      if (this.fileQuestion.fileCallbacks) {
+        this.fileQuestion.fileCallbacks.downloadFile(this.fileQuestion, this.fileQuestion.name, value, (status, data) => {
+          if (!this.fileQuestion || !this.callback) {
+            return;
+          }
+          if (status !== "error") {
+            this.loaded[index] = {
+              content: data,
+              name: value.name,
+              type: value.type,
+            };
+            downloadedCount++;
+            if (downloadedCount === files.length) {
+              this.callback(status, this.loaded);
+            }
+          } else {
+            this.callback("error", this.loaded);
+          }
+        });
+      }
+    });
+  }
+  public dispose(): void {
+    this.fileQuestion = undefined;
+    this.callback = undefined;
+  }
+}

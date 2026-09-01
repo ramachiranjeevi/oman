@@ -1,0 +1,21 @@
+# Dependencies — regenerate via the relevant package manager, never commit
+node_modules/
+
+# Secrets — live credentials, never commit
+.env
+.env.*
+
+# Runtime data / generated at run time
+directus/api/data.db
+*.log
+
+# Locally downloaded dev tool runtimes (JDK, Node) — not source
+/.tools/
+
+# Claude Code local session/config data
+.claude/
+
+# Camunda Platform Run — downloaded binary distribution, not source
+camunda-module/camunda-run.zip
+camunda-module/internal/
+camunda-module/camunda-h2-default/

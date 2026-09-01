@@ -1,0 +1,20 @@
+get:
+  summary: System Info
+  description: Perform a system status check and return the options.
+  operationId: serverInfo
+  responses:
+    '200':
+      content:
+        application/json:
+          schema:
+            properties:
+              data:
+                type: object
+            type: object
+      description: Successful request
+    '401':
+      $ref: '../../openapi.yaml#/components/responses/UnauthorizedError'
+    '404':
+      $ref: '../../openapi.yaml#/components/responses/NotFoundError'
+  tags:
+    - Server

@@ -1,0 +1,8 @@
+<ng-template #template>
+    <ng-container *ngIf="question.showPreviewContainer">
+        <div [class]="question.cssClasses.fileList || undefined">
+            <sv-ng-file-page *ngFor="let page of question.renderedPages; trackBy: trackPagesFn" [page]="page"
+                [question]="question"></sv-ng-file-page>
+        </div>
+    </ng-container>
+</ng-template>

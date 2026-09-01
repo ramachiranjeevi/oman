@@ -1,0 +1,411 @@
+import { Serializer } from "./jsonobject";
+import { property } from "./decorators";
+import { QuestionFactory } from "./questionfactory";
+import { ChoiceItem, QuestionSelectBase } from "./question_baseselect";
+import { ItemValue } from "./itemvalue";
+import { CssClassBuilder } from "./utils/cssClassBuilder";
+import { EventBase } from "./event";
+import { DropdownListModel } from "./dropdownListModel";
+import { settings } from "./settings";
+import { updateListCssValues } from "./utils/dom-utils";
+import { Helpers } from "./helpers";
+import { questionDropdownMixin } from "./question_dropdown_mixin";
+import { ActionContainer } from "./actions/container";
+import { Action } from "./actions/action";
+import { ComputedUpdater } from "./base";
+
+/**
+ * A class that describes the Dropdown question type.
+ *
+ * [View Demo](https://surveyjs.io/form-library/examples/questiontype-dropdown/ (linkStyle))
+ */
+export class QuestionDropdownModel extends questionDropdownMixin(QuestionSelectBase) {
+  lastSelectedItemValue: ItemValue = null;
+
+  protected onPropertyValueChanged(name: string, oldValue: any, newValue: any): void {
+    super.onPropertyValueChanged(name, oldValue, newValue);
+    const visibleChoicesChangedProps = ["choicesMin", "choicesMax", "choicesStep"];
+    const resetReadOnlyTextProps = ["value", "renderAs", "showOtherItem", "otherText", "placeholder", "choices", "visibleChoices"];
+    if (visibleChoicesChangedProps.indexOf(name) > -1) {
+      this.onVisibleChoicesChanged();
+    }
+    if (resetReadOnlyTextProps.indexOf(name) > -1) {
+      this.getSingleSelectedItem();
+      this.resetReadOnlyText();
+    }
+    if (name === "placeholder") {
+      this.updateInputPlaceholder(newValue);
+    }
+  }
+  public locStrsChanged(): void {
+    super.locStrsChanged();
+    this.resetReadOnlyText();
+    this.updateInputPlaceholder(this.placeholder);
+  }
+  private updateInputPlaceholder(val: string) {
+    if (!!this.dropdownListModelValue) {
+      this.dropdownListModel.setInputPlaceholder(val);
+    }
+  }
+  public get showOptionsCaption(): boolean {
+    return this.allowClear;
+  }
+  public set showOptionsCaption(val: boolean) {
+    this.allowClear = val;
+  }
+  public get optionsCaption(): string {
+    return this.placeholder;
+  }
+  public set optionsCaption(val: string) {
+    this.placeholder = val;
+  }
+  /**
+   * A placeholder for the input field.
+   */
+  @property({ localizable: { defaultStr: true } }) placeholder: string;
+
+  public getType(): string {
+    return "dropdown";
+  }
+  public get isNewA11yStructure() {
+    return true;
+  }
+  public get a11yQuestionAriaRole(): string | null {
+    return this.searchEnabled ? null : "combobox";
+  }
+  public get a11yInputAriaRole(): string | null {
+    return this.searchEnabled ? "combobox" : null;
+  }
+  /**
+   * Returns the selected choice item. If no item is selected, returns `null`.
+   */
+  public get selectedItem(): ChoiceItem { return <ChoiceItem>this.getSingleSelectedItem(); }
+  protected isOtherValueUnused(): boolean {
+    return !this.selectedItem?.showCommentArea;
+  }
+  protected onGetSingleSelectedItem(selectedItemByValue: ItemValue): void {
+    if (!!selectedItemByValue) {
+      this.lastSelectedItemValue = selectedItemByValue;
+    }
+  }
+  public get isShowingChoiceComment(): boolean {
+    return this.selectedItem?.showCommentArea;
+  }
+  supportAutoAdvance(): boolean {
+    return !this.isShowingChoiceComment;
+  }
+  private minMaxChoices = <Array<ItemValue>>[];
+  protected getChoices(): Array<ItemValue> {
+    var items = super.getChoices();
+    if (this.choicesMax <= this.choicesMin) return items;
+    var res = [];
+    for (var i = 0; i < items.length; i++) {
+      res.push(items[i]);
+    }
+    if (
+      this.minMaxChoices.length === 0 ||
+      this.minMaxChoices.length !==
+      (this.choicesMax - this.choicesMin) / this.choicesStep + 1
+    ) {
+      this.minMaxChoices = [];
+      for (
+        var i = this.choicesMin;
+        i <= this.choicesMax;
+        i += this.choicesStep
+      ) {
+        this.minMaxChoices.push(this.createItemValue(i));
+      }
+    }
+    res = res.concat(this.minMaxChoices);
+    return res;
+  }
+  /**
+   * Use the `choicesMin`, `choicesMax`, and `choicesStep` properties to generate choice items automatically. For example, the configuration below generates three choice items: [10, 20, 30].
+   *
+   * ```js
+   * "choicesMin": 10,
+   * "choicesMax": 30
+   * "choicesStep": 10
+   * ```
+   * @see choicesMax
+   * @see choicesStep
+   */
+  @property() choicesMin: number;
+  /**
+   * Use the `choicesMin`, `choicesMax`, and `choicesStep` properties to generate choice items automatically. For example, the configuration below generates three choice items: [10, 20, 30].
+   *
+   * ```js
+   * "choicesMin": 10,
+   * "choicesMax": 30
+   * "choicesStep": 10
+   * ```
+   * @see choicesMin
+   * @see choicesStep
+   */
+  @property() choicesMax: number;
+  /**
+   * Use the `choicesMin`, `choicesMax`, and `choicesStep` properties to generate choice items automatically. For example, the configuration below generates three choice items: [10, 20, 30].
+   *
+   * ```js
+   * "choicesMin": 10,
+   * "choicesMax": 30
+   * "choicesStep": 10
+   * ```
+   *
+   * The default value of the `choicesStep` property is 1.
+   * @see choicesMin
+   * @see choicesMax
+   */
+  @property({ onSetting: (val) => val < 1 ? 1 : val }) choicesStep: number;
+
+  @property() autocomplete: string;
+
+  /**
+   * Specifies whether to display a button that clears the selected value.
+   */
+  @property() allowClear: boolean;
+  /**
+   * Specifies whether users can enter a value into the input field to filter the drop-down list.
+   *
+   * [View Demo](https://surveyjs.io/form-library/examples/create-dropdown-menu-in-javascript/ (linkStyle))
+   * @see searchMode
+   * @see [SurveyModel.onChoicesSearch](https://surveyjs.io/form-library/documentation/api-reference/survey-data-model#onChoicesSearch)
+   */
+  @property({
+    onSet: (newValue: boolean, target: QuestionDropdownModel) => {
+      if (!!target.dropdownListModelValue) {
+        target.dropdownListModel.setSearchEnabled(newValue);
+      }
+    }
+  }) searchEnabled: boolean;
+
+  /**
+   * Specifies a comparison operation used to filter the drop-down list. Applies only if [`searchEnabled`](#searchEnabled) is `true`.
+   *
+   * Possible values:
+   *
+   * - `"contains"` (default)
+   * - `"startsWith"`
+   * @see [SurveyModel.onChoicesSearch](https://surveyjs.io/form-library/documentation/api-reference/survey-data-model#onChoicesSearch)
+   */
+  @property() searchMode: "contains" | "startsWith";
+
+  /**
+   * Specifies whether users can add their own choices if the desired option isn't available in the dropdown.
+   *
+   * Default value: `false`
+   *
+   * [View Demo](https://surveyjs.io/form-library/examples/dropdown-custom-choice-options/ (linkStyle))
+   *
+   * > Custom choices will only be stored temporarily for the duration of the current browser session. If you want to save them in a database or another data storage, handle the [`onCreateCustomChoiceItem`](https://surveyjs.io/form-library/documentation/api-reference/survey-data-model#onCreateCustomChoiceItem) event.
+   * @since 2.0.4
+   */
+  @property({
+    onSet: (newValue: boolean, target: QuestionDropdownModel) => {
+      if (!!target.dropdownListModelValue) {
+        target.dropdownListModel.setAllowCustomChoices(newValue);
+      }
+    }
+  }) allowCustomChoices: boolean;
+
+  /**
+   * Specifies the text displayed for the command that creates a custom choice. Applies only when [`allowCustomChoices`](#allowCustomChoices) is `true`.
+   *
+   * Default value: `"Create \"{0}\" item..."`
+   * @since 2.5.17
+   */
+  @property({ localizable: { defaultStr: "createCustomItem" } }) createCustomChoiceText: string;
+
+  /**
+   * Specifies whether to wrap long texts in choice options onto a new line.
+   *
+   * Default value: `true`
+   *
+   * Disable this property if you want the texts to be truncated with ellipsis.
+   */
+  @property() textWrapEnabled: boolean;
+  @property({ defaultValue: false }) inputHasValue: boolean;
+  /**
+   * Enables lazy loading. If you set this property to `true`, you should implement the Survey's [`onChoicesLazyLoad`](https://surveyjs.io/form-library/documentation/surveymodel#onChoicesLazyLoad) event handler.
+   * @see choicesLazyLoadPageSize
+   * @see SurveyModel.onChoicesLazyLoad
+   */
+  @property({
+    onSet: (newValue: boolean, target: QuestionDropdownModel) => {
+      if (!!target.dropdownListModelValue) {
+        target.dropdownListModel.setChoicesLazyLoadEnabled(newValue);
+      }
+    }
+  }) choicesLazyLoadEnabled: boolean;
+  /**
+   * Specifies the number of choice items to load at a time when choices are loaded on demand.
+   *
+   * Default value: 25
+   *
+   * > This property does not accept values below 25 to prevent the server from being flooded with requests.
+   * @see choicesLazyLoadEnabled
+   * @see SurveyModel.onChoicesLazyLoad
+   */
+  @property() choicesLazyLoadPageSize: number;
+  public getControlClass(): string {
+    return new CssClassBuilder()
+      .append(this.cssClasses.control)
+      .append(this.cssClasses.controlSelect, this.renderAs == "select")
+      .append(this.cssClasses.controlEmpty, this.isEmpty())
+      .append(this.cssClasses.onError, this.hasCssError())
+      .append(this.cssClasses.controlDisabled, this.isDisabledStyle)
+      .append(this.cssClasses.controlReadOnly, this.isReadOnlyStyle)
+      .append(this.cssClasses.controlPreview, this.isPreviewStyle)
+      .append(this.cssClasses.controlInputFieldComponent, !!this.inputFieldComponentName)
+      .toString();
+  }
+  protected updateCssClasses(res: any, css: any): void {
+    super.updateCssClasses(res, css);
+    if (this.useDropdownList) {
+      updateListCssValues(res, css);
+    }
+  }
+  @property() suggestedItem: ItemValue;
+  public get selectedItemLocText() {
+    const item = this.suggestedItem || this.selectedItem;
+    return item?.locText;
+  }
+  public get inputFieldComponentName(): string {
+    return this.inputFieldComponent || this.itemComponent;
+  }
+  public get showSelectedItemLocText(): boolean {
+    return !this.inputHasValue && !this.inputFieldComponentName && !!this.selectedItemLocText && this.dropdownListModel.canShowSelectedItem;
+  }
+  public get showInputFieldComponent(): boolean {
+    return !this.inputHasValue && !!this.inputFieldComponentName && !this.isEmpty();
+  }
+  protected calculateReadOnlyText(): string {
+    if (!this.useDropdownList) {
+      if (this.isOtherSelected) return this.otherText;
+      if (this.isNoneSelected) return this.noneText;
+    }
+    const item = this.selectedItem;
+    return !!item ? item.text : "";
+  }
+  private get useDropdownList(): boolean { return this.renderAs !== "select"; }
+  public get dropdownListModel(): DropdownListModel {
+    if (!this.isDisposed && this.useDropdownList && !this.dropdownListModelValue) {
+      this.dropdownListModelValue = new DropdownListModel(this);
+    }
+    return this.dropdownListModelValue;
+  }
+  public set dropdownListModel(val: DropdownListModel) {
+    this.dropdownListModelValue = val;
+  }
+  public onOpened: EventBase<QuestionDropdownModel> = this.addEvent<QuestionDropdownModel>();
+
+  protected onSelectedItemValuesChangedHandler(newValue: any): void {
+    this.dropdownListModelValue?.setInputStringFromSelectedItem(newValue);
+    super.onSelectedItemValuesChangedHandler(newValue);
+  }
+  protected updateCustomChoices(value: any, items: Array<ItemValue>): void {
+    if (value !== undefined && value !== null && this.allowCustomChoices && !this.choicesLazyLoadEnabled) {
+      this.customChoices.splice(0, this.customChoices.length);
+      const item = items.filter(ch => Helpers.isTwoValueEquals(ch.id, value, false, false))[0];
+      if (!item) {
+        this.customChoices.splice(0, this.customChoices.length, new ItemValue(value));
+      }
+    }
+  }
+
+  protected getFirstInputElementId(): string {
+    return this.getInputIdCore(this.searchEnabled || this.allowCustomChoices);
+  }
+  public getInputId() {
+    return this.getInputIdCore(true);
+  }
+  private getInputIdCore(addPostFix: boolean): string {
+    const postFix = addPostFix && this.useDropdownList ? "_0" : "";
+    return this.inputId + postFix;
+  }
+  protected onClearValue(): void {
+    super.onClearValue();
+    this.lastSelectedItemValue = null;
+  }
+
+  public afterRenderCore(el: any): void {
+    super.afterRenderCore(el);
+    if (!!this.dropdownListModelValue) {
+      this.dropdownListModelValue.clear();
+    }
+  }
+
+  onClick(e: any): void {
+    !!this.onOpenedCallBack && this.onOpenedCallBack();
+  }
+
+  onKeyUp(event: any): void {
+    const char: number = event.which || event.keyCode;
+    if (char === 46) {
+      this.clearValueFromUI();
+      event.preventDefault();
+      event.stopPropagation();
+    }
+  }
+  private inputActionBarValue: ActionContainer;
+  public get inputActionBar() {
+    if (!this.inputActionBarValue) {
+      this.inputActionBarValue = new ActionContainer();
+      this.inputActionBarValue.locOwner = this;
+      this.inputActionBarValue.containerCss = this.cssClasses.group;
+      this.inputActionBarValue.setActionsAppearance({ mode: "tertiary", style: "neutral", size: "small" });
+
+      const chevronButton = new Action({
+        id: "chevron",
+        css: "sd-editor-chevron-button",
+        iconName: this.cssClasses.chevronButtonIconId || "icon-chevron",
+        iconSize: "auto",
+        showTitle: false,
+        locTitle: this.locSelectCaption,
+        disableTabStop: true,
+        enabled: new ComputedUpdater(() => {
+          return !this.isInputReadOnly;
+        }),
+        visible: new ComputedUpdater(() => {
+          return !this.isPreviewStyle;
+        }),
+        action: () => {}
+      });
+      this.inputActionBarValue.addAction(chevronButton);
+    }
+    return this.inputActionBarValue;
+  }
+}
+Serializer.addClass(
+  "dropdown",
+  [
+    { name: "placeholder", alternativeName: "optionsCaption", serializationProperty: "locPlaceholder" },
+    { name: "allowClear:boolean", alternativeName: "showOptionsCaption", default: true },
+    { name: "choicesMin:number", default: 0 },
+    { name: "choicesMax:number", default: 0 },
+    { name: "choicesStep:number", default: 1, minValue: 1 },
+    { name: "autocomplete", alternativeName: "autoComplete", choices: settings.questions.dataList, },
+    { name: "textWrapEnabled:boolean", default: true },
+    { name: "renderAs", default: "default", visible: false },
+    { name: "searchEnabled:boolean", default: true, visible: false },
+    {
+      name: "allowCustomChoices:boolean",
+      visibleIf: (obj: any): boolean => !obj.choicesFromQuestion, dependsOn: "choicesFromQuestion"
+    },
+    { name: "createCustomChoiceText", serializationProperty: "locCreateCustomChoiceText", visibleIf: (obj: any): boolean => obj.allowCustomChoices },
+    { name: "searchMode", default: "contains", choices: ["contains", "startsWith"], },
+    { name: "choicesLazyLoadEnabled:boolean", visible: false },
+    { name: "choicesLazyLoadPageSize:number", default: 25, visible: false },
+    { name: "inputFieldComponent", visible: false },
+    { name: "itemComponent", visible: false, default: "" }
+  ],
+  function () {
+    return new QuestionDropdownModel("");
+  },
+  "selectbase"
+);
+QuestionFactory.Instance.registerQuestion("dropdown", (name) => {
+  var q = new QuestionDropdownModel(name);
+  q.choices = QuestionFactory.DefaultChoices;
+  return q;
+});

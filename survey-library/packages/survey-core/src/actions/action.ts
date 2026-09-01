@@ -1,0 +1,709 @@
+import { ILocalizableOwner, LocalizableString } from "../localizablestring";
+import { Base, ComputedUpdater } from "../base";
+import { ISurvey } from "../base-interfaces";
+import { getLocaleString } from "../surveyStrings";
+import { property } from "../decorators";
+import { IPopupOptionsBase, PopupModel } from "../popup";
+import { CssClassBuilder } from "../utils/cssClassBuilder";
+import { ActionBarCssClasses, defaultActionBarCss } from "./actionBarCss";
+import { IListModel } from "./list-model";
+import { ListModel } from "../list";
+
+export type actionModeType = "large" | "small" | "popup" | "removed";
+
+/**
+ * An action item.
+ *
+ * Action items are used in the Toolbar, matrix rows, titles of pages, panels, questions, and other survey elements.
+ *
+ * [View Demo](https://surveyjs.io/form-library/examples/add-custom-navigation-button/ (linkStyle))
+ */
+export interface IAction {
+  /**
+   * A unique action item identifier.
+   *
+   * [View Demo](https://surveyjs.io/form-library/examples/add-custom-navigation-button/ (linkStyle))
+   */
+  id?: string;
+  /**
+   * Specifies the action item's visibility.
+   * @see enabled
+   * @see active
+   */
+  visible?: boolean | ComputedUpdater<boolean>;
+  /**
+   * The action item's title.
+   *
+   * [View Demo](https://surveyjs.io/form-library/examples/add-custom-navigation-button/ (linkStyle))
+   * @see showTitle
+   * @see disableShrink
+   */
+  title?: string;
+  titles?: { [locale: string]: string };
+  locTitle?: LocalizableString;
+  locTitleName?: string;
+  /**
+   * The action item's tooltip.
+   */
+  tooltip?: string;
+  locTooltipName?: string;
+  /**
+   * Specifies whether users can interact with the action item.
+   * @see active
+   * @see visible
+   */
+  enabled?: boolean | ComputedUpdater<boolean>;
+  enabledIf?: () => boolean;
+  /**
+   * Specifies the visibility of the action item's title.
+   * @see title
+   * @see disableShrink
+   */
+  showTitle?: boolean;
+  /**
+   * A function that is executed when users click the action item.
+   *
+   * [View Demo](https://surveyjs.io/form-library/examples/add-custom-navigation-button/ (linkStyle))
+   */
+  action?: (context?: any) => void;
+  onMouseDown?:(event: any) => void;
+  onFocus?: (isMouse: boolean, event: any) => void;
+  /**
+   * One or several CSS classes that you want to apply to the outer `<div>` element.
+   *
+   * In the rendered markup, an action item consists of a `<button>` wrapped in a `<div>`. The `css` property applies classes to the `<div>` element.
+   *
+   * To apply several classes, separate them with a space character: `"myclass1 myclass2"`.
+   *
+   * [View Demo](https://surveyjs.io/form-library/examples/add-custom-navigation-button/ (linkStyle))
+   * @see innerCss
+   */
+  css?: string;
+  /**
+   * One or several CSS classes that you want to apply to the inner `<button>` element.
+   *
+   * In the rendered markup, an action item consists of a `<button>` wrapped in a `<div>`. The `innerCss` property applies classes to the `<button>` element. The button contains a nested `<span>` element that displays the label text. Use the `span` selector to style it.
+   *
+   * To apply several classes, separate them with a space character: `"myclass1 myclass2"`.
+   *
+   * [View Demo](https://surveyjs.io/form-library/examples/add-custom-navigation-button/ (linkStyle))
+   * @see css
+   */
+  innerCss?: string;
+  /**
+   * The action item's data object. Use it to pass required data to a custom template or component.
+   */
+  data?: any;
+  popupModel?: any; //TODO: temp, use data instead
+  needSeparator?: boolean; //TODO: temp
+  /**
+   * Specifies whether the action item is active.
+   *
+   * Use this property as a flag to specify different action item appearances in different states.
+   * @see enabled
+   * @see visible
+   */
+  active?: boolean;
+  popupActive?: boolean;
+  /**
+   * Specifies the name of a template used to render the action item.
+   * @see component
+   */
+  template?: string;
+  /**
+   * Specifies the name of a component used to render the action item.
+   */
+  component?: string;
+  /**
+   * The action item's icon name.
+   * @see iconSize
+   */
+  iconName?: string;
+  /**
+   * The action item's icon size in pixels.
+   * @see iconName
+   */
+  iconSize?: number | string;
+  /**
+   * The action item's location in a matrix question's row.
+   *
+   * The following values are available:
+   *
+   * - `"start"` - The action item is located at the beginning of the row.
+   * - `"end"` - The action is located at the end of the row.
+   */
+  location?: string;
+  /**
+   * Set this property to `true` if you want to disable keyboard navigation for the action item (sets the `tabIndex` attribute to -1).
+   */
+  disableTabStop?: boolean;
+
+  /**
+   * Set this property to `true` if you want the item's `title` to be always visible.
+   * If you set it to `false`, the `title` hides when the screen space is limited, and the item displays only the icon.
+   * @see title
+   * @see iconName
+   */
+  disableShrink?: boolean;
+  disableHide?: boolean;
+  mode?: actionModeType;
+  /**
+   * A number that specifies the action's position relative to other actions.
+   *
+   * [View Demo](https://surveyjs.io/form-library/examples/add-custom-navigation-button/ (linkStyle))
+   */
+  visibleIndex?: number;
+  isLabel?: boolean;
+  needSpace?: boolean;
+  ariaChecked?: boolean;
+  ariaExpanded?: boolean;
+  ariaControls?: string;
+  ariaLabelledBy?: string;
+  ariaRole?: string;
+  elementId?: string;
+  items?: Array<IAction>;
+  markerIconName?: string;
+  showPopup?: () => void;
+  hidePopup?: () => void;
+  appearance?: Partial<IActionAppearance>;
+  activeAppearance?: Partial<IActionAppearance>;
+}
+
+let _createPopupModelWithListModel: (listOptions: IListModel, popupOptions?: IPopupOptionsBase) => PopupModel;
+export function setCreatePopupModelWithListModel(fn: (listOptions: IListModel, popupOptions?: IPopupOptionsBase) => PopupModel): void {
+  _createPopupModelWithListModel = fn;
+}
+
+export abstract class BaseAction extends Base implements IAction {
+  items?: IAction[];
+  private cssClassesValue: any;
+  private ownerValue: ILocalizableOwner;
+  public getSurvey(isLive: boolean = false): ISurvey {
+    const owner: any = this.owner;
+    return owner && owner.getSurvey ? owner.getSurvey(isLive) : null;
+  }
+  @property() tooltip: string;
+  @property() showTitle: boolean;
+  @property() innerCss: string;
+  @property() active: boolean;
+  @property() popupActive: boolean;
+  private _data: any;
+  public get data() {
+    return this._data;
+  }
+  public set data(val: any) {
+    this._data = val;
+  }
+  @property() popupModel: any;
+  @property() needSeparator: boolean;
+  @property() template: string;
+  @property({ defaultValue: "large" }) mode: actionModeType;
+  @property() visibleIndex: number;
+  @property() disableTabStop: boolean;
+  @property() disableShrink: boolean;
+  @property() disableHide: boolean;
+  @property({ defaultValue: false }) needSpace: boolean;
+  @property({ defaultValue: false }) isLabel: boolean;
+  @property() ariaChecked: boolean;
+  @property() ariaExpanded: boolean;
+  @property() ariaLabelledBy: string;
+  @property() ariaControls: string;
+  @property({ defaultValue: "button" }) ariaRole: string;
+  private idValue: string;
+  public get id(): string { return this.getId(); }
+  public set id(val: string) { this.setId(val); }
+  protected getId(): string { return this.idValue; }
+  protected setId(val: string): void { this.idValue = val; }
+  @property() iconName: string;
+  @property({ defaultValue: 24 }) iconSize: number | string;
+  @property() markerIconName: string;
+  @property() css?: string;
+  minDimension: number;
+  maxDimension: number;
+  public addVisibilityChangedCallback(callback: (action: BaseAction) => void) {}
+  public removeVisibilityChangedCallback(callback: (action: BaseAction) => void) {}
+  public get renderedId(): string {
+    const raw = this.getPropertyValue("renderedIdRaw", undefined, () => this.getIdGenerator().next("sv-action"));
+    return this.composeElementId(raw);
+  }
+  public get owner(): ILocalizableOwner { return this.ownerValue; }
+  public set owner(val: ILocalizableOwner) {
+    if (val !== this.owner) {
+      this.ownerValue = val;
+      this.locStrsChanged();
+    }
+  }
+  public get visible(): boolean {
+    return this.getVisible();
+  }
+  public set visible(val: boolean) {
+    this.setVisible(val);
+  }
+  public get enabled() {
+    return this.getEnabled();
+  }
+  public set enabled(val: boolean) {
+    this.setEnabled(val);
+  }
+  public get component(): string {
+    return this.getComponent();
+  }
+  public set component(val: string) {
+    this.setComponent(val);
+  }
+  public get locTitle(): LocalizableString {
+    return this.getLocTitle();
+  }
+  public set locTitle(val: LocalizableString) {
+    this.setLocTitle(val);
+  }
+  public get title(): string {
+    return this.getTitle();
+  }
+  public set title(val: string) {
+    this.setTitle(val);
+  }
+  public get titles(): { [locale: string]: string } {
+    return this.locTitle.getJson();
+  }
+  public set titles(val: { [locale: string]: string }) {
+    this.locTitle.setJson(val);
+  }
+  public set cssClasses(val: ActionBarCssClasses) {
+    this.cssClassesValue = val;
+  }
+  public get cssClasses(): Readonly<ActionBarCssClasses> {
+    return this.cssClassesValue || defaultActionBarCss;
+  }
+  public get isVisible() {
+    return this.visible && this.mode !== "popup" && this.mode !== "removed";
+  }
+  public get disabled(): boolean {
+    return this.enabled !== undefined && !this.enabled;
+  }
+  public get canShrink() {
+    return !this.disableShrink && !!this.iconName;
+  }
+  public get hasTitle(): boolean {
+    return (
+      ((this.mode != "small" &&
+        (this.showTitle || this.showTitle === undefined)) ||
+        !this.iconName) &&
+      !!this.title
+    );
+  }
+  public get hasSubItems(): boolean {
+    return !!this.items && this.items.length > 0;
+  }
+  public get innerListModel(): ListModel | undefined {
+    if (!this.popupModel || !this.popupModel.contentComponentData || !this.popupModel.contentComponentData.model) return;
+    return this.popupModel.contentComponentData.model;
+  }
+  public getActionBarItemTitleCss(): string {
+    return new CssClassBuilder()
+      .append(this.cssClasses.itemTitle)
+      .append(this.cssClasses.itemTitleWithIcon, !!this.iconName)
+      .toString();
+  }
+  public getActionBarItemCss(): string {
+    const hasTitle = this.hasTitle;
+    return new CssClassBuilder()
+      .append(this.cssClasses.item)
+      //TODO: remove itemWithTitle and itemAsIcon, itemIcon classes and replace with modifiers to item class in css
+      .append(this.cssClasses.itemWithTitle, hasTitle)
+      .append(this.cssClasses.itemAsIcon, !hasTitle)
+      //end of TODO
+      .append(this.cssClasses.itemActive, !!this.active)
+      .append(this.cssClasses.itemPopupActive, !!this.popupActive)
+      .append(this.innerCss)
+      .toString();
+  }
+  public getActionRootCss(): string {
+    return new CssClassBuilder()
+      .append(this.cssClasses.containerItem)
+      .append(this.css)
+      .append(this.cssClasses.containerItemSpace, this.needSpace)
+      .append(this.cssClasses.containerItemHidden, !this.isVisible)
+      .toString();
+  }
+  public getActionRootContentCss(): string {
+    return new CssClassBuilder()
+      .append(this.cssClasses.containerItemContent)
+      .toString();
+  }
+  public getTooltip(): string {
+    return this.tooltip || (!this.hasTitle ? this.title : null);
+  }
+  public getIsTrusted(args: any): boolean {
+    if (!!args.originalEvent) {
+      return args.originalEvent.isTrusted;
+    }
+    return args.isTrusted;
+  }
+  public showPopup(): void {
+    if (!!this.popupModel) {
+      this.popupModel.show();
+    }
+  }
+  public hidePopup(): void {
+    if (!!this.popupModel) {
+      this.popupModel.hide();
+    }
+  }
+
+  @property({ defaultValue: false }) isPressed: boolean;
+  @property({ defaultValue: false }) isHovered: boolean;
+
+  private showPopupTimeout: any;
+  private hidePopupTimeout: any;
+  private clearPopupTimeouts() {
+    if (this.showPopupTimeout) clearTimeout(this.showPopupTimeout);
+    if (this.hidePopupTimeout) clearTimeout(this.hidePopupTimeout);
+  }
+  public showPopupDelayed(delay: number) {
+
+    this.clearPopupTimeouts();
+    this.showPopupTimeout = setTimeout(() => {
+      this.clearPopupTimeouts();
+
+      this.showPopup();
+
+    }, delay);
+  }
+
+  public hidePopupDelayed(delay: number) {
+    if (this.popupModel?.isVisible) {
+
+      this.clearPopupTimeouts();
+      this.hidePopupTimeout = setTimeout(() => {
+        this.clearPopupTimeouts();
+
+        this.hidePopup();
+        this.isHovered = false;
+
+      }, delay);
+    } else {
+      this.clearPopupTimeouts();
+      this.isHovered = false;
+    }
+  }
+  public setPredefinedAppearance(_: IActionAppearance) { }
+  protected abstract getEnabled(): boolean;
+  protected abstract setEnabled(val: boolean): void;
+  protected abstract getVisible(): boolean;
+  protected abstract setVisible(val: boolean): void;
+  protected abstract getLocTitle(): LocalizableString;
+  protected abstract setLocTitle(val: LocalizableString): void;
+  protected abstract getTitle(): string;
+  protected abstract setTitle(val: string): void;
+  protected abstract getComponent(): string;
+  protected abstract setComponent(val: string): void;
+}
+
+export interface IActionAppearance {
+  style: "neutral" | "alert" | "brand";
+  mode: "primary" | "secondary" | "tertiary" | "tertiary-surface" | "tertiary-muted" | "tertiary-muted-surface" | "quaternary" | "quaternary-surface";
+  size: "large" | "medium" | "small" | "x-small" | "xx-small";
+  showBorder?: boolean;
+ }
+
+export class Action extends BaseAction implements IAction, ILocalizableOwner {
+  private locTitleValue: LocalizableString;
+  public intersectionVisibilityObserver: IntersectionObserver;
+
+  public innerItem: IAction;
+  constructor(innerItemData: IAction) {
+    super();
+    const innerItem: IAction = (innerItemData instanceof Action) ? innerItemData.innerItem : innerItemData;
+    this.innerItem = innerItem;
+    this.locTitle = !!innerItem ? innerItem["locTitle"] : null;
+    if (!!innerItem) {
+      for (var key in innerItem) {
+        if (key === "locTitle" || key === "title" && !!this.title) continue;
+        (<any>this)[key] = (<any>innerItem)[key];
+      }
+    }
+    if (!!this.locTitleName) {
+      this.locTitleChanged();
+    }
+    this.locStrChangedInPopupModel();
+  }
+  elementId?: string;
+  private createLocTitle(): LocalizableString {
+    return this.createLocalizableString("title", this, true);
+  }
+  public setSubItems(options: IListModel): void {
+    this.markerIconName = "icon-chevronright-24x24";
+    this.items = [...options.items];
+    if (!this.popupModel) {
+      this.createPopupForSubitems(options);
+    } else {
+      const list: any = this.innerListModel;
+      list.setItems(this.items);
+    }
+    this.component = this.getGroupComponentName();
+  }
+  private createPopupForSubitems(options: IListModel): void {
+    const listOptions = Object.assign({}, options);
+    listOptions.searchEnabled = false;
+    const popupModel = _createPopupModelWithListModel(
+      listOptions,
+      { horizontalPosition: "right", showPointer: false, canShrink: false }
+    );
+    popupModel.cssClass = "sv-popup-inner";
+    this.popupModel = popupModel;
+  }
+
+  location?: string;
+  protected getId(): string { return this.getPropertyValue("id"); }
+  protected setId(val: string): void { this.setPropertyValue("id", val); }
+  @property({ defaultValue: true }) private _visible: boolean;
+  @property({
+    onSet: (_, target: Action) => {
+      target.locTooltipChanged();
+    }
+  }) locTooltipName?: string;
+  @property() private _enabled: boolean;
+  @property() action: (context?: any, isUserAction?: boolean) => void;
+  @property() onFocus: (isMouse: boolean, event: any) => void;
+  @property() onMouseDown?: (event: any) => void;
+  @property() _component: string;
+  @property({ defaultValue: {} }) appearance: Partial<IActionAppearance>;
+  @property({ defaultValue: { style: "brand", mode: "secondary" } }) activeAppearance: Partial<IActionAppearance>;
+  @property({ defaultValue: { style: "neutral", mode: "tertiary", size: "small" } }) predefinedAppearance: IActionAppearance;
+  @property() items: any;
+  @property({
+    onSet: (val, target) => {
+      if (target.locTitleValue.text === val) return;
+      target.locTitleValue.text = val;
+    }
+  }) _title: string;
+  protected getLocTitle(): LocalizableString {
+    return this.locTitleValue;
+  }
+  protected setLocTitle(val: LocalizableString): void {
+    if (!val && !this.locTitleValue) {
+      val = this.createLocTitle();
+    }
+    if (!!this.locTitleValue) {
+      this.locTitleValue.onStringChanged.remove(this.locTitleChanged);
+    }
+    this.locTitleValue = val;
+    this.locTitleValue.onStringChanged.add(this.locTitleChanged);
+    this.locTitleChanged();
+  }
+  protected getTitle(): string {
+    return this._title;
+  }
+  protected setTitle(val: string): void {
+    this._title = val;
+  }
+  public get locTitleName(): string {
+    return this.locTitle.localizationName;
+  }
+  public set locTitleName(val: string) {
+    this.locTitle.localizationName = val;
+  }
+  public locStrsChanged(): void {
+    super.locStrsChanged();
+    this.locTooltipChanged();
+    this.locStrChangedInPopupModel();
+  }
+  public doAction(args: any): boolean {
+    const evt = !!args.originalEvent ? args.originalEvent : args;
+    this.action(this, evt.isTrusted);
+    evt.preventDefault();
+    evt.stopPropagation();
+    return true;
+  }
+  private isMouseDown: boolean;
+  public doMouseDown(event: any): void {
+    this.isMouseDown = true;
+    this.onMouseDown && this.onMouseDown(event);
+  }
+  public doFocus(args: any): void {
+    if (!!this.onFocus) {
+      const evt = !!args.originalEvent ? args.originalEvent : args;
+      this.onFocus(this.isMouseDown, evt);
+    }
+    this.isMouseDown = false;
+  }
+  private locStrChangedInPopupModel(): void {
+    if (!this.innerListModel) return;
+    const model = this.innerListModel;
+    if (Array.isArray(model.actions)) {
+      const actions: Array<any> = model.actions;
+      actions.forEach(item => {
+        if (!!(<any>item).locStrsChanged) {
+          (<any>item).locStrsChanged();
+        }
+      });
+    }
+  }
+  private locTitleChanged = () => {
+    const val = this.locTitle.renderedHtml;
+    this.setPropertyValue("_title", !!val ? val : undefined);
+  };
+  private locTooltipChanged(): void {
+    if (!this.locTooltipName) return;
+    this.tooltip = getLocaleString(this.locTooltipName, this.locTitle.locale);
+  }
+
+  //ILocalizableOwner
+  getLocale(): string { return this.owner ? this.owner.getLocale() : ""; }
+  getMarkdownHtml(text: string, name: string, item?: any): string { return this.owner ? this.owner.getMarkdownHtml(text, name, item) : undefined; }
+  getProcessedText(text: string): string { return this.owner ? this.owner.getProcessedText(text) : text; }
+  getRenderer(name: string): string { return this.owner ? this.owner.getRenderer(name) : null; }
+  getRendererContext(locStr: LocalizableString): any { return this.owner ? this.owner.getRendererContext(locStr) : locStr; }
+
+  public setVisible(val: boolean): void {
+    if (this.visible !== val) {
+      this._visible = val;
+    }
+  }
+  public getVisible(): boolean {
+    return this._visible;
+  }
+
+  public enabledIf?: () => boolean;
+  public setEnabled(val: boolean): void {
+    this._enabled = val;
+  }
+  public getEnabled(): boolean {
+    if (this.enabledIf) return this.enabledIf();
+    return this._enabled;
+  }
+  public setComponent(val: string): void {
+    this._component = val;
+  }
+  public getComponent(): string {
+    return this._component;
+  }
+  protected getGroupComponentName() {
+    return "sv-list-item-group";
+  }
+
+  public initLoadingIndicatorVisibilityObserver(handler: (isVisible: boolean) => void) {
+    if (typeof IntersectionObserver !== "undefined") {
+      this.intersectionVisibilityObserver = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+          const isIntersecting = entry.isIntersecting;
+          handler(isIntersecting);
+        });
+      }, ({ trackVisibility: true, delay: 100 }) as any);
+    }
+  }
+
+  public dispose(): void {
+    if (!!this.locTitleValue) {
+      this.locTitleValue.onStringChanged.remove(this.locTitleChanged);
+    }
+    this.locTitleChanged = undefined;
+    this.action = undefined;
+    super.dispose();
+    if (this.popupModel) {
+      this.popupModel.dispose();
+    }
+    if (this.intersectionVisibilityObserver) {
+      this.intersectionVisibilityObserver.disconnect();
+      this.intersectionVisibilityObserver = undefined;
+    }
+  }
+  public updateDimension(mode: actionModeType, htmlElement: HTMLElement, calcDimension: (el: HTMLElement) => number): void {
+    const property = mode == "small" ? "minDimension" : "maxDimension";
+    const hiddenClass = this.cssClasses.containerItemHidden;
+    if (htmlElement) {
+      const actionContainer = htmlElement;
+      if (hiddenClass && actionContainer.classList.contains(hiddenClass)) {
+        actionContainer.classList.remove(hiddenClass);
+        this[property] = calcDimension(htmlElement);
+        actionContainer.classList.add(hiddenClass);
+      } else {
+        this[property] = calcDimension(htmlElement);
+      }
+    }
+  }
+
+  public needUpdateMaxDimension: boolean = false;
+  public needUpdateMinDimension: boolean = false;
+  public updateModeCallback: (mode: actionModeType, callback: (mode: actionModeType, el: HTMLElement) => void) => void;
+  public afterRenderCallback: () => void;
+  public afterRender(): void {
+    this.afterRenderCallback && this.afterRenderCallback();
+  }
+  public updateMode(mode: actionModeType, callback: (mode: actionModeType, el: HTMLElement) => void): void {
+    if (this.updateModeCallback) {
+      this.updateModeCallback(mode, callback);
+    } else {
+      this.afterRenderCallback = () => {
+        this.updateModeCallback(mode, callback);
+        this.afterRenderCallback = undefined;
+      };
+    }
+  }
+  public updateDimensions(calcDimension: (htmlElement: HTMLElement) => number, callback: () => void, modeToCalculate?: actionModeType): void {
+    const mode = !modeToCalculate || (modeToCalculate == "large" && this.mode !== "small") ? this.mode : modeToCalculate;
+    this.updateMode(mode, (mode, htmlElement) => {
+      this.updateDimension(mode, htmlElement, calcDimension);
+      if (!modeToCalculate) {
+        this.updateMode(mode !== "small" ? "small" : "large", (mode, htmlElement) => {
+          this.updateDimension(mode, htmlElement, calcDimension);
+          callback();
+        });
+      } else {
+        callback();
+      }
+    });
+  }
+  private inputElementValue: HTMLElement;
+  public setInputElement(val: HTMLElement) {
+    this.inputElementValue = val;
+  }
+  public getInputElement() {
+    return this.inputElementValue;
+  }
+  public setPredefinedAppearance(val: IActionAppearance) {
+    this.predefinedAppearance = val;
+  }
+  public getActionBarItemCss(): string {
+    const appearance = Object.assign({}, this.predefinedAppearance || {}, this.appearance || {}, this.active ? this.activeAppearance || {} : {});
+    const css = super.getActionBarItemCss();
+    const prefix = this.cssClasses.itemAppearancePrefix;
+    if (!prefix) {
+      return css;
+    }
+    return new CssClassBuilder().append(css)
+      .append(`${prefix}--${appearance.style}`, !!appearance.style)
+      .append(`${prefix}--${appearance.mode}`, !!appearance.mode)
+      .append(`${prefix}--${appearance.size}`, !!appearance.size)
+      .append(`${prefix}--border`, !!appearance.showBorder)
+      .toString();
+  }
+}
+
+export class ActionDropdownViewModel {
+  private popupModel: any;
+  private funcKey = "sv-dropdown-action";
+  constructor(private item: Action) {
+    this.setupPopupCallbacks();
+  }
+  private setupPopupCallbacks() {
+    const popupModel = this.popupModel = this.item.popupModel;
+    if (!popupModel) return;
+    popupModel.registerPropertyChangedHandlers(["isVisible"], () => {
+      if (!popupModel.isVisible) {
+        this.item.popupActive = false;
+      } else {
+        this.item.popupActive = true;
+      }
+    }, this.funcKey);
+  }
+  private removePopupCallbacks() {
+    if (!!this.popupModel) {
+      this.popupModel.unregisterPropertyChangedHandlers(["isVisible"], this.funcKey);
+    }
+  }
+  public dispose(): void {
+    this.removePopupCallbacks();
+  }
+}

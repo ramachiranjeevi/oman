@@ -1,0 +1,47 @@
+import { registerMarkupTests } from "./helper";
+export * from "./etalon_components";
+export * from "./etalon_image";
+export * from "./etalon_text";
+export * from "./etalon_dropdown";
+export * from "./etalon_tagbox";
+export * from "./etalon_checkbox";
+export * from "./etalon_radiogroup";
+export * from "./etalon_imagepicker";
+export * from "./etalon_comment";
+export * from "./etalon_boolean";
+export * from "./etalon_rating";
+export * from "./etalon_ranking";
+export * from "./etalon_multipletext";
+export * from "./etalon_file";
+export * from "./etalon_paneldynamic";
+export * from "./etalon_page_panel";
+export * from "./etalon_matrix";
+export * from "./etalon_matrixdropdown";
+export * from "./etalon_matrixdynamic";
+export * from "./etalon_question";
+export * from "./etalon_survey";
+export * from "./etalon_signaturepad";
+export * from "./etalon_expression";
+export * from "./etalon_layout";
+export * from "./etalon_buttongroup";
+export * from "./etalon_slider";
+export * from "./etalon_imagemap";
+export { markupTests } from "./helper";
+
+registerMarkupTests([
+  // #region HTML question
+  {
+    name: "Test HTML question markup",
+    json: {
+      elements: [
+        {
+          name: "name",
+          type: "html",
+          html: "HTML content here",
+          title: "Question title",
+        }
+      ]
+    },
+    etalon: "<div class=\"sd-question__header-and-content-container\"><div class=\"sd-element__content sd-question__content\" role=\"presentation\"><div class=\"sd-html\">HTML content here</div></div></div>"
+  },
+]);

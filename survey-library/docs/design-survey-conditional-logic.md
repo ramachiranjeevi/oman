@@ -1,0 +1,1365 @@
+---
+title: Conditional Logic and Dynamic Texts | SurveyJS
+description: Learn how to implement branching and skip logic and add dynamic texts to your surveys.
+---
+# Conditional Logic and Dynamic Texts
+
+This help topic describes how to implement custom conditional logic and add dynamic texts to your survey.
+
+## Dynamic Texts
+
+Survey UI texts support placeholders whose values are computed at runtime to make the texts dynamic. Placeholders can be used in the following places:
+
+- Titles and descriptions of surveys, pages, panels, and questions
+- Properties that accept HTML markup ([`completedHtml`](https://surveyjs.io/Documentation/Library?id=surveymodel#completedHtml), [`loadingHtml`](https://surveyjs.io/Documentation/Library?id=surveymodel#loadingHtml), etc.)
+- [Expressions](#expressions)
+
+You can use the following values as placeholders:
+
+- [Question Values](#question-values)
+- [Variables](#variables)
+- [Calculated Values](#calculated-values)
+
+### Question Values
+
+To use a question value as a placeholder, specify the question's [`name`](https://surveyjs.io/Documentation/Library?id=Question#name) in curly brackets. The name will be replaced with the question value. For instance, the following example defines two [Single-Line Input](https://surveyjs.io/Documentation/Library?id=questiontextmodel) questions: First Name and Last Name. An [HTML](https://surveyjs.io/Documentation/Library?id=questionhtmlmodel) question uses their `name` property to reference them and display their values:
+
+```js
+const surveyJson = {
+  "elements": [
+    { "name": "firstName", "type": "text", "title": "First Name", "defaultValue": "John" },
+    { "name": "lastName", "type": "text", "title": "Last Name", "defaultValue": "Smith" },
+    {
+      "name": "greetings",
+      "type": "html",
+      "html": "<p>Hello, {firstName} {lastName}!</p>"
+    }
+  ]
+};
+```
+
+> For questions with a specified [`valueName`](https://surveyjs.io/form-library/documentation/api-reference/question#valueName) property, use its value instead of the `name` value.
+
+In single- and multiple-selection question types (Dropdown, Checkbox, Radio Button Group, Tag Box, Image Picker), items can contain a display value in addition to a question value. In this case, placeholders are replaced with display values. If you want to use question values instead, disable the [`useDisplayValuesInDynamicTexts`](https://surveyjs.io/form-library/documentation/api-reference/question#useDisplayValuesInDynamicTexts) property.
+
+Certain question types can contain multiple values. Use a dot symbol to access a specific value (item or cell):
+
+<div class="v2-class---doc-table-container">
+  <table class="v2-class---doc-table-container__table">
+    <thead>
+      <tr>
+        <th>Question Type</th>
+        <th>Syntax</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td><a href="/Documentation/Library?id=questionmultipletextmodel">Multiple Textboxes</a></td>
+        <td><code>{qid.itemid}</code></td>
+      </tr>
+      <tr>
+        <td><a href="/Documentation/Library?id=questionmatrixmodel">Single-Select Matrix</a></td>
+        <td><code>{maxtrixid.rowid}</code></td>
+      </tr>
+      <tr>
+        <td rowspan="2" style="vertical-align:middle"><a href="/Documentation/Library?id=questionmatrixdropdownmodel">Multi-Select Matrix</a></td>
+        <td><code>{maxtrixid.rowid.columnid}</code></td>
+      </tr>
+      <tr>
+        <td><code>{maxtrixid-total.columnid}</code> (accesses a cell in the total row)</td>
+      </tr>
+    </tbody>
+  </table>
+</div>
+
+[View Demo](https://surveyjs.io/form-library/examples/use-and-represent-complex-questions-in-expressions/ (linkStyle))
+
+In question types whose value is an array, you can use zero-based indices to access a specific item, question, or matrix cell:
+
+<div class="v2-class---doc-table-container">
+  <table class="v2-class---doc-table-container__table">
+    <thead>
+      <tr>
+        <th>Question Type</th>
+        <th>Syntax</th>
+        <th>Description</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td><a href="https://surveyjs.io/form-library/documentation/api-reference/checkbox-question-model">Checkboxes</a>, <br><a href="https://surveyjs.io/form-library/documentation/api-reference/image-picker-question-model">Image Picker</a>, <br><a href="https://surveyjs.io/form-library/documentation/api-reference/multiple-text-entry-question-model">Multiple Textboxes</a>, <br><a href="https://surveyjs.io/form-library/documentation/api-reference/ranking-question-model">Ranking</a></td>
+        <td style="vertical-align:middle"><code>{qid[index]}</code></td>
+        <td style="vertical-align:middle">Accesses a specific choice option or text box value.</td>
+      </tr>
+      <tr>
+        <td style="vertical-align:middle" rowspan="2"><a href="/Documentation/Library?id=questionpaneldynamicmodel">Dynamic Panel</a></td>
+        <td style="vertical-align:middle"><code>{dpanelid[index].qid}</code></td>
+        <td>Accesses a question in a specific panel.</td>
+      </tr>
+      <tr>
+        <td style="vertical-align:middle"><code>{dpanelid[-1].qid}</code><br><code>{dpanelid[-2].qid}</code><br>...</td>
+        <td style="vertical-align:middle">Accesses a question in the last panel, the panel before the last, and so on.</td>
+      </tr>
+      <tr>
+        <td rowspan="2" style="vertical-align:middle"><a href="/Documentation/Library?id=questionmatrixdynamicmodel">Dynamic Matrix</a></td>
+        <td style="vertical-align:middle"><code>{dmatrixid[rowindex].columnid}</code></td>
+        <td style="vertical-align:middle">Accesses a specific matrix cell.</td>
+      </tr>
+      <tr>
+        <td style="vertical-align:middle"><code>{dmatrixid[-1].columnid}</code><br><code>{dmatrixid[-2].columnid}</code><br>...</td>
+        <td style="vertical-align:middle">Accesses a cell in the last row, the row before the last, and so on.</td>
+      </tr>
+    </tbody>
+  </table>
+</div>
+
+You can also use prefixes, such as `row`, `panel`, `parentPanel`, and `composite` to access a specific question or cell relative to the question you configure: 
+
+<div class="v2-class---doc-table-container">
+  <table class="v2-class---doc-table-container__table">
+    <thead>
+      <tr>
+        <th>Question Type</th>
+        <th>Syntax</th>
+        <th>Action</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td rowspan="7" style="vertical-align:middle"><a href="/form-library/documentation/api-reference/matrix-table-question-model">Single-Select Matrix</a>, <a href="/form-library/documentation/api-reference/matrix-table-with-dropdown-list">Multi-Select Matrix</a>, <a href="/form-library/documentation/api-reference/dynamic-matrix-table-question-model">Dynamic Matrix</a></td>
+        <td><code>{row.columnid}</code></td>
+        <td>Accesses a cell in the same row.</td>
+      </tr>
+      <tr>
+        <td><code>{prevRow.columnid}</code></td>
+        <td>Accesses a cell in the previous row.</td>
+      </tr>
+      <tr>
+        <td><code>{nextRow.columnid}</code></td>
+        <td>Accesses a cell in the next row.</td>
+      </tr>
+      <tr>
+        <td style="vertical-align:middle"><code>{rowIndex}</code></td>
+        <td>Accesses the row index within the collection of <a href="https://surveyjs.io/form-library/documentation/api-reference/matrix-table-with-dropdown-list#rows">all rows</a>. Starts with 1.</td>
+      </tr>
+      <tr>
+        <td style="vertical-align:middle"><code>{visibleRowIndex}</code></td>
+        <td>Accesses the row index within the collection of <a href="https://surveyjs.io/form-library/documentation/api-reference/matrix-table-with-dropdown-list#visibleRows">visible rows</a>. Starts with 1.</td>
+      </tr>
+      <tr>
+        <td style="vertical-align:middle"><code>{rowName}</code></td>
+        <td>Accesses the row name (the <code>value</code> property within objects in the <a href="https://surveyjs.io/form-library/documentation/api-reference/matrix-table-with-dropdown-list#rows"><code>rows</code></a> array). Use this placeholder if you need to distinguish between matrix rows.</td>
+      </tr>
+      <tr>
+        <td style="vertical-align:middle"><code>{rowTitle}</code></td>
+        <td>Accesses the row title (the <code>text</code> property within objects in the <a href="https://surveyjs.io/form-library/documentation/api-reference/matrix-table-with-dropdown-list#rows"><code>rows</code></a> array).</td>
+      </tr>
+      <tr>
+        <td style="vertical-align:middle"><a href="/form-library/documentation/api-reference/matrix-table-with-dropdown-list">Multi-Select Matrix</a>, <a href="/form-library/documentation/api-reference/dynamic-matrix-table-question-model">Dynamic Matrix</a></td>
+        <td><code>{totalRow.columnid}</code></td>
+        <td>Accesses a cell in the total row.</td>
+      </tr>
+      <tr>
+        <td rowspan="4" style="vertical-align:middle"><a href="/form-library/documentation/api-reference/dynamic-panel-model">Dynamic Panel</a></td>
+        <td><code>{panel.qid}</code></td>
+        <td>Accesses a question in the same panel.</td>
+      </tr>
+      <tr>
+        <td><code>{prevPanel.qid}</code></td>
+        <td>Accesses a question in the previous panel.</td>
+      </tr>
+      <tr>
+        <td><code>{nextPanel.qid}</code></td>
+        <td>Accesses a question in the next panel.</td>
+      </tr>
+      <tr>
+        <td style="vertical-align:middle"><code>{parentPanel.qid}</code></td>
+        <td>Accesses a question in a parent Dynamic Panel.<br>Applies when one Dynamic Panel question is nested in another.</td>
+      </tr>
+      <tr>
+        <td><a href="/form-library/documentation/customize-question-types/create-composite-question-types">Composite questions</a></td>
+        <td style="vertical-align:middle"><code>{composite.qid}</code></td>
+        <td>Accesses a question in the same composite question.</td>
+      </tr>
+    </tbody>
+  </table>
+</div>
+
+[View Demo](/Examples/Library?id=condition-dynamic (linkStyle))
+
+### Element Properties
+
+Using element properties in dynamic texts and expressions is helpful when you need to reference metadata that isn't part of the survey result&mdash;for example, to read an element's visibility, disabled state, custom property values, or item-level attributes. To reference an element property inside a dynamic text or expression, use the following syntax:
+
+| Operator | Description | Example |
+| -------- | ----------- | ------- |
+| `{$elname.propname}` | Returns the value of a property on another survey element. Use the element's `name` to reference questions, panels, and pages, or use the `survey` keyword to access survey-level properties. | `{$question1.visible}`<br>`{$page1.visible}`<br>`{$survey.visible}` |
+| `{$self.propname}` | Returns the value of a property on the current element. | `{$self.choices[0].text}` |
+| `{$item.propname}` | Returns the value of a property on a choice item or a matrix row/column within a [`choicesVisibleIf`](https://surveyjs.io/form-library/documentation/api-reference/dropdown-menu-model#choicesVisibleIf), [`rowsVisibleIf`](https://surveyjs.io/form-library/documentation/api-reference/matrix-table-question-model#rowsVisibleIf), or [`columnsVisibleIf`](https://surveyjs.io/form-library/documentation/api-reference/matrix-table-question-model#columnsVisibleIf) expression. | `{$item.score}` |
+
+For example, the following code uses item-level properties to implement cascading dropdowns. The `"program"` dropdown filters items based on the selected college, and the `"course"` dropdown filters items based on the selected program. Both filters use `{$item.propname}` to access item attributes defined through custom properties.
+
+<details>
+  <summary>View Code Example</summary>
+
+```js
+import { Serializer } from " survey-core";
+
+Serializer.addProperty("itemvalue", { name: "college" });
+Serializer.addProperty("itemvalue", { name: "program" });
+
+const surveyJson = {
+  "title": "STUDENT FEEDBACK ON CLASSROOM TEACHING",
+  "pages": [
+    {
+      "name": "intro",
+      "elements": [
+        {
+          "type": "dropdown",
+          "name": "college",
+          "title": "Select your college",
+          "placeholder": "Select college...",
+          "choices": [
+            "Science College",
+            "Engineering College",
+            "Management College",
+            "Medical College",
+            "Fine Arts College"
+          ]
+        },
+        {
+          "type": "dropdown",
+          "name": "program",
+          "title": "Program and specialization",
+          "choices": [
+            { "value": "bsc_cs", "text": "B.Sc - Computer Science", "college": "Science College" },
+            { "value": "bsc_phy", "text": "B.Sc - Physics", "college": "Science College" },
+            { "value": "bsc_chem", "text": "B.Sc - Chemistry", "college": "Science College" },
+
+            { "value": "btech_cse", "text": "B.Tech - Computer Science & Engineering", "college": "Engineering College" },
+            { "value": "btech_mech", "text": "B.Tech - Mechanical Engineering", "college": "Engineering College" },
+            { "value": "btech_civil", "text": "B.Tech - Civil Engineering", "college": "Engineering College" },
+
+            { "value": "bba", "text": "BBA - Bachelor of Business Administration", "college": "Management College" },
+            { "value": "mba", "text": "MBA - Master of Business Administration", "college": "Management College" },
+            { "value": "pgdm", "text": "PGDM - Post Graduate Diploma in Management", "college": "Management College" },
+
+            { "value": "mbbs", "text": "MBBS - Bachelor of Medicine and Surgery", "college": "Medical College" },
+            { "value": "bds", "text": "BDS - Bachelor of Dental Surgery", "college": "Medical College" },
+            { "value": "bpharma", "text": "B.Pharm - Bachelor of Pharmacy", "college": "Medical College" },
+
+            { "value": "bfa_paint", "text": "BFA - Painting", "college": "Fine Arts College" },
+            { "value": "bfa_sculpt", "text": "BFA - Sculpture", "college": "Fine Arts College" },
+            { "value": "bfa_photo", "text": "BFA - Photography", "college": "Fine Arts College" }
+          ],
+          "choicesVisibleIf": "{college} = {$item.college}",
+          "enableIf": "{college} notempty",
+          "placeholder": "Select program...",
+          "startWithNewLine": false
+        },
+        {
+          "type": "dropdown",
+          "name": "course",
+          "title": "Course or subject taken",
+          "choices": [
+            { "value": "ds", "text": "Data Structures", "program": "bsc_cs" },
+            { "value": "os", "text": "Operating Systems", "program": "bsc_cs" },
+            { "value": "algorithms", "text": "Algorithms", "program": "bsc_cs" },
+
+            { "value": "quantum_phy", "text": "Quantum Physics", "program": "bsc_phy" },
+            { "value": "optics", "text": "Optics", "program": "bsc_phy" },
+            { "value": "thermo", "text": "Thermodynamics", "program": "bsc_phy" },
+
+            { "value": "organic_chem", "text": "Organic Chemistry", "program": "bsc_chem" },
+            { "value": "inorganic_chem", "text": "Inorganic Chemistry", "program": "bsc_chem" },
+            { "value": "physical_chem", "text": "Physical Chemistry", "program": "bsc_chem" },
+
+            { "value": "oop", "text": "Object-Oriented Programming", "program": "btech_cse" },
+            { "value": "networks", "text": "Computer Networks", "program": "btech_cse" },
+            { "value": "ai", "text": "Artificial Intelligence", "program": "btech_cse" },
+
+            { "value": "thermo_mech", "text": "Thermodynamics", "program": "btech_mech" },
+            { "value": "fluid_mech", "text": "Fluid Mechanics", "program": "btech_mech" },
+            { "value": "machine_design", "text": "Machine Design", "program": "btech_mech" },
+
+            { "value": "structural", "text": "Structural Engineering", "program": "btech_civil" },
+            { "value": "surveying", "text": "Surveying", "program": "btech_civil" },
+            { "value": "geotech", "text": "Geotechnical Engineering", "program": "btech_civil" },
+
+            { "value": "marketing", "text": "Marketing Management", "program": "bba" },
+            { "value": "finance", "text": "Financial Accounting", "program": "bba" },
+            { "value": "hr", "text": "Human Resource Management", "program": "bba" },
+
+            { "value": "strategic", "text": "Strategic Management", "program": "mba" },
+            { "value": "leadership", "text": "Leadership and Ethics", "program": "mba" },
+            { "value": "business_analysis", "text": "Business Analytics", "program": "mba" },
+
+            { "value": "economics", "text": "Managerial Economics", "program": "pgdm" },
+            { "value": "operations", "text": "Operations Management", "program": "pgdm" },
+            { "value": "digital_marketing", "text": "Digital Marketing", "program": "pgdm" },
+
+            { "value": "anatomy", "text": "Human Anatomy", "program": "mbbs" },
+            { "value": "physiology", "text": "Physiology", "program": "mbbs" },
+            { "value": "pathology", "text": "Pathology", "program": "mbbs" },
+
+            { "value": "oral_bio", "text": "Oral Biology", "program": "bds" },
+            { "value": "dental_materials", "text": "Dental Materials", "program": "bds" },
+            { "value": "periodontics", "text": "Periodontics", "program": "bds" },
+
+            { "value": "pharmaceutics", "text": "Pharmaceutics", "program": "bpharma" },
+            { "value": "pharmacology", "text": "Pharmacology", "program": "bpharma" },
+            { "value": "pharma_chem", "text": "Pharmaceutical Chemistry", "program": "bpharma" },
+
+            { "value": "color_theory", "text": "Color Theory", "program": "bfa_paint" },
+            { "value": "portrait_painting", "text": "Portrait Painting", "program": "bfa_paint" },
+            { "value": "art_history", "text": "Art History", "program": "bfa_paint" },
+
+            { "value": "clay_modelling", "text": "Clay Modelling", "program": "bfa_sculpt" },
+            { "value": "stone_carving", "text": "Stone Carving", "program": "bfa_sculpt" },
+            { "value": "metal_casting", "text": "Metal Casting", "program": "bfa_sculpt" },
+
+            { "value": "digital_photo", "text": "Digital Photography", "program": "bfa_photo" },
+            { "value": "lighting", "text": "Studio Lighting", "program": "bfa_photo" },
+            { "value": "photo_editing", "text": "Photo Editing Techniques", "program": "bfa_photo" }
+          ],
+          "choicesVisibleIf": "{program} = {$item.program}",
+          "enableIf": "{program} notempty",
+          "placeholder": "Select course...",
+          "startWithNewLine": false
+        },
+        // ...
+      ]
+    },
+    // ..
+  ],
+  // ...
+};
+```
+
+</details>
+
+[View Demo](https://surveyjs.io/form-library/examples/education/student-feedback-form-template/ (linkStyle))
+
+### Variables
+
+Variables are used to store JavaScript-calculated values. To create or change a variable, call the Survey's [`setVariable(name, value)`](https://surveyjs.io/Documentation/Library?id=surveymodel#setVariable) method. In the following code, this method sets a `currentYear` variable used to display the current year in an Html question:
+
+```js
+import { Model } from "survey-core";
+
+const surveyJson = {
+  "elements": [{
+    "name": "footer",
+    "type": "html",
+    "html": "&copy; 2015-{currentyear} Devsoft Baltic OÜ"
+  }]
+};
+
+const survey = new Model(surveyJson);
+
+survey.setVariable("currentyear", new Date().getFullYear());
+```
+
+If you need to get a variable's value, call the [`getVariable(name)`](https://surveyjs.io/Documentation/Library?id=surveymodel#getVariable) method. For example, the following code outputs the `currentyear` variable's value into the browser's console:
+
+```js
+console.log(survey.getVariable("currentyear"));
+```
+
+You can also call the [`getVariableNames()`](https://surveyjs.io/Documentation/Library?id=surveymodel#getVariableNames) method to get a list of all available variables:
+
+```js
+console.log(survey.getVariableNames()); // Outputs [ "currentyear" ]
+```
+
+### Calculated Values
+
+Calculated values allow you to register an [expression](#expressions) under a required name. If the expression includes [questions](#question-values), [variables](#variables), or [functions](#built-in-functions), it is recalculated each time their values are changed.
+
+To configure a calculated value, define the [`calculatedValues`](https://surveyjs.io/Documentation/Library?id=surveymodel#calculatedValues) array in the survey JSON schema. Each object in this array should contain the following fields:
+
+- `name` - A name that identifies the calculated value.
+- `expression` - An expression that returns the calculated value.
+- `includeIntoResult` - A Boolean property that specifies whether to include the calculated value in survey results.
+
+The following code shows how to calculate a full name value based on the first and last names:
+
+```js
+const surveyJson = {
+  "elements": [
+    { "name": "firstName", "type": "text", "title": "First Name", "defaultValue": "John" },
+    { "name": "lastName", "type": "text", "title": "Last Name", "defaultValue": "Smith" },
+    {
+      "name": "greetings",
+      "type": "html",
+      "html": "<p>Hello, {fullname}!</p>"
+    }
+  ],
+  "calculatedValues": [{
+    "name": "fullname",
+    "expression": "{firstName} +  ' ' + {lastName}"
+  }]
+};
+```
+
+[View Demo](https://surveyjs.io/form-library/examples/custom-variables-for-background-form-calculations/ (linkStyle))
+
+<div id="variables-vs-question-values"></div>
+
+### Variables vs Calculated Values
+
+Variables and calculated values are both used to perform custom calculations within a survey. However, they also have a number of important differences. The following table compares variables with calculated values across multiple criteria:
+
+| Criteria | Variables | Calculated values |
+|--------- | --------- | ----------------- |
+| Configuration | Configured using JavaScript code | Configured using an expression in the survey JSON schema |
+| Evaluation / Re-evaluation | Evaluated only once&mdash;when set | Evaluated when the survey model is instantiated and re-evaluated each time dynamic values within the expression are changed |
+| Inclusion in survey results | Aren't saved in survey results but can be (see below) | Saved in survey results if the `includeIntoResult` property is enabled |
+
+If you need to save a variable in survey results, create an intermediary calculated value that references the variable. Enable the calculated value's `includeIntoResult` property to save the value in survey results. The following code shows how to save a `currentyear-var` variable value in survey results via a `currentyear` calculated value:
+
+```js
+import { Model } from "survey-core";
+
+const surveyJson = {
+  "elements": [{
+    "name": "footer",
+    "type": "html",
+    "html": "&copy; 2015-{currentyear} Devsoft Baltic OÜ"
+  }],
+  "calculatedValues": [{
+    "name": "currentyear",
+    "expression": "{currentyear-var}",
+    "includeIntoResult": true
+  }]
+};
+
+const survey = new Model(surveyJson);
+
+survey.setVariable("currentyear-var", new Date().getFullYear());
+```
+
+## Expressions
+
+Expressions allow you to add logic to your survey and perform calculations right in the survey JSON schema. Expressions are evaluated and re-evaluated at runtime.
+
+SurveyJS supports the following expression types:
+
+- String expression   
+  An expression that evaluates to a string value. The following string expression evaluates to `"Adult"` if the [`age`](#age) function returns a value of 21 or higher; otherwise, the expression evaluates to `"Minor"`:
+
+    ```js
+    "expression": "iif(age({birthdate}) >= 21, 'Adult', 'Minor')"
+    ```
+
+- Numeric expression    
+  An expression that evaluates to a number. The following numeric expression evaluates to the sum of the `total1` and `total2` question values:
+
+    ```js
+    "expression": "sum({total1}, {total2})"
+    ```
+
+- Boolean expression    
+  An expression that evaluates to `true` or `false`. Boolean expressions are widely used to implement conditional logic. Refer to the following help topic for more information: [Conditional Visibility](#conditional-visibility).
+
+Expressions can include question names, variables, and calculated values (described in the [Dynamic Texts](#dynamic-texts) section). Plus, expressions can use [built-in](#built-in-functions) and [custom functions](#custom-functions).
+
+### Supported Operators
+
+The SurveyJS expression engine is built upon the <a href="https://github.com/pegjs/pegjs" target="_blank">PEG.js</a> parser generator. The following table gives a brief overview of operators that you can use within expressions. For a detailed look at the grammar rules used by the expression parser, refer to the [`survey-library`](https://github.com/surveyjs/survey-library/blob/70ed9d8cb5a0672cd5d106dabba9b1ef35cc8186/packages/survey-core/src/expressions/grammar.pegjs) GitHub repository.
+
+| Operator | Description | Expression example |
+| -------- | ----------- | ------------------ |
+| `empty` | Returns `true` if the value is `undefined` or `null`. | `"{q1} empty"` | 
+| `notempty` | Returns `true` if the value is different from `undefined` and `null`. | `"{q1} notempty"` | 
+| <code>&#124;&#124;</code> / `or` | Combines two or more conditions and returns `true` if *any* of them is `true`. | `"{q1} empty or {q2} empty"` |
+| `&&` / `and`  | Combines two or more conditions and returns `true` if *all* of them are `true`. | `"{q1} empty and {q2} empty"` |
+| `!` / `negate` | Returns `true` if the condition returns `false`, and vice versa. | `!{q1}` |
+| `<=` / `lessorequal`  | Compares two values and returns `true` if the first is less or equal to the second. | `"{q1} <= 10"` |
+| `>=` / `greaterorequal`  | Compares two values and returns `true` if the first is greater or equal to the second. | `"{q1} >= 10"` |
+| `=` / `==` / `equal`  | Compares two values and returns `true` if they are loosely equal (that is, their type is disregarded). | `"{q1} = 10"` |
+| `!=` / `<>` / `notequal`  | Compares two values and returns `true` if they are not loosely equal. | `"{q1} != 10"` |
+| `<` / `less`  | Compares two values and returns `true` if the first is less than the second. | `"{q1} < 10"` |
+| `>` / `greater`  | Compares two values and returns `true` if the first is greater than the second. | `"{q1} > 10"` |
+| `+`  | Adds up two values. | `"{q1} + {q2}"` |
+| `-`  | Subtracts the second value from the first. | `"{q1} - {q2}"` |
+| `*`  | Multiplies two values. | `"{q1} * {q2}"` |
+| `/`  | Divides the first value by the second. | `"{q1} / {q2}"` |
+| `%`  | Returns the remainder of the division of the first value by the second. | `"{q1} % {q2}"` |
+| `^` / `power`  | Raises the first value to the power of the second. | `"{q1} ^ {q2}"` |
+| `*=` / `contains` / `contain`  | Compares two values and returns `true` if the first value contains the second value within it. | `"{q1} contains 'abc'"` |
+| `notcontains` / `notcontain` | Compares two values and returns `true` if the first value doesn't contain the second value within it. | `"{q1} notcontains 'abc'"` |
+| `anyof` | Compares a value with an array of values and returns `true` if the value is present, or compares two arrays and returns `true` if the first array includes any value from the second. | `"{q1} anyof [ 'value1', 'value2', 'value3' ]"` |
+| `noneof` | Compares a value with an array of values and returns `true` if the value is absent, or compares two arrays and returns `true` if the first array includes none of the values from the second. | `"{q1} noneof [ 'value1', 'value2', 'value3' ]"` |
+| `allof` | Compares two arrays and returns `true` if the first array includes all values from the second. | `"{q1} allof [ 'value1', 'value2', 'value3' ]"` |
+| `#` | Disables type conversion for a referenced value (e.g., string values `"true"`, `"false"`, `"123"` won't be converted to corresponding Boolean and numeric values). | `"{#q1}"` |
+
+> Comparison operations are case-sensitive.
+
+### Built-In Functions
+
+Functions allow you to perform additional calculations within an expression. One expression can contain multiple function calls.
+
+Functions can accept arguments. For example, the following expression shows the built-in [`age`](#age) and [`iif`](#iif) functions. `age` accepts the value of a `birthdate` question. `iif` accepts three arguments: a condition, a value to return when the condition is truthy, and a value to return when the condition is falsy.
+
+```js
+"expression": "iif(age({birthdate}) >= 21, 'Adult', 'Minor')"
+```
+
+The following built-in functions are available:
+
+- [`iif`](#iif)
+- [`isContainerReady`](#iscontainerready)
+- [`isDisplayMode`](#isdisplaymode)
+- [`age`](#age)
+- [`currentDate`](#currentdate)
+- [`today`](#today)
+- [`year`](#year)
+- [`month`](#month)
+- [`day`](#day)
+- [`weekday`](#weekday)
+- [`getDate`](#getdate)
+- [`dateAdd`](#dateadd)
+- [`dateDiff`](#datediff)
+- [`sum`](#sum)
+- [`max`](#max)
+- [`min`](#min)
+- [`avg`](#avg)
+- [`round`](#round)
+- [`trunc`](#trunc)
+- [`sumInArray`](#suminarray)
+- [`maxInArray`](#maxinarray)
+- [`minInArray`](#mininarray)
+- [`avgInArray`](#avginarray)
+- [`countInArray`](#countinarray)
+- [`displayValue`](#displayvalue)
+- [`propertyValue`](#propertyvalue)
+
+If you do not find a required function in the list above, you can [implement a custom function](#custom-functions) with the required functionality.
+
+---
+
+#### `iif`
+
+*Definition*: `iif(condition: expression, valueIfTrue: any, valueIfFalse: any): any`
+
+Returns the `valueIfTrue` value if the `condition` is truthy or the `valueIfFalse` value if the `condition` is falsy.
+
+*Example*: `"expression": "iif({question1} + {question2} > 20, 'High', 'Low')"`
+
+[View Source Code](https://github.com/surveyjs/survey-library/blob/70ed9d8cb5a0672cd5d106dabba9b1ef35cc8186/packages/survey-core/src/functionsfactory.ts#L414-L419 (linkStyle))
+
+---
+
+#### `isContainerReady`
+
+*Definition*: `isContainerReady(nameOfPanelOrPage: string): boolean`
+
+Returns `true` if all questions in a given panel or page have valid input; otherwise, returns `false`. An empty question value is considered valid if neither validators nor required status is defined for it.
+
+*Example*: `"expression": "isContainerReady('page1')"`
+
+[View Source Code](https://github.com/surveyjs/survey-library/blob/70ed9d8cb5a0672cd5d106dabba9b1ef35cc8186/packages/survey-core/src/functionsfactory.ts#L496-L518 (linkStyle))
+
+---
+
+#### `isDisplayMode`
+
+*Definition*: `isDisplayMode(): boolean`
+
+Returns `true` if the survey is in display or preview mode.
+
+*Example*: `"expression": "isDisplayMode()"` 
+
+[View Source Code](https://github.com/surveyjs/survey-library/blob/70ed9d8cb5a0672cd5d106dabba9b1ef35cc8186/packages/survey-core/src/functionsfactory.ts#L520-L523 (linkStyle))  
+
+---
+
+#### `age`
+
+*Definition*: `age(birthdate: any): number`  
+
+Returns age according to a given birthdate. The date argument (which is typically taken from a question) should be defined as a valid [JavaScript Date](https://www.w3schools.com/jsref/jsref_obj_date.asp).
+
+*Example*: `"expression": "age({birthdate})"`
+
+[View Source Code](https://github.com/surveyjs/survey-library/blob/70ed9d8cb5a0672cd5d106dabba9b1ef35cc8186/packages/survey-core/src/functionsfactory.ts#L439-L443 (linkStyle))  
+
+---
+
+#### `currentDate`
+
+*Definition*: `currentDate(): Date`
+
+Returns the current date and time. 
+
+*Example*: `"expression": "currentDate()"`
+
+[View Source Code](https://github.com/surveyjs/survey-library/blob/70ed9d8cb5a0672cd5d106dabba9b1ef35cc8186/packages/survey-core/src/functionsfactory.ts#L525-L528 (linkStyle))  
+
+---
+
+#### `today`
+
+*Definition*: `today(daysToAdd?: number): Date`
+
+Returns the current date or a date shifted from the current by a given number of days. For example, `today()` returns the current date, 0 hours, 0 minutes, 0 seconds; `today(-1)` returns yesterday's date, same time; `today(1)` returns tomorrow's date, same time.
+
+*Examples*:
+
+- `"expression": "today()"`
+- `"expression": "today(2)"`
+
+[View Source Code](https://github.com/surveyjs/survey-library/blob/70ed9d8cb5a0672cd5d106dabba9b1ef35cc8186/packages/survey-core/src/functionsfactory.ts#L530-L542 (linkStyle))
+
+---
+
+#### `year`
+
+*Definition*: `year(date?: Date): number`
+
+Returns the year of a given date.
+
+*Example*: `"expression": "year({birthdate})"`
+
+[View Source Code](https://github.com/surveyjs/survey-library/blob/70ed9d8cb5a0672cd5d106dabba9b1ef35cc8186/packages/survey-core/src/functionsfactory.ts#L574-L578 (linkStyle))
+
+---
+
+#### `month`
+
+*Definition*: `month(date?: Date): number`
+
+Returns the month of a given date as a value from 1 (January) to 12 (December).
+
+*Example*: `"expression": "month({birthdate})"`
+
+[View Source Code](https://github.com/surveyjs/survey-library/blob/70ed9d8cb5a0672cd5d106dabba9b1ef35cc8186/packages/survey-core/src/functionsfactory.ts#L580-L584 (linkStyle))
+
+---
+
+#### `day`
+
+*Definition*: `day(date?: Date): number`
+
+Returns the day of the month for a given date as a value from 1 to 31.
+
+*Example*: `"expression": "day({birthdate})"`
+
+[View Source Code](https://github.com/surveyjs/survey-library/blob/70ed9d8cb5a0672cd5d106dabba9b1ef35cc8186/packages/survey-core/src/functionsfactory.ts#L586-L590 (linkStyle))
+
+---
+
+#### `weekday`
+
+*Definition*: `weekday(date?: Date): number`
+
+Returns the day of the week for a given date as a value from 0 (Sunday) to 6 (Saturday).
+
+*Example*: `"expression": "weekday({birthdate})"`
+
+[View Source Code](https://github.com/surveyjs/survey-library/blob/70ed9d8cb5a0672cd5d106dabba9b1ef35cc8186/packages/survey-core/src/functionsfactory.ts#L592-L596 (linkStyle))
+
+---
+
+#### `getDate`
+
+*Definition*: `getDate(question: expression): Date`
+
+Returns a Date value converted from a given question's value.
+
+*Example*: `"expression": "getDate({birthdate})"`
+
+[View Source Code](https://github.com/surveyjs/survey-library/blob/70ed9d8cb5a0672cd5d106dabba9b1ef35cc8186/packages/survey-core/src/functionsfactory.ts#L421-L425 (linkStyle))  
+
+---
+
+#### `dateAdd`
+
+*Definition*: `dateAdd(date: any, numberToAdd: number, interval: "days" | "hours" | "minutes" | "seconds" | "months" | "years"): Date`
+
+Adds or subtracts a specified number of days (default), hours, minutes, seconds, months, or years to or from a date value.
+
+*Example*: `"expression": "dateAdd({startDate}, 14, "days")"`
+
+[View Source Code](https://github.com/surveyjs/survey-library/blob/70ed9d8cb5a0672cd5d106dabba9b1ef35cc8186/packages/survey-core/src/functionsfactory.ts#L460-L486 (linkStyle))
+
+---
+
+#### `dateDiff`
+
+*Definition*: `dateDiff(fromDate: any, toDate: any, interval: "days" | "hours" | "minutes" | "seconds" | "months" | "years"): number`
+
+Returns a difference between two given dates in days (default), hours, minutes, seconds, months, or years.
+
+*Example*: `"expression": "dateDiff({birthdate}, today(), "months")"`
+
+[View Source Code](https://github.com/surveyjs/survey-library/blob/70ed9d8cb5a0672cd5d106dabba9b1ef35cc8186/packages/survey-core/src/functionsfactory.ts#L445-L458 (linkStyle))
+
+---
+
+#### `sum`
+
+*Definition*: `sum(param1: number, param2: number, ...): number`  
+
+Returns the sum of passed numbers.
+
+*Example*: `"expression": "sum({total1}, {total2})"`
+
+[View Source Code](https://github.com/surveyjs/survey-library/blob/70ed9d8cb5a0672cd5d106dabba9b1ef35cc8186/packages/survey-core/src/functionsfactory.ts#L223-L232 (linkStyle))
+
+---
+
+#### `max`
+
+*Definition*: `max(param1: number, param2: number, ...): number`
+ 
+Returns the maximum of passed numbers.
+
+*Example*: `"expression": "max({total1}, {total2})"`
+
+[View Source Code](https://github.com/surveyjs/survey-library/blob/70ed9d8cb5a0672cd5d106dabba9b1ef35cc8186/packages/survey-core/src/functionsfactory.ts#L256-L259 (linkStyle))
+
+---
+
+#### `min`
+
+*Definition*: `min(param1: number, param2: number, ...): number`
+
+Returns the minimum of passed numbers.
+
+*Example*: `"expression": "min({total1}, {total2})"`
+
+[View Source Code](https://github.com/surveyjs/survey-library/blob/70ed9d8cb5a0672cd5d106dabba9b1ef35cc8186/packages/survey-core/src/functionsfactory.ts#L251-L254 (linkStyle))
+
+---
+
+#### `avg`
+
+*Definition*: `avg(param1: number, param2: number, ...): number`
+
+Returns the average of passed numbers.
+
+*Example*: `"expression": "avg({total1}, {total2}, {total3})"`
+
+[View Source Code](https://github.com/surveyjs/survey-library/blob/70ed9d8cb5a0672cd5d106dabba9b1ef35cc8186/packages/survey-core/src/functionsfactory.ts#L268-L274 (linkStyle))
+
+---
+
+#### `round`
+
+*Definition*: `round(num: number, precision?: number): number`
+
+Rounds the given number to the specified number of decimal places. If the `precision` parameter is omitted, the given number is rounded to the nearest integer.
+
+*Examples:*
+
+```js
+"expression": "round({numericQuestion}, 2)" // Rounds the value of `numericQuestion` to two decimal places
+"expression": "round(0.5)" // 1
+"expression": "round(-0.5)" // -1
+"expression": "round(1.005, 2)" // 1.01
+"expression": "round(2.175, 2)" // 2.18
+"expression": "round(-1.005, 2)" // -1.01
+"expression": "round(-2.175, 2)" // -2.18
+```
+
+[View Source Code](https://github.com/surveyjs/survey-library/blob/70ed9d8cb5a0672cd5d106dabba9b1ef35cc8186/packages/survey-core/src/functionsfactory.ts#L276-L290 (linkStyle))
+
+---
+
+#### `trunc`
+
+*Definition*: `trunc(num: number, precision?: number): number`
+
+Truncates the given number to the specified number of decimal places. If the `precision` parameter is omitted, only the integer part is returned. Trailing zeroes in the decimal part are removed after truncation.
+
+*Examples:*
+
+```js
+"expression": "trunc({numericQuestion}, 2)" // Truncates the value of `numericQuestion` to two decimal places
+"expression": "trunc(0.5)" // 0
+"expression": "trunc(-0.5)" // 0
+"expression": "trunc(1.005, 2)" // 1
+"expression": "trunc(2.175, 1)" // 2.1
+"expression": "trunc(-1.005, 2)" // -1
+"expression": "trunc(-2.175, 1)" // -2.1
+```
+
+[View Source Code](https://github.com/surveyjs/survey-library/blob/70ed9d8cb5a0672cd5d106dabba9b1ef35cc8186/packages/survey-core/src/functionsfactory.ts#L292-L305 (linkStyle))
+
+---
+
+#### `sumInArray`
+
+*Definition*: `sumInArray(question: expression, dataFieldName: string, filter?: expression): number`
+
+Returns the sum of numbers taken from a specified data field. This data field is searched in an array that contains a user response to a [Multi-Select Matrix](https://surveyjs.io/form-library/examples/multi-select-matrix-question/), [Dynamic Matrix](https://surveyjs.io/form-library/examples/dynamic-matrix-add-new-rows/), or [Dynamic Panel](/form-library/examples/duplicate-group-of-fields-in-form/) question. The optional `filter` parameter defines a rule according to which values are included in the calculation.
+
+The following code sums up values from a `"total"` matrix column but includes only the rows where a `"categoryId"` column equals 1:
+
+*Example*: `"expression": "sumInArray({matrixdynamic}, 'total', {categoryId} = 1)"`
+
+[View Source Code](https://github.com/surveyjs/survey-library/blob/70ed9d8cb5a0672cd5d106dabba9b1ef35cc8186/packages/survey-core/src/functionsfactory.ts#L367-L375 (linkStyle))
+
+---
+
+#### `maxInArray`
+
+*Definition*: `maxInArray(question: expression, valueField: string, returnFieldOrFilter?: string | expression, filter?: expression): number | string`
+
+Returns the maximum numeric value from a specified field within an array. The array is typically the response value of a [Multi-Select Matrix](https://surveyjs.io/form-library/examples/multi-select-matrix-question/), [Dynamic Matrix](https://surveyjs.io/form-library/examples/dynamic-matrix-add-new-rows/), or [Dynamic Panel](/form-library/examples/duplicate-group-of-fields-in-form/) question.
+
+- `valueField`: The field whose numeric values are evaluated.
+- `filter` (optional): An expression that limits which items are included.
+- `returnFieldOrFilter` (optional):
+  - If a string, specifies a field whose value is returned for the item with the maximum `valueField`.
+  - If an expression, acts as a filter (equivalent to passing it as the `filter` argument).
+
+If `returnFieldOrFilter` is not specified or is a filter, the function returns the maximum numeric value. Otherwise, it returns the corresponding field value from the item that produced the maximum.
+
+**Examples:**
+
+```js
+{
+  matrixdynamic: [
+    { name: "A", price: 10, active: true },
+    { name: "B", price: 20, active: true },
+    { name: "C", price: 30, active: false }
+  ]
+}
+```
+
+```js
+"maxInArray({matrixdynamic}, 'price')" // 30
+"maxInArray({matrixdynamic}, 'price', 'name')" // C
+"maxInArray({matrixdynamic}, 'price', active = true)" // 20
+"maxInArray({matrixdynamic}, 'price', 'name', active = true)" // B
+```
+
+[View Source Code](https://github.com/surveyjs/survey-library/blob/70ed9d8cb5a0672cd5d106dabba9b1ef35cc8186/packages/survey-core/src/functionsfactory.ts#L386-L393 (linkStyle))
+
+---
+
+#### `minInArray`
+
+*Definition*: `minInArray(question: expression, valueField: string, returnFieldOrFilter?: string | expression, filter?: expression): number | string`
+ 
+Returns the minimum numeric value from a specified field within an array. The array is typically the response value of a [Multi-Select Matrix](https://surveyjs.io/form-library/examples/multi-select-matrix-question/), [Dynamic Matrix](https://surveyjs.io/form-library/examples/dynamic-matrix-add-new-rows/), or [Dynamic Panel](/form-library/examples/duplicate-group-of-fields-in-form/) question.
+
+- `valueField`: The field whose numeric values are evaluated.
+- `filter` (optional): An expression that limits which items are included.
+- `returnFieldOrFilter` (optional):
+  - If a string, specifies a field whose value is returned for the item with the minimum `valueField`.
+  - If an expression, acts as a filter (equivalent to passing it as the `filter` argument).
+
+If `returnFieldOrFilter` is not specified or is a filter, the function returns the minimum numeric value. Otherwise, it returns the corresponding field value from the item that produced the minimum.
+
+**Examples:**
+
+```js
+{
+  matrixdynamic: [
+    { name: "A", price: 10, active: false },
+    { name: "B", price: 20, active: true },
+    { name: "C", price: 30, active: true }
+  ]
+}
+```
+
+```js
+"minInArray({matrixdynamic}, 'price')" // 10
+"minInArray({matrixdynamic}, 'price', 'name')" // A
+"minInArray({matrixdynamic}, 'price', active = true)" // 20
+"minInArray({matrixdynamic}, 'price', 'name', active = true)" // B
+```
+
+[View Source Code](https://github.com/surveyjs/survey-library/blob/70ed9d8cb5a0672cd5d106dabba9b1ef35cc8186/packages/survey-core/src/functionsfactory.ts#L377-L384 (linkStyle))
+
+---
+
+#### `avgInArray`
+
+*Definition*: `avgInArray(question: expression, valueField: string, filter?: expression): number`
+
+Returns the average of numbers taken from a specified value field. This value field is searched in an array that contains a user response to a [Multi-Select Matrix](https://surveyjs.io/form-library/examples/multi-select-matrix-question/), [Dynamic Matrix](https://surveyjs.io/form-library/examples/dynamic-matrix-add-new-rows/), or [Dynamic Panel](/form-library/examples/duplicate-group-of-fields-in-form/) question. The optional `filter` parameter defines a rule according to which values are included in the calculation.
+
+The following code finds an average of values within a `"quantity"` matrix column, excluding zeroes:
+
+*Example*: `"expression": "avgInArray({matrixdynamic}, 'quantity', {quantity} > 0)"`
+
+[View Source Code](https://github.com/surveyjs/survey-library/blob/70ed9d8cb5a0672cd5d106dabba9b1ef35cc8186/packages/survey-core/src/functionsfactory.ts#L405-L412 (linkStyle))  
+
+---
+
+#### `countInArray`
+
+*Definition*: `countInArray(question: expression, valueField: string, filter?: expression): number`
+
+Returns the total number of array items in which a specified value field has a value other than `null` or `undefined`. This value field is searched in an array that contains a user response to a [Multi-Select Matrix](https://surveyjs.io/form-library/examples/multi-select-matrix-question/), [Dynamic Matrix](https://surveyjs.io/form-library/examples/dynamic-matrix-add-new-rows/), or [Dynamic Panel](/form-library/examples/duplicate-group-of-fields-in-form/) question.
+
+The following code finds the total number of matrix rows with a `"quantity"` column value greater than zero but includes only the rows where a `"categoryId"` column equals 1.:
+
+*Example*: `"expression": "countInArray({matrixdynamic}, 'quantity', {quantity} > 0 and {categoryId} = 1)"`
+
+[View Source Code](https://github.com/surveyjs/survey-library/blob/70ed9d8cb5a0672cd5d106dabba9b1ef35cc8186/packages/survey-core/src/functionsfactory.ts#L395-L403 (linkStyle))
+
+---
+
+#### `displayValue`
+
+*Definition*: `displayValue(questionName: string, value?: any): any`
+
+Returns a question's display text. Supports questions nested within panels or matrices.
+
+The second parameter allows you to get a display text associated with a specific value rather than with the current question value. For instance, the following expression references a display text that corresponds to value 5 in a Dropdown question. If you don't pass the second parameter, the `displayValue` function returns a display text for the currently selected question value.
+
+*Example*: `"expression": "displayValue('my-dropdown-question', 5)"`
+
+[View Source Code](https://github.com/surveyjs/survey-library/blob/70ed9d8cb5a0672cd5d106dabba9b1ef35cc8186/packages/survey-core/src/functionsfactory.ts#L620-L639 (linkStyle))
+
+> When using the `displayValue` function within a [`setValueExpression`](https://surveyjs.io/form-library/documentation/api-reference/question#setValueExpression), specify the [`setValueIf`](https://surveyjs.io/form-library/documentation/api-reference/question#setValueIf) expression as well. This requirement stems from the fact that the `setValueExpression` is reevaluated only when `setValueIf` is `true` or once the value of a referenced question is changed. Although you do pass a question name to the `displayValue` function, this name is only used to access the question within JavaScript code and doesn't directly reference it. To trigger the reevaluation in this case, define the `setValueIf` expression as follows:
+>
+> ```js
+> "setValueExpression": "displayValue('my-dropdown-question')",
+> "setValueIf": "{my-dropdown-question} notempty"
+> ```
+
+---
+
+#### `propertyValue`
+
+> This function is obsolete. Use the dollar sign (`$`) to access property values instead. For details, see the [Element Properties](#element-properties) section.
+
+*Definition*: `propertyValue(questionName: string, propertyName: string): any`
+
+Returns the value of a property specified for a given question. Supports questions nested within panels or matrices.
+
+*Example*: `"expression": "propertyValue('question1', 'visible')"`
+
+[View Source Code](https://github.com/surveyjs/survey-library/blob/70ed9d8cb5a0672cd5d106dabba9b1ef35cc8186/packages/survey-core/src/functionsfactory.ts#L641-L657 (linkStyle))
+
+### Custom Functions
+
+In addition to [built-in functions](#built-in-functions), expressions can use custom functions. They allow you to extend the functionality of your survey. 
+
+#### Implement a Custom Function
+
+Your custom function must accept only one array-like parameter that will contain all the passed arguments. For example, the following code passes two arguments to a custom function `myFunc`:
+
+```js
+"expression": "myFunc({question1}, {question2})"
+```
+
+However, the `myFunc` implementation must accept only one parameter&mdash;an array that contains all arguments:
+
+```js
+function myFunc(params) {
+  let q1_value = params[0];
+  let q2_value = params[1];
+  // ...
+  return someValue;
+}
+```
+
+After you implement a custom function, you need to register it:
+
+```js
+import { registerFunction } from "survey-core";
+
+registerFunction({
+  name: "myFunc",
+  func: myFunc
+});
+```
+
+For illustrative purposes, the code below shows the built-in `age` function implementation:
+
+```js
+import { registerFunction } from "survey-core";
+
+// Accepts a birthdate and returns the current age in full years
+function age(params: any[]): any {
+  if (!params && params.length < 1) return null;
+  if (!params[0]) return null;
+  var birthDate = new Date(params[0]);
+  var today = new Date();
+  var age = today.getFullYear() - birthDate.getFullYear();
+  var m = today.getMonth() - birthDate.getMonth();
+  if (m < 0 || (m === 0 && today.getDate() < birthDate.getDate())) {
+    age -= age > 0 ? 1 : 0;
+  }
+  return age;
+}
+// Register the `age` function under the `age` alias
+registerFunction({ name: "age", func: age });
+```
+
+[View Demo](https://surveyjs.io/form-library/examples/condition-customfunctions/ (linkStyle))
+
+#### Access Survey Elements Within a Custom Function
+
+You can access any survey element via a [survey instance](https://surveyjs.io/Documentation/Library?id=surveymodel). Use the `this.survey` property to get the survey instance within your custom function implementation. This property allows you to design your function so that it accepts a survey element name as a parameter:
+
+```js
+"expression": "myFunc('questionName')"
+```
+
+Within the function implementation, you can use the passed name to get the instance of the corresponding element:
+
+```js
+function myFunc(params) {
+  const questionInstance = this.survey.getQuestionByName(params[0]);
+  // ...
+}
+```
+
+#### Asynchronous Functions
+
+If an expression requires time-consuming calculations or needs to retrieve data from a server, implement an asynchronous custom function. Two types of asynchronous functions are supported:
+
+- Functions that return the result via a callback\
+Use `this.returnResult()` to pass the computed value when it becomes available:
+
+    ```js
+    function asyncFunc(params: any[]): any {
+      setTimeout(() => {
+        this.returnResult(yourValue);
+      }, 100);
+    }
+    ```
+
+- Functions that return a `Promise`\
+Resolve the promise with the computed value:
+
+    ```js
+    async function asyncFunc(params: any[]): any {
+      return new Promise((resolve) => {
+        setTimeout(() => {
+          resolve(yourValue);
+        }, 100);
+      });
+    }
+    ```
+
+After implementing an asynchronous function, register it and set the `isAsync` option to `true` to indicate that the function is asynchronous.
+
+```js
+import { registerFunction } from "survey-core";
+
+registerFunction({
+  name: "asyncFunc",
+  func: asyncFunc,
+  isAsync: true
+});
+```
+
+[View Demo](https://surveyjs.io/Examples/Library?id=questiontype-expression-async (linkStyle))
+
+### Expression Validation
+
+Starting with SurveyJS v2.5.7, expressions can be validated using the [`validateExpressions(options)`](/form-library/documentation/api-reference/survey-data-model#validateExpressions) method.
+
+This method detects the following types of errors:
+
+- Unknown variable\
+The expression references an undefined variable or an unknown question, panel, or page name.
+
+- Unknown function\
+The expression references an unregistered function.
+
+- Semantic error\
+The expression is syntactically valid but has no meaningful effect because it always evaluates to the same value.
+
+- Syntax error\
+The expression contains invalid syntax, such as unmatched parentheses, missing operands, or invalid operators.
+
+When called without arguments, the method validates all four error types. It returns an array of [`IExpressionValidationResult`](/form-library/documentation/iexpressionvalidationresult) objects. Each object contains the survey element and property name that hold the invalid expression, along with detailed error information.
+
+The following example validates survey expressions and determines whether an invalid expression belongs to a question, panel, page, or the survey itself:
+
+```js
+// ...
+// Omitted: `SurveyModel` creation
+// ...
+const results = survey.validateExpressions();
+results.forEach(result => {
+  let element = result.obj;
+  const propertyName = result.propertyName;
+  const errors = result.errors;
+
+  while (
+    !element.isQuestion &&
+    !element.isPanel &&
+    !element.isPage &&
+    !element.isSurvey
+  ) {
+    element = element.getOwner();
+  }
+  const elementName = element.name || "survey";
+
+  // Example: log validation errors
+  console.warn(
+    `Expression error in "${elementName}", property "${propertyName}":`,
+    errors
+  );
+});
+```
+
+You can disable checks for unknown variables, unknown functions, and semantic errors by passing an `options` object with the `variables`, `functions`, or `semantics` property set to `false`. Syntax errors are always validated.
+
+```js
+// ...
+// Omitted: `SurveyModel` creation
+// ...
+
+// Validate syntax errors only
+const results = survey.validateExpressions({
+  variables: false,
+  functions: false,
+  semantics: false
+});
+```
+
+## Conditional Visibility
+
+You can specify whether an individual survey element is visible, read-only, or required based on a condition. This functionality is built upon Boolean expressions. Such expressions evaluate to `true` or `false`.
+
+A survey parses and runs all expressions on startup. If a Boolean expression evaluates to `false`, the corresponding element becomes invisible (or read-only, or optional); if it evaluates to `true`, the element becomes visible (or enabled, or required). After any value used in an expression changes, the survey re-evaluates this expression.
+
+The table below shows examples of Boolean expressions. For a full list of operators available within expressions, refer to the [Supported Operators](#supported-operators) section.
+
+| Expression | Description |
+| ---------- | ----------- |
+| `"{age} >= 21"` | Evaluates to `true` if the `"age"` question has a value of 21 or higher. |
+| `"({rank1} + {rank2} + {rank3}) > 21 and {isLoyal} = 'yes'"` | The `or` and `and` operators combine two or more conditions. |
+| `"{name} notempty"` | Evaluates to `true` if the `"name"` question has any value. |
+| `"{name} empty"`| Evaluates to `true` if the `"name"` question has no value. |
+| `"{speakinglanguages} = ['English', 'Spanish']"` | Evaluates to `true` if strictly English and Spanish are selected in the `"speakinglanguages"` question. If one of the languages is not selected or other languages are selected too, the expression evaluates to `false`. |
+| `"{speakinglanguages} contains 'Spanish'"` | Evaluates to `true` if Spanish is selected. Other languages may or may not be selected. |
+| `"age({birthdate}) >= 21"` | Evaluates to `true` if the `age` function returns 21 or higher. |
+
+You should use different properties to specify the visibility of [questions](#question-visibility) and [items (choices, rows, columns)](#item-visibility-choices-columns-rows).
+
+### Question Visibility
+
+Assign Boolean expressions to the [`visibleIf`](https://surveyjs.io/Documentation/Library?id=Question#visibleIf), [`enableIf`](https://surveyjs.io/Documentation/Library?id=Question#enableIf), and [`requiredIf`](https://surveyjs.io/Documentation/Library?id=Question#requiredIf) properties of questions, panels, and pages. In the following example, the `visibleIf` property is used to hide the `drivers-license` question for respondents under 16 years old:
+
+```js
+const surveyJson = {
+  "elements": [{
+    "name": "birthdate"
+  }, {
+    "name": "drivers-license",
+    "title": "Have you got a driver's license?",
+    "visibleIf": "age({birthdate}) >= 16"
+  }]
+}
+```
+
+If you do not specify the `visibleIf`, `enableIf`, and `requiredIf` properties, an element's state depends on the [`isVisible`](/Documentation/Library?id=Question#isVisible), [`isReadOnly`](/Documentation/Library?id=Question#isReadOnly), and [`isRequired`](/Documentation/Library?id=Question#isRequired) properties. You can specify them at design time or use them to get or set the current state at runtime. If you set one of these properties for a panel or page, all nested questions inherit the setting.
+
+[View Demo](https://surveyjs.io/form-library/examples/implement-conditional-logic-to-change-question-visibility/ (linkStyle))
+
+### Item Visibility (Choices, Columns, Rows)
+
+SurveyJS allows you to control available choices, columns, and rows based on previous answers.
+
+#### Specify Visibility Conditions for Individual Items
+
+Individual items (choices, columns, rows) can be configured with objects. Each object can have a `visibleIf` property that accepts an expression. When the expression evaluates to `true`, the associated item becomes visible.
+
+In the following code, the `SMS` and `WhatsApp` choices are visible only if a user has entered their phone number:
+
+```js
+const surveyJson = {
+  "elements": [{
+    "name": "Contacts"
+    "choices": [
+      "Email",
+      { "value": "SMS", "visibleIf": "{phone} notempty" },
+      { "value": "WhatsApp", "visibleIf": "{phone} notempty" }
+    ]
+  },
+  // ...
+  ]
+}
+```
+
+[View Demo](https://surveyjs.io/Examples/Library?id=condition-choicesVisibleIf (linkStyle))
+
+This technique has one drawback: if a question contains many items, you have to copy the same expression into every item that should have dynamic visibility. If that is your case, use the technique described in the next topic.
+
+#### Combine Visibility Conditions
+
+You can specify one expression that will run against every item (choice, row, column). If the expression evaluates to `true`, the item becomes visible. Assign your expression to the [`choicesVisibleIf`](/Documentation/Library?id=QuestionSelectBase#choicesVisibleIf), [`rowsVisibleIf`](/Documentation/Library?id=questionmatrixmodel#rowsVisibleIf), or [`columnsVisibleIf`](/Documentation/Library?id=questionmatrixmodel#columnsVisibleIf) property. To access the current item, use the `{item}` operand.
+
+The following code shows how to specify the `choicesVisibleIf` property. The `"default"` question includes selected choices from the `"installed"` question. The `"secondChoice"` question also includes selected choices from the `"installed"` question but uses the `choiceVisibleIf` property to filter out the choice selected in the `"default"` question.
+
+```js
+const surveyJson = {
+  "elements": [{
+    "name": "installed",
+    "choices": ["Google Chrome", "Microsoft Edge", "Firefox", "Internet Explorer", "Safari", "Opera"],
+    // ...
+  }, {
+    "name": "default",
+    "choicesFromQuestion": "installed",
+    "choicesFromQuestionMode": "selected"
+    // ...
+  }, {
+    "name": "secondChoice",
+    "choicesFromQuestion": "installed",
+    "choicesFromQuestionMode": "selected",
+    "choicesVisibleIf": "{item} != {default}",
+    // ...
+  }]
+}
+```
+
+## Conditional Survey Logic (Triggers)
+
+Triggers allow you to implement additional logic that isn't related to [read-only or required state or visibility](#conditional-visibility). Each trigger is associated with an expression and an action. A survey re-evaluates this expression each time values used in it are changed. If the expression returns `true`, the survey performs the associated action.
+
+The following triggers are available:
+
+- [`complete`](#complete)
+- [`setvalue`](#setvalue)
+- [`copyvalue`](#copyvalue)
+- [`runexpression`](#runexpression)
+- [`skip`](#skip)
+  
+---
+
+### `complete`
+
+Completes the survey. The `expression` is evaluated only when a user switches to the next page.
+
+In the following code, a trigger completes the survey if the `"age"` question on this page has a value under 18:
+
+```js
+const surveyJson = {
+  "elements": [{
+    "name": "age", 
+    // ...
+  }],
+  "triggers": [
+    { "type": "complete", "expression": "{age} < 18" }
+  ]
+}
+```
+
+[View Demo](https://surveyjs.io/form-library/examples/add-skip-logic-to-survey/ (linkStyle))
+
+---
+
+### `setvalue`
+
+Sets a specified value to a given question. The `setValue` property specifies the value; the `setToName` property specifies the question name.
+
+In the following code, triggers are used to set the `"ageType"` value to `"minor"` or `"adult"` based on the `"age"` question value:
+
+```js
+const surveyJson = {
+  "elements": [{
+    "name": "age", 
+    // ...
+  }, {
+    "name": "ageType",
+    // ...
+  }],
+  "triggers": [{
+    "type": "setvalue",
+    "expression": "{age} < 18",
+    "setToName": "ageType",
+    "setValue": "minor"
+  }, {
+    "type": "setvalue",
+    "expression": "{age} >= 18",
+    "setToName": "ageType",
+    "setValue": "adult"
+  }]
+}
+```
+
+> You can use the [`setValueExpression`](/form-library/documentation/api-reference/question#setValueExpression) and [`setValueIf`](/form-library/documentation/api-reference/question#setValueIf) properties as an alternative.
+
+---
+
+### `copyvalue`
+
+Copies a value from one question to another. The `fromName` property specifies the source question; the `setToName` property specifies the target question.
+
+In the following code, a trigger copies the `"billingAddress"` question value into the `"shippingAddress"` question if the `"sameAsBilling"` question is `Yes`:
+
+```js
+const surveyJson = {
+  "elements": [{
+    "name": "billingAddress", 
+    // ...
+  }, {
+    "name": "shippingAddress",
+    // ...
+  }, {
+    "name": "sameAsBilling",
+    "choices": [ "Yes", "No" ]
+    // ...
+  }],
+  "triggers": [{
+    "type": "copyvalue",
+    "expression": "{sameAsBilling} = 'Yes'",
+    "fromName": "billingAddress",
+    "setToName": "shippingAddress"
+  }]
+}
+```
+
+> You can use the [`setValueExpression`](/form-library/documentation/api-reference/question#setValueExpression) and [`setValueIf`](/form-library/documentation/api-reference/question#setValueIf) properties as an alternative.
+
+---
+
+### `runexpression`
+
+If the `expression` is `true`, the trigger runs another expression specified by the `runExpression` property. You can also save the result of `runExpression` as a question value. For this, assign the question's name to the `setToName` property.
+
+---
+
+### `skip`
+
+Switches the survey to a target question's page and focuses the question. The `gotoName` property specifies the target question.
+
+In the following code, a trigger navigates to the `"additionalInfoPage"` page and focuses the `"additionalInfo"` question if the `"sameAsBilling"` question is `Yes`:
+
+```js
+const surveyJson = {
+ "pages": [{
+   "name": "billingAddressPage",
+   "elements": [{
+     "name": "billingAddress",
+     // ...
+    }]
+  }, {
+   "name": "shippingAddressPage",
+   "elements": [{
+      "name": "sameAsBilling",
+      "choices": [ "Yes", "No" ]
+      // ...
+  }, {     
+     "name": "shippingAddress",
+     "visibleIf": "{sameAsBilling} = 'No'",
+     // ...
+    }]
+  }, {
+   "name": "additionalInfoPage",
+   "elements": [{
+     "name": "additionalInfo",
+     // ...
+    }]
+  }],
+ "triggers": [{
+   "type": "skip",
+   "expression": "{sameAsBilling} = 'Yes'",
+   "gotoName": "additionalInfo"
+  }]
+}
+```

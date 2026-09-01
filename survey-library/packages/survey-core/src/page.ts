@@ -1,0 +1,489 @@
+import { Serializer } from "./jsonobject";
+import { property } from "./decorators";
+import {
+  IPage,
+  IPanel,
+  IElement,
+  ISurvey,
+  IElementUIState,
+} from "./base-interfaces";
+import { PanelModelBase, PanelModel } from "./panel";
+import { CssClassBuilder } from "./utils/cssClassBuilder";
+import { settings } from "./settings";
+
+/**
+ * The `PageModel` object describes a survey page and contains properties and methods that allow you to control the page and access its elements (panels and questions).
+ *
+ * [View Demo](https://surveyjs.io/form-library/examples/nps-question/ (linkStyle))
+ */
+export class PageModel extends PanelModel implements IPage {
+  public isPageContainer: boolean;
+
+  public getType(): string {
+    return "page";
+  }
+  public toString(): string {
+    return this.name;
+  }
+  public get isPage(): boolean {
+    return !this.isPanel;
+  }
+  public get isPanel(): boolean {
+    return !!this.parent;
+  }
+  public getOwner(): any {
+    return this.survey;
+  }
+  public get showPanelAsPage(): boolean {
+    return true;
+  }
+  public get hasEditButton(): boolean {
+    return this.isPanel && this.survey && this.survey.state === "preview"
+     && !!this.parent && !this.parent.isPanel && this.hasQuestionToEdit;
+  }
+  private get hasQuestionToEdit(): boolean {
+    return this.visibleQuestions.some(q => q.hasInput);
+  }
+  protected getElementsForRows(): Array<IElement> {
+    if (!this.isStartPage) {
+      const q = this.singleInput?.currentSingleElement;
+      if (!!q) {
+        if ((<any>q).page === this) return [q];
+        return [];
+      }
+    }
+    return super.getElementsForRows();
+  }
+  protected disposeElements(): void {
+    if (!this.isPageContainer) {
+      super.disposeElements();
+    }
+  }
+  protected onRemoveElement(element: IElement): void {
+    if (this.isPageContainer) {
+      element.parent = null;
+      this.unregisterElementPropertiesChanged(element);
+    } else {
+      super.onRemoveElement(element);
+    }
+  }
+  public getTemplate(): string {
+    return this.isPanel ? "panel" : super.getTemplate();
+  }
+  public getPanelInDesignMode(): PanelModel { return null; }
+  public get no(): string {
+    if (!this.canShowPageNumber() || !this.survey) return "";
+    let no = this.isStartPage ? "" : this.num + ". ";
+    return this.titleSettings.getUpdatedPageNo(this, no);
+  }
+  public addNoFromChild(no: string): string { return no; }
+  public get cssTitleNumber(): string {
+    return this.isPanel ? this.cssClasses.panel.number : this.cssClasses.page.number;
+  }
+  public getCssTitleExpandableSvg(): string {
+    return null;
+  }
+  public get cssRequiredMark(): string {
+    return "";
+  }
+  protected canShowPageNumber(): boolean {
+    return this.survey && (<any>this.survey).showPageNumbers;
+  }
+  protected canShowTitle(survey: ISurvey): boolean {
+    return !survey || (<any>survey).showPageTitles;
+  }
+  protected setTitleValue(val: string): void {
+    super.setTitleValue(val);
+    this.navigationLocStrChanged();
+  }
+  protected getDefaultTitleTagName(): string {
+    return settings.titleTags.page;
+  }
+  /**
+   * Specifies the title text displayed on a navigation button in the TOC or progress bar. Applies when [`showTOC`](#showTOC) is `true` or when [`showProgressBar`](#showProgressBar) is `true`, [`progressBarType`](#progressBarType) is set to `"pages"`, and [`progressBarShowNavigationText`](#progressBarShowNavigationText) is `true`.
+   *
+   * If `navigationTitle` is not specified, the navigation button displays the page [`title`](https://surveyjs.io/form-library/documentation/api-reference/page-model#title) or [`name`](https://surveyjs.io/form-library/documentation/pagemodel#name).
+   *
+   * [Table of Contents Demo](https://surveyjs.io/form-library/examples/table-of-contents/ (linkStyle))
+   *
+   * [Progress Bar Demo](https://surveyjs.io/form-library/examples/configure-form-navigation-with-progress-indicators/ (linkStyle))
+   * @see navigationDescription
+   */
+  public get navigationTitle(): string {
+    return this.getLocStringText(this.locNavigationTitle);
+  }
+  public set navigationTitle(val: string) {
+    this.setLocStringText(this.locNavigationTitle, val);
+  }
+  /**
+   * Specifies the description text displayed on a navigation button in the progress bar. Applies when [`showProgressBar`](#showProgressBar) is `true`, [`progressBarType`](#progressBarType) is set to `"pages"`, and [`progressBarShowNavigationText`](#progressBarShowNavigationText) is `true`.
+   * @see navigationTitle
+   */
+  @property({ localizable: true }) navigationDescription: string;
+  public navigationLocStrChanged(): void {
+    if (this.isLocStrEmpty("navigationTitle")) {
+      this.locTitle.strChanged();
+    }
+    this.locStrChanged("navigationTitle");
+    this.locStrChanged("navigationDescription");
+  }
+  getMarkdownHtml(text: string, name: string, item?: any): string {
+    const result = super.getMarkdownHtml(text, name, item);
+    if (name === "navigationTitle" && this.canShowPageNumber() && result) {
+      return this.num + ". " + result;
+    }
+    return result;
+  }
+  @property({ defaultValue: false }) passed: boolean;
+  protected removeFromParent(): void {
+    if (!!this.survey) {
+      this.removeSelfFromList(this.survey.pages);
+    }
+  }
+  /**
+   * The visible index of the page. It has values from 0 to visible page count - 1.
+   * @see SurveyModel.visiblePages
+   * @see SurveyModel.pages
+   */
+  public get visibleIndex(): number {
+    return this.getPropertyValue("visibleIndex", -1);
+  }
+  public set visibleIndex(val: number) {
+    this.setPropertyValue("visibleIndex", val);
+  }
+  protected canRenderFirstRows(): boolean {
+    return !this.isDesignMode || this.visibleIndex == 0;
+  }
+  protected isQuestionIndexRecursive(): boolean {
+    const res = super.isQuestionIndexRecursive();
+    return res && this.isComplexIndex(this.getStartIndex());
+  }
+  protected getPanelStartIndex(index: number): number {
+    if (this.isQuestionIndexRecursive()) return 0;
+    return index;
+  }
+  protected getPageVisibleIndex(): number { return this.visibleIndex; }
+  getQuestionStartIndex(): string {
+    const res = this.getStartIndex();
+    if (this.isQuestionIndexRecursive()) {
+      return this.getQuestionStartIndexVsVisibleIndex(res, this.num - 1);
+    }
+    return res;
+  }
+  /**
+   * Returns `true` if this page is a start page.
+   *
+   * Refer to the following help topic for more information on how to configure a start page: [Start Page](https://surveyjs.io/form-library/documentation/design-survey-create-a-multi-page-survey#start-page).
+   */
+  public get isStartPage(): boolean {
+    return this.survey && this.survey.isPageStarted(this);
+  }
+  public get isStarted(): boolean { return this.isStartPage; }
+  protected calcCssClasses(css: any): any {
+    if (this.isPanel) return super.calcCssClasses(css);
+    const classes = { page: {}, error: {}, pageTitle: "", pageDescription: "", row: "", rowMultiple: "", pageRow: "", rowCompact: "", rowEnter: "", rowLeave: "", rowDelayedEnter: "", rowReplace: "" };
+    this.copyCssClasses(classes.page, css.page);
+    this.copyCssClasses(classes.error, css.error);
+    if (!!css.pageTitle) {
+      classes.pageTitle = css.pageTitle;
+    }
+    if (!!css.pageDescription) {
+      classes.pageDescription = css.pageDescription;
+    }
+    if (!!css.row) {
+      classes.row = css.row;
+    }
+    if (!!css.pageRow) {
+      classes.pageRow = css.pageRow;
+    }
+    if (!!css.rowMultiple) {
+      classes.rowMultiple = css.rowMultiple;
+    }
+    if (!!css.rowCompact) {
+      classes.rowCompact = css.rowCompact;
+    }
+    if (!!css.rowEnter) {
+      classes.rowEnter = css.rowEnter;
+    }
+    if (!!css.rowDelayedEnter) {
+      classes.rowDelayedEnter = css.rowDelayedEnter;
+    }
+    if (!!css.rowLeave) {
+      classes.rowLeave = css.rowLeave;
+    }
+    if (!!css.rowReplace) {
+      classes.rowReplace = css.rowReplace;
+    }
+    if (this.survey) {
+      this.cssCallbacks.updatePageCssClasses(this, classes);
+    }
+    return classes;
+  }
+  protected getCssPanelTitle(): string {
+    if (this.isPanel) return super.getCssPanelTitle();
+    if (!this.cssClasses.page) return "";
+    return new CssClassBuilder()
+      .append(this.cssClasses.page.title)
+      .toString();
+  }
+  public get cssRoot(): string {
+    if (this.isPanel || !this.cssClasses.page || !this.survey) return "";
+    return new CssClassBuilder()
+      .append(this.cssClasses.page.root)
+      .append(this.cssClasses.page.emptyHeaderRoot, !(<any>this.survey).renderedHasHeader &&
+        !((<any>this.survey).isShowProgressBarOnTop && !(<any>this.survey).isStaring))
+      .toString();
+  }
+  public get cssHeader(): string {
+    return this.cssClasses.page?.header || this.cssClasses.panel?.header;
+  }
+  public get cssContent(): string {
+    return this.cssClasses.page?.content || this.cssClasses.panel?.content;
+  }
+  protected getCssError(cssClasses: any): string {
+    if (this.isPanel) return super.getCssError(cssClasses);
+    return new CssClassBuilder()
+      .append(super.getCssError(cssClasses))
+      .append(cssClasses.page.errorsContainer).toString();
+  }
+  @property({ defaultValue: -1, onSet: (val: number, target: PageModel) => target.onNumChanged(val) }) num: number;
+  /**
+   * @deprecated Use the [`showNavigationButtons`](https://surveyjs.io/form-library/documentation/api-reference/page-model#showNavigationButtons) property instead.
+   * @hidden
+   */
+  public get navigationButtonsVisibility(): string {
+    const result = this.showNavigationButtons;
+    if (result === undefined || result === null) {
+      return "inherit";
+    }
+    return result ? "show" : "hide";
+  }
+  public set navigationButtonsVisibility(val: string) {
+    this.showNavigationButtons = val;
+  }
+  /**
+   * Gets or sets the visibility of the Start, Next, Previous, and Complete navigation buttons on this page. Overrides the [`showNavigationButtons`](https://surveyjs.io/form-library/documentation/api-reference/survey-data-model#showNavigationButtons) property specified on the survey-level.
+   *
+   * Default value: `undefined` (the visibility depends on the survey-level setting)
+   */
+  public get showNavigationButtons(): boolean | string {
+    return this.getPropertyValue("showNavigationButtons", undefined);
+  }
+  public set showNavigationButtons(val: boolean | string) {
+    this.setShowNavigationButtonsProperty(val);
+  }
+  public setShowNavigationButtonsProperty(val: boolean | string) {
+    if (typeof val == "string") {
+      val = val.toLowerCase();
+    }
+    if (val === true || val === false) {
+      this.setPropertyValue("showNavigationButtons", val);
+    } else if (val === "show") {
+      this.setPropertyValue("showNavigationButtons", true);
+    } else if (val === "hide") {
+      this.setPropertyValue("showNavigationButtons", false);
+    } else {
+      this.setPropertyValue("showNavigationButtons", undefined);
+    }
+  }
+  /**
+   * Returns `true` if this is the current page.
+   * @see SurveyModel.currentPage
+   */
+  public get isActive(): boolean {
+    return !!this.survey && <PageModel>this.survey.currentPage === this;
+  }
+  private wasShownValue: boolean = false;
+  /**
+   * Returns `true` if the respondent has already seen this page (it was rendered during the current session or its visited state was restored via [`uiState`](https://surveyjs.io/form-library/documentation/api-reference/survey-data-model#uiState)).
+   */
+  public get wasShown(): boolean {
+    return this.wasRendered || this.wasShownValue;
+  }
+  get hasShown(): boolean {
+    return this.wasShown;
+  }
+  public setWasShown(val: boolean): void {
+    this.wasShownValue = val;
+    if (!val) {
+      this.resetWasRendered();
+    }
+  }
+  // MERGE(V3): recurring conflict vs master (V2). V3 tracks the page's progress state as
+  // `shown`/`wasShown`; V2 uses `passed`/`this.passed` + a `pagePassed` lifecycle callback.
+  // On merge, KEEP THIS V3 VERSION (drop master's `passed`/`pagePassed` block).
+  protected getUIState(): IElementUIState {
+    let result = super.getUIState();
+    if (this.wasShown) {
+      result = result || {};
+      result.shown = true;
+    }
+    return result;
+  }
+  // MERGE(V3): keep `shown`/`setWasShown` here; discard master's `state.passed`/`this.passed`
+  // and its `onPropertyValueChanged("passed", ...) => pagePassed(this)` override.
+  protected setUIState(state: IElementUIState): void {
+    super.setUIState(state);
+    if (state.shown) {
+      this.setWasShown(true);
+    }
+  }
+  protected onFirstRenderingCore(): void {
+    super.onFirstRenderingCore();
+    if (this.isDesignMode) return;
+    if (this.survey) {
+      this.lifecycleCallbacks.pageShown(this);
+    }
+    var els = this.elements;
+    for (var i = 0; i < els.length; i++) {
+      if (els[i].isPanel) {
+        (<PanelModelBase><any>els[i]).randomizeElements(this.areQuestionsRandomized);
+      }
+    }
+    if (this.randomizeElements(this.areQuestionsRandomized)) {
+      const singleQuestion: any = this.singleInput?.currentSingleElement;
+      if (singleQuestion?.page === this) {
+        this.singleInput.currentSingleElement = this.getFirstVisibleElement();
+      }
+    }
+  }
+  /**
+   * Scrolls this page to the top.
+   */
+  public scrollToTop() {
+    if (!!this.survey) {
+      this.survey.scrollElementToTop({ element: this, question: null, page: this, id: this.id, scrollIfVisible: false, scrollIntoViewOptions: { block: "start" } });
+    }
+  }
+  /**
+   * A time period that a respondent has spent on this page so far; measured in seconds. Applies only to [quiz surveys](https://surveyjs.io/form-library/documentation/design-survey-create-a-quiz).
+   * @see timeLimit
+   */
+  public timeSpent = 0;
+  /**
+   * Returns a list of all panels on this page.
+   * @param visibleOnly A Boolean value that specifies whether to include only visible panels.
+   * @param includingDesignTime For internal use.
+   */
+  public getAllPanels(
+    visibleOnly: boolean = false,
+    includingDesignTime: boolean = false
+  ): Array<IPanel> {
+    var result = new Array<IPanel>();
+    this.addPanelsIntoList(result, visibleOnly, includingDesignTime);
+    return result;
+  }
+  public getPanels(visibleOnly: boolean = false, includingDesignTime: boolean = false): Array<IPanel> {
+    return this.getAllPanels(visibleOnly, includingDesignTime);
+  }
+  /**
+   * A time period that a respondent has to complete this page; measured in seconds. Applies only to [quiz surveys](https://surveyjs.io/form-library/documentation/design-survey-create-a-quiz).
+   *
+   * Default value: 0 (time is unlimited)
+   *
+   * Alternatively, you can use the `SurveyModel`'s [`timeLimitPerPage`](https://surveyjs.io/form-library/documentation/surveymodel#timeLimitPerPage) property to specify identical time periods for all survey pages.
+   * @see timeSpent
+   */
+  @property({ defaultValue: 0 }) timeLimit: number;
+  /**
+   * @deprecated Use the [`timeLimit`](https://surveyjs.io/form-library/documentation/api-reference/page-model#timeLimit) property instead.
+   * @hidden
+   */
+  public get maxTimeToFinish(): number {
+    return this.timeLimit;
+  }
+  public set maxTimeToFinish(val: number) {
+    this.timeLimit = val;
+  }
+  public getMaxTimeToFinish(): number {
+    if (this.timeLimit !== 0) return this.timeLimit;
+    const res = !!this.survey ? this.survey.timeLimitPerPage : 0;
+    return res > 0 ? res : 0;
+  }
+  protected onNumChanged(value: number) { }
+  protected onVisibleChanged() {
+    if (this.isRandomizing) return;
+    super.onVisibleChanged();
+    if (this.survey != null) {
+      this.lifecycleCallbacks.pageVisibilityChanged(this, this.isVisible);
+    }
+  }
+
+  public ensureRowsVisibility() {
+    super.ensureRowsVisibility();
+    this.elements.forEach(el => el.ensureRowsVisibility());
+  }
+
+  private _isReadyForClean: boolean = true;
+  public get isReadyForClean(): boolean {
+    return this._isReadyForClean;
+  }
+  public set isReadyForClean(val: boolean) {
+    const oldValue = this._isReadyForClean;
+    this._isReadyForClean = val;
+    if (this._isReadyForClean !== oldValue) {
+      this.isReadyForCleanChangedCallback && this.isReadyForCleanChangedCallback();
+    }
+  }
+  public isReadyForCleanChangedCallback: () => void;
+  public enableOnElementRerenderedEvent(): void {
+    super.enableOnElementRerenderedEvent();
+    this.isReadyForClean = false;
+  }
+  public disableOnElementRerenderedEvent(): void {
+    super.disableOnElementRerenderedEvent();
+    this.isReadyForClean = true;
+  }
+}
+
+Serializer.addClass(
+  "page",
+  [
+    {
+      name: "showNavigationButtons:boolean",
+      defaultFunc: () => undefined,
+      onSetValue: function (obj: any, value: any) {
+        obj && obj.setShowNavigationButtonsProperty(value);
+      },
+      alternativeName: "navigationButtonsVisibility"
+    },
+    {
+      name: "timeLimit:number",
+      alternativeName: "maxTimeToFinish",
+      default: 0,
+      minValue: 0,
+      visibleIf: (obj: any) => {
+        return !!obj.survey && obj.survey.showTimer;
+      }
+    },
+    {
+      name: "navigationTitle",
+      serializationProperty: "locNavigationTitle",
+    },
+    {
+      name: "navigationDescription",
+      serializationProperty: "locNavigationDescription",
+    },
+    { name: "title:text", serializationProperty: "locTitle" },
+    { name: "description:text", serializationProperty: "locDescription" },
+    { name: "state", visible: false },
+    { name: "isRequired", visible: false },
+    { name: "startWithNewLine", visible: false },
+    { name: "width", visible: false },
+    { name: "minWidth", visible: false },
+    { name: "maxWidth", visible: false },
+    { name: "colSpan", visible: false, isSerializable: false },
+    { name: "effectiveColSpan:number", visible: false, isSerializable: false },
+    { name: "innerIndent", visible: false },
+    { name: "indent", visible: false },
+    { name: "page", visible: false, isSerializable: false },
+    { name: "showNumber", visible: false },
+    { name: "showQuestionNumbers", visible: false },
+    { name: "allowAdaptiveActions", visible: false },
+    { name: "requiredErrorText:text", serializationProperty: "locRequiredErrorText", visible: false },
+  ],
+  function () {
+    return new PageModel();
+  },
+  "panel"
+);

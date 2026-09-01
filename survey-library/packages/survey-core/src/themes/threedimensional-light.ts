@@ -1,0 +1,34 @@
+// Auto-generated theme: threedimensional
+export default {
+  "themeName": "threedimensional",
+  "colorPalette": "light",
+  "cssVariables": {
+    "--sjs2-color-project-brand-600": "rgba(217, 74, 100, 1)",
+    "--sjs2-color-utility-toolbox": "rgba(248, 248, 248, 1)",
+    "--sjs2-color-utility-property-grid": "rgba(248, 248, 248, 1)",
+    "--sjs2-color-utility-tabs": "rgba(248, 248, 248, 1)",
+    "--sjs2-color-utility-surface-survey": "rgba(255, 255, 255, 1)",
+    "--sjs2-color-utility-surface-designer": "rgba(255, 255, 255, 1)",
+    "--sjs2-color-bg-basic-primary": "rgba(248, 248, 248, 1)",
+    "--sjs2-color-bg-basic-secondary": "rgba(255, 255, 255, 1)",
+    "--sjs2-color-bg-basic-primary-dim": "rgba(242, 242, 242, 1)",
+    "--sjs2-color-bg-basic-secondary-dim": "rgba(242, 242, 242, 1)",
+    "--sjs2-color-bg-neutral-tertiary-dim": "rgba(255, 255, 255, 1)",
+    "--sjs2-color-bg-brand-secondary": "rgba(217, 74, 100, 0.1)",
+    "--sjs2-color-bg-brand-primary-dim": "rgba(189, 61, 84, 1)",
+    "--sjs2-color-bg-note-secondary": "rgba(67, 127, 217, 0.1)",
+    "--sjs2-color-bg-positive-secondary": "rgba(25, 179, 148, 0.1)",
+    "--sjs2-color-bg-warning-secondary": "rgba(255, 152, 20, 0.1)",
+    "--sjs2-color-bg-alert-secondary": "rgba(229, 10, 62, 0.1)",
+    "--sjs2-color-fg-basic-primary": "rgba(0, 0, 0, 0.91)",
+    "--sjs2-color-fg-basic-secondary": "rgba(0, 0, 0, 0.45)",
+    "--sjs2-color-fg-brand-primary-disabled": "rgba(255, 255, 255, 0.25)",
+    "--sjs2-color-border-basic-secondary": "rgba(0, 0, 0, 0.08)",
+    "--sjs2-color-border-basic-secondary-overlay": "rgba(0, 0, 0, 0.16)",
+    "--sjs2-color-data-chart-track-color-0": "var(--sjs2-palette-gray-000)",
+    "--sjs2-color-component-panel-default-border": "var(--sjs2-color-utility-shadow-surface-default)",
+    "--sjs2-border-effect-component-formbox-default": "0px 0px 0px 2px rgba(228, 228, 228, 1), 0px -2px 0px 2px rgba(228, 228, 228, 1)",
+    "--sjs2-border-effect-surface-default": "0px 2px 0px 2px rgba(228, 228, 228, 1), 0px 0px 0px 2px rgba(228, 228, 228, 1)",
+    "--sjs2-border-effect-floating-default": "0px 0px 0px 2px rgba(228, 228, 228, 1), 0px 8px 0px 2px rgba(228, 228, 228, 1), 0px 0px 0px 0px rgba(0, 0, 0, 0.1)"
+  }
+};

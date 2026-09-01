@@ -1,0 +1,149 @@
+import * as React from "react";
+import * as ReactDOM from "react-dom";
+import { Base, Action } from "survey-core";
+import { ReactElementFactory } from "../../element-factory";
+import { SurveyElementBase } from "../../reactquestion_element";
+import { attachKey2click } from "../../reactSurvey";
+import { SvgIcon } from "../svg-icon/svg-icon";
+import { SurveyActionBarSeparator } from "./action-bar-separator";
+import { SurveyLocStringViewer } from "../../string-viewer";
+
+interface IActionBarItemProps {
+  item: Action;
+}
+
+export class SurveyAction extends SurveyElementBase<IActionBarItemProps, any> {
+  private ref: React.RefObject<any>;
+  constructor(props: any) {
+    super(props);
+    this.ref = React.createRef();
+  }
+  get item() {
+    return this.props.item;
+  }
+  protected getStateElement(): Base {
+    return this.item;
+  }
+
+  renderElement() {
+    //refactor
+    const itemClass = this.item.getActionRootCss();
+    const separator = this.item.needSeparator ? (
+      <SurveyActionBarSeparator></SurveyActionBarSeparator>
+    ) : null;
+
+    const itemComponent = ReactElementFactory.Instance.createElement(
+      this.item.component || "sv-action-bar-item",
+      {
+        item: this.item,
+      }
+    );
+    return (
+      <div className={itemClass} id={this.item.renderedId} ref={this.ref}>
+        <div className={this.item.getActionRootContentCss()}>
+          {separator}
+          {itemComponent}
+        </div>
+      </div>
+    );
+  }
+  componentWillUnmount(): void {
+    super.componentWillUnmount();
+    this.item.updateModeCallback = undefined;
+  }
+  componentDidMount(): void {
+    super.componentDidMount();
+    this.item.updateModeCallback = (mode, callback) => {
+      queueMicrotask(() => {
+        if ((ReactDOM as any)["flushSync"]) {
+          (ReactDOM as any)["flushSync"](() => {
+            this.item.mode = mode;
+          });
+        } else {
+          this.item.mode = mode;
+        }
+        queueMicrotask(() => {
+          callback(mode, this.ref.current);
+        });
+      });
+    };
+    this.item.afterRender();
+  }
+}
+
+export class SurveyActionBarItem extends SurveyElementBase<
+  IActionBarItemProps,
+  any
+> {
+  private ref: React.RefObject<any> = React.createRef();
+  get item(): Action {
+    return this.props.item;
+  }
+  protected getStateElement(): Base {
+    return this.item;
+  }
+
+  renderElement() {
+    return <>{this.renderInnerButton()}</>;
+  }
+  renderText() {
+    if (!this.item.hasTitle) return null;
+    return <SurveyLocStringViewer model={this.item.locTitle} textClass={this.item.getActionBarItemTitleCss()} />;
+  }
+  renderButtonContent() {
+    const text = this.renderText();
+    const svgIcon = !!this.item.iconName ? (
+      <SvgIcon
+        className={this.item.cssClasses.itemIcon}
+        size={this.item.iconSize}
+        iconName={this.item.iconName}
+        title={this.item.tooltip || this.item.title}
+      ></SvgIcon>
+    ) : null;
+    return (
+      <>
+        {svgIcon}
+        {text}
+      </>
+    );
+  }
+
+  renderInnerButton() {
+    const className = this.item.getActionBarItemCss();
+    const buttonContent = this.renderButtonContent();
+    const tabIndex = this.item.disableTabStop ? -1 : undefined;
+    const button = attachKey2click(
+      <button
+        ref={this.ref}
+        className={className}
+        type="button"
+        disabled={this.item.disabled}
+        onMouseDown={(args) => this.item.doMouseDown(args)}
+        onFocus={(args) => this.item.doFocus(args)}
+        onClick={(args) => this.item.doAction(args)}
+        title={this.item.getTooltip()}
+        tabIndex={tabIndex}
+        aria-checked={this.item.ariaChecked}
+        aria-expanded={this.item.ariaExpanded}
+        aria-controls={this.item.ariaControls}
+        aria-labelledby={this.item.ariaLabelledBy}
+        role={this.item.ariaRole}
+      >
+        {buttonContent}
+      </button>, this.item, { processEsc: false });
+
+    return button;
+  }
+  componentDidMount(): void {
+    super.componentDidMount();
+    this.props.item.setInputElement(this.ref.current);
+  }
+  componentWillUnmount(): void {
+    super.componentWillUnmount();
+    this.props.item.setInputElement(undefined);
+  }
+}
+
+ReactElementFactory.Instance.registerElement("sv-action-bar-item", (props) => {
+  return React.createElement(SurveyActionBarItem, props);
+});

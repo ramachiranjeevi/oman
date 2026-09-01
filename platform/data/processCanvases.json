@@ -1,0 +1,292 @@
+{
+  "test_canvas_process": {
+    "processKey": "test_canvas_process",
+    "processName": "Cinema Film Screening License",
+    "shapes": [
+      {
+        "id": "start",
+        "type": "start",
+        "name": "Application Submitted",
+        "x": 40,
+        "y": 160
+      },
+      {
+        "id": "decision",
+        "type": "decision",
+        "name": "Eligibility Check",
+        "x": 200,
+        "y": 140,
+        "decisionKey": "cinema_eligibility_and_fee",
+        "resultVar": "eligibilityResult"
+      },
+      {
+        "id": "notEligible",
+        "type": "end",
+        "name": "Rejected - Not Eligible",
+        "x": 260,
+        "y": 340
+      },
+      {
+        "id": "pay",
+        "type": "task",
+        "name": "Applicant Pays Fee",
+        "x": 420,
+        "y": 140,
+        "candidateGroup": "applicant"
+      },
+      {
+        "id": "schedule",
+        "type": "automatic",
+        "name": "Auto-schedule Field Visit",
+        "x": 600,
+        "y": 140,
+        "action": "auto-schedule-field-visit"
+      },
+      {
+        "id": "evaluate",
+        "type": "task",
+        "name": "Field Visit & Evaluation",
+        "x": 780,
+        "y": 140,
+        "candidateGroup": "specialist"
+      },
+      {
+        "id": "review",
+        "type": "approval",
+        "name": "Head of Section Review",
+        "x": 960,
+        "y": 140,
+        "candidateGroup": "head_of_section",
+        "timer": {
+          "duration": 60,
+          "unit": "minutes",
+          "onTimeoutAction": "escalate-sla-breach"
+        }
+      },
+      {
+        "id": "rejected",
+        "type": "end",
+        "name": "Rejected",
+        "x": 1140,
+        "y": 340
+      },
+      {
+        "id": "issue",
+        "type": "automatic",
+        "name": "Issue License + QR",
+        "x": 1140,
+        "y": 140,
+        "action": "issue-license"
+      },
+      {
+        "id": "approved",
+        "type": "end",
+        "name": "License Issued",
+        "x": 1320,
+        "y": 140
+      }
+    ],
+    "connections": [
+      {
+        "id": "c1",
+        "from": "start",
+        "to": "decision"
+      },
+      {
+        "id": "c2",
+        "from": "decision",
+        "to": "pay",
+        "label": "Eligible"
+      },
+      {
+        "id": "c3",
+        "from": "decision",
+        "to": "notEligible",
+        "label": "Not Eligible"
+      },
+      {
+        "id": "c4",
+        "from": "pay",
+        "to": "schedule"
+      },
+      {
+        "id": "c5",
+        "from": "schedule",
+        "to": "evaluate"
+      },
+      {
+        "id": "c6",
+        "from": "evaluate",
+        "to": "review"
+      },
+      {
+        "id": "c7",
+        "from": "review",
+        "to": "evaluate",
+        "label": "Comments"
+      },
+      {
+        "id": "c8",
+        "from": "review",
+        "to": "rejected",
+        "label": "Reject"
+      },
+      {
+        "id": "c9",
+        "from": "review",
+        "to": "issue",
+        "label": "Approve"
+      },
+      {
+        "id": "c10",
+        "from": "issue",
+        "to": "approved"
+      }
+    ]
+  },
+  "cinema_film_screening_license": {
+    "processName": "Cinema Film Screening License",
+    "shapes": [
+      {
+        "id": "start",
+        "type": "start",
+        "name": "Application Submitted",
+        "x": 40,
+        "y": 160
+      },
+      {
+        "id": "decision",
+        "type": "decision",
+        "name": "Eligibility Check",
+        "x": 200,
+        "y": 140,
+        "decisionKey": "cinema_eligibility_and_fee",
+        "resultVar": "eligibilityResult"
+      },
+      {
+        "id": "notEligible",
+        "type": "end",
+        "name": "Rejected - Not Eligible",
+        "x": 260,
+        "y": 340
+      },
+      {
+        "id": "pay",
+        "type": "task",
+        "name": "Applicant Pays Fee",
+        "x": 420,
+        "y": 140,
+        "candidateGroup": "applicant"
+      },
+      {
+        "id": "schedule",
+        "type": "automatic",
+        "name": "Auto-schedule Field Visit",
+        "x": 600,
+        "y": 140,
+        "action": "auto-schedule-field-visit"
+      },
+      {
+        "id": "evaluate",
+        "type": "task",
+        "name": "Field Visit & Evaluation",
+        "x": 940,
+        "y": 33,
+        "candidateGroup": "specialist"
+      },
+      {
+        "id": "review",
+        "type": "approval",
+        "name": "Head of Section Review",
+        "x": 578,
+        "y": 397,
+        "candidateGroup": "head_of_section",
+        "timer": {
+          "duration": 60,
+          "unit": "minutes",
+          "onTimeoutAction": "escalate-sla-breach"
+        }
+      },
+      {
+        "id": "rejected",
+        "type": "end",
+        "name": "Rejected",
+        "x": 1140,
+        "y": 340
+      },
+      {
+        "id": "issue",
+        "type": "automatic",
+        "name": "Issue License + QR",
+        "x": 1140,
+        "y": 140,
+        "action": "issue-license"
+      },
+      {
+        "id": "approved",
+        "type": "end",
+        "name": "License Issued",
+        "x": 1320,
+        "y": 140
+      }
+    ],
+    "connections": [
+      {
+        "id": "c1",
+        "from": "start",
+        "to": "decision"
+      },
+      {
+        "id": "c2",
+        "from": "decision",
+        "to": "pay",
+        "label": "Eligible"
+      },
+      {
+        "id": "c3",
+        "from": "decision",
+        "to": "notEligible",
+        "label": "Not Eligible"
+      },
+      {
+        "id": "c4",
+        "from": "pay",
+        "to": "schedule"
+      },
+      {
+        "id": "c5",
+        "from": "schedule",
+        "to": "evaluate"
+      },
+      {
+        "id": "c6",
+        "from": "evaluate",
+        "to": "review"
+      },
+      {
+        "id": "c7",
+        "from": "review",
+        "to": "evaluate",
+        "label": "Comments"
+      },
+      {
+        "id": "c8",
+        "from": "review",
+        "to": "rejected",
+        "label": "Reject"
+      },
+      {
+        "id": "c9",
+        "from": "review",
+        "to": "issue",
+        "label": "Approve"
+      },
+      {
+        "id": "c10",
+        "from": "issue",
+        "to": "approved"
+      }
+    ],
+    "processKey": "cinema_film_screening_license"
+  }
+}

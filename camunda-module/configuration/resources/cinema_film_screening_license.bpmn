@@ -1,0 +1,78 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<bpmn:definitions xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL"
+                   xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI"
+                   xmlns:dc="http://www.omg.org/spec/DD/20100524/DC"
+                   xmlns:camunda="http://camunda.org/schema/1.0/bpmn"
+                   id="Definitions_cinema" targetNamespace="http://oman-info.gov.om/bpmn">
+
+  <bpmn:process id="cinema_film_screening_license" name="Cinema Film Screening License" isExecutable="true" camunda:historyTimeToLive="180">
+
+    <bpmn:startEvent id="StartEvent_Submit" name="Application Submitted" />
+
+    <bpmn:businessRuleTask id="Task_EligibilityCheck" name="Eligibility Check (DMN)"
+        camunda:decisionRef="cinema_eligibility_and_fee"
+        camunda:mapDecisionResult="singleResult"
+        camunda:resultVariable="eligibilityResult" />
+
+    <bpmn:exclusiveGateway id="Gateway_EligibilityMet" name="Eligible?" />
+
+    <bpmn:endEvent id="EndEvent_Rejected_NotEligible" name="Rejected - Not Eligible" />
+
+    <bpmn:userTask id="Task_PayFee" name="Applicant Pays Fee" camunda:candidateGroups="applicant" />
+
+    <bpmn:serviceTask id="Task_AutoSchedule" name="Auto-schedule Field Visit"
+        camunda:type="external" camunda:topic="auto-schedule-field-visit" />
+
+    <bpmn:userTask id="Task_FieldVisitEvaluation" name="Field Visit &amp; Evaluation"
+        camunda:candidateGroups="specialist" />
+
+    <bpmn:userTask id="Task_HeadOfSectionReview" name="Head of Section Review"
+        camunda:candidateGroups="head_of_section" />
+
+    <bpmn:boundaryEvent id="BoundaryEvent_SlaTimer" name="SLA 1hr" attachedToRef="Task_HeadOfSectionReview">
+      <bpmn:timerEventDefinition>
+        <bpmn:timeDuration xsi:type="bpmn:tFormalExpression" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">PT1H</bpmn:timeDuration>
+      </bpmn:timerEventDefinition>
+    </bpmn:boundaryEvent>
+
+    <bpmn:serviceTask id="Task_EscalateSla" name="Escalate SLA Breach"
+        camunda:type="external" camunda:topic="escalate-sla-breach" />
+
+    <bpmn:endEvent id="EndEvent_EscalatedThenContinue" name="Escalation Sent" />
+
+    <bpmn:exclusiveGateway id="Gateway_ReviewOutcome" name="Outcome?" />
+
+    <bpmn:endEvent id="EndEvent_Rejected" name="Rejected" />
+
+    <bpmn:serviceTask id="Task_IssueLicense" name="Issue License + QR"
+        camunda:type="external" camunda:topic="issue-license" />
+
+    <bpmn:endEvent id="EndEvent_Approved" name="License Issued" />
+
+    <bpmn:sequenceFlow id="Flow_1" sourceRef="StartEvent_Submit" targetRef="Task_EligibilityCheck" />
+    <bpmn:sequenceFlow id="Flow_2" sourceRef="Task_EligibilityCheck" targetRef="Gateway_EligibilityMet" />
+    <bpmn:sequenceFlow id="Flow_3" sourceRef="Gateway_EligibilityMet" targetRef="Task_PayFee">
+      <bpmn:conditionExpression xsi:type="bpmn:tFormalExpression" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">${eligibilityResult.eligible == true}</bpmn:conditionExpression>
+    </bpmn:sequenceFlow>
+    <bpmn:sequenceFlow id="Flow_4" sourceRef="Gateway_EligibilityMet" targetRef="EndEvent_Rejected_NotEligible">
+      <bpmn:conditionExpression xsi:type="bpmn:tFormalExpression" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">${eligibilityResult.eligible == false}</bpmn:conditionExpression>
+    </bpmn:sequenceFlow>
+    <bpmn:sequenceFlow id="Flow_5" sourceRef="Task_PayFee" targetRef="Task_AutoSchedule" />
+    <bpmn:sequenceFlow id="Flow_6" sourceRef="Task_AutoSchedule" targetRef="Task_FieldVisitEvaluation" />
+    <bpmn:sequenceFlow id="Flow_7" sourceRef="Task_FieldVisitEvaluation" targetRef="Task_HeadOfSectionReview" />
+    <bpmn:sequenceFlow id="Flow_SlaEscalate" sourceRef="BoundaryEvent_SlaTimer" targetRef="Task_EscalateSla" />
+    <bpmn:sequenceFlow id="Flow_EscalateEnd" sourceRef="Task_EscalateSla" targetRef="EndEvent_EscalatedThenContinue" />
+    <bpmn:sequenceFlow id="Flow_8" sourceRef="Task_HeadOfSectionReview" targetRef="Gateway_ReviewOutcome" />
+    <bpmn:sequenceFlow id="Flow_9" sourceRef="Gateway_ReviewOutcome" targetRef="Task_IssueLicense">
+      <bpmn:conditionExpression xsi:type="bpmn:tFormalExpression" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">${outcome == "approve"}</bpmn:conditionExpression>
+    </bpmn:sequenceFlow>
+    <bpmn:sequenceFlow id="Flow_10" sourceRef="Gateway_ReviewOutcome" targetRef="Task_FieldVisitEvaluation">
+      <bpmn:conditionExpression xsi:type="bpmn:tFormalExpression" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">${outcome == "comments"}</bpmn:conditionExpression>
+    </bpmn:sequenceFlow>
+    <bpmn:sequenceFlow id="Flow_11" sourceRef="Gateway_ReviewOutcome" targetRef="EndEvent_Rejected">
+      <bpmn:conditionExpression xsi:type="bpmn:tFormalExpression" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">${outcome == "reject"}</bpmn:conditionExpression>
+    </bpmn:sequenceFlow>
+    <bpmn:sequenceFlow id="Flow_12" sourceRef="Task_IssueLicense" targetRef="EndEvent_Approved" />
+
+  </bpmn:process>
+</bpmn:definitions>

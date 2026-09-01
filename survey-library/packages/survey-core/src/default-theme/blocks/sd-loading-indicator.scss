@@ -1,0 +1,27 @@
+@use "../variables.scss" as *;
+
+@keyframes rotationAnimation {
+  from {
+    rotate: 0deg;
+  }
+
+  to {
+    rotate: 360deg;
+  }
+}
+
+.sd-loading-indicator {
+  height: var(--sjs2-size-x600);
+
+  .sv-svg-icon {
+    height: var(--sjs2-size-x600);
+    width: var(--sjs2-size-x600);
+    animation-name: rotationAnimation;
+    animation-timing-function: linear;
+    animation-iteration-count: infinite;
+    animation-duration: 1s;
+    use {
+      fill: var(--sjs2-color-bg-brand-primary)
+    }
+  }
+}

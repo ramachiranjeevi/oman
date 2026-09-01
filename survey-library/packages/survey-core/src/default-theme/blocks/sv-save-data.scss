@@ -1,0 +1,77 @@
+@use "../variables.scss" as *;
+@use "../typography-mixins.scss" as *;
+
+.sv-save-data_root {
+  position: fixed;
+  left: 50%;
+  bottom: var(--sjs2-spacing-x300);
+  background: $background;
+  opacity: 0;
+  padding: var(--sjs2-spacing-x300) var(--sjs2-spacing-x600);
+  box-shadow: $shadow-medium;
+  border-radius: var(--sjs2-radius-component-notifier);
+  color: $foreground;
+  min-width: calc(var(--sjs2-base-unit-size) * 30);
+  text-align: center;
+  z-index: 1600; //todo: should overlap popup
+
+  @include sjs2--typography--default;
+
+  display: flex;
+  flex-direction: row;
+  justify-content: center;
+  align-items: center;
+
+  transform: translateX(-50%) translateY(var(--sjs2-spacing-x300));
+  transition-timing-function: ease-in;
+  transition-property: transform, opacity;
+  transition-delay: 0.25s;
+  transition: 0.5s;
+}
+
+.sv-save-data_root.sv-save-data_root--shown {
+  transition-timing-function: ease-out;
+  transition-property: transform, opacity;
+  transform: translateX(-50%) translateY(0);
+  transition-delay: 0.25s;
+  opacity: 0.75;
+}
+
+.sv-save-data_root {
+  span {
+    display: flex;
+    flex-grow: 1;
+  }
+
+  .sd-action-bar {
+    display: flex;
+    flex-grow: 0;
+    flex-shrink: 0;
+  }
+}
+
+.sv-save-data_root--shown.sv-save-data_success,
+.sv-save-data_root--shown.sv-save-data_error {
+  opacity: 1;
+}
+
+.sv-save-data_root.sv-save-data_root--with-buttons {
+  padding: var(--sjs2-spacing-x200) var(--sjs2-spacing-x200) var(--sjs2-spacing-x200) var(--sjs2-spacing-x600);
+}
+
+.sv-save-data_root.sv-save-data_error {
+  @include sjs2--typography--default-strong;
+  background-color: var(--sjs2-color-bg-alert-primary);
+  color: var(--sjs2-color-fg-alert-on-primary);
+  gap: var(--sjs2-spacing-x600);
+}
+
+.sv-save-data_root.sv-save-data_success {
+  @include sjs2--typography--default-strong;
+  background-color: var(--sjs2-color-bg-brand-primary);
+  color: var(--sjs2-color-fg-brand-on-primary);
+}
+
+.sv-save-data_root .sv-save-data_button {
+  outline: var(--sjs2-border-width-x200) solid var(--sd-action-title-color);
+}

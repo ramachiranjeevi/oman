@@ -1,0 +1,16 @@
+{
+  "name": "oman-info-platform",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Platform module: BFF API gateway + web UI, orchestrating the Directus and Camunda modules via REST.",
+  "scripts": {
+    "dev": "node --watch src/server.js",
+    "start": "node src/server.js"
+  },
+  "dependencies": {
+    "express": "^4.19.2",
+    "node-fetch": "^3.3.2",
+    "dotenv": "^16.4.5"
+  }
+}

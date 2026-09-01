@@ -1,0 +1,172 @@
+@use "../variables.scss" as *;
+@use "../typography-mixins.scss" as *;
+
+.sd-selectbase {
+  border: none;
+  margin: 0;
+  padding: 0;
+  //prevent comment to resize over question area
+  min-inline-size: 0;
+  min-width: 0;
+}
+
+.sd-selectbase--row {
+  border: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-wrap: wrap;
+  column-gap: var(--sjs2-spacing-x400);
+}
+
+.sd-selectbase--multi-column {
+  display: flex;
+  flex: 1 1 0px;
+  flex-wrap: nowrap;
+  overflow: auto;
+  padding: var(--sjs2-border-width-a11y);
+  margin: calc(var(--sjs2-border-width-a11y) * -1);
+}
+
+.sd-selectbase__label {
+  @include sjs2--typography--component--label--content;
+  display: inline-flex;
+  position: relative;
+  gap: var(--sjs2-layout-component-labeled-item-box-gap-horizontal);
+  vertical-align: top;
+  max-width: 100%;
+  cursor: pointer;
+}
+
+.sd-item--disabled .sd-selectbase__label,
+.sd-item--readonly .sd-selectbase__label,
+.sd-item--preview .sd-selectbase__label {
+  cursor: default;
+}
+
+.sd-selectbase__column {
+  vertical-align: top;
+}
+
+.sd-selectbase__column {
+  display: block;
+  box-sizing: border-box;
+  flex: 1 1 0px;
+  max-width: 100%;
+}
+
+.sd-selectbase__column:not(:last-child) {
+  padding-right: var(--sjs2-layout-component-labeled-group-box-gap-horizontal);
+}
+
+// Copied from stylesmanager
+.sd-selectbase__column.sv-q-column-1 {
+  width: 100%;
+}
+
+$item-fade-in-duration: var(--sjs-ranking-fade-in-duration, 100ms);
+$item-move-in-duration: var(--sjs-ranking-move-in-duration, 150ms);
+$item-fade-in-delay: var(--sjs-ranking-fade-in-delay, 150ms);
+$item-fade-out-duration: var(--sjs-ranking-fade-out-duration, 100ms);
+$item-move-out-duration: var(--sjs-ranking-move-out-duration, 150ms);
+$item-move-out-delay: var(--sjs-ranking-move-out-delay, 0ms);
+
+.sd-item--enter,
+.sd-item--leave {
+  animation-name: moveInWithOverflow, fadeIn;
+  opacity: 0;
+  animation-fill-mode: forwards;
+  animation-timing-function: linear;
+  animation-direction: var(--animation-direction);
+  animation-duration: var(--move-animation-duration), var(--fade-animation-duration);
+  animation-delay: var(--move-animation-delay), var(--fade-animation-delay);
+}
+
+.sd-item--enter {
+  --animation-direction: normal;
+  --move-animation-duration: #{$item-move-in-duration};
+  --move-animation-delay: 0s;
+  --fade-animation-duration: #{$item-fade-in-duration};
+  --fade-animation-delay: #{$item-fade-in-delay};
+}
+.sd-item--leave {
+  --animation-direction: reverse;
+  --move-animation-duration: #{$item-move-out-duration};
+  --move-animation-delay: #{$item-move-out-delay};
+  --fade-animation-duration: #{$item-fade-out-duration};
+  --fade-animation-delay: 0s;
+}
+
+div[class*="sv-q-column-"] {
+  &:not(:first-of-type) {
+    .sd-item--enter {
+      --move-animation-duration: 0s;
+      --fade-animation-delay: 0s;
+    }
+  }
+}
+.sd-selectbase__other {
+  margin-top: 0;
+}
+.sd-selectbase__other:not(:last-of-type) {
+  margin-bottom: var(--sjs2-spacing-x200);
+}
+.sd-selectbase__item-panel--leave,
+.sd-selectbase__item-panel--enter {
+  animation-name: fadeIn, moveInWithOverflow;
+  animation-fill-mode: forwards;
+  animation-timing-function: var(--animation-timing-function);
+  animation-direction: var(--animation-direction);
+  animation-duration: var(--fade-animation-duration), var(--move-animation-duration);
+  animation-delay: var(--fade-animation-delay), var(--move-animation-delay);
+  min-height: 0 !important;
+}
+.sd-selectbase__item-panel--enter {
+  opacity: 0;
+  height: 0;
+  --animation-direction: normal;
+  --animation-timing-function: #{$ease-out};
+  --move-animation-duration: #{$item-panel-move-in-duration};
+  --move-animation-delay: 0s;
+  --fade-animation-duration: #{$item-panel-fade-in-duration};
+  --fade-animation-delay: #{$item-panel-fade-in-delay};
+}
+
+.sd-selectbase__item-panel--leave {
+  --animation-direction: reverse;
+  --animation-timing-function: #{$reverse-ease-out};
+  --move-animation-duration: #{$item-panel-move-out-duration};
+  --move-animation-delay: #{$item-panel-move-out-delay};
+  --fade-animation-duration: #{$item-panel-fade-out-duration};
+  --fade-animation-delay: 0s;
+}
+
+.sd-selectbase__item-comment--leave,
+.sd-selectbase__item-comment--enter {
+  animation-name: fadeIn, moveInWithOverflow;
+  animation-fill-mode: forwards;
+  animation-timing-function: var(--animation-timing-function);
+  animation-direction: var(--animation-direction);
+  animation-duration: var(--fade-animation-duration), var(--move-animation-duration);
+  animation-delay: var(--fade-animation-delay), var(--move-animation-delay);
+  min-height: 0 !important;
+}
+.sd-selectbase__item-comment--enter {
+  opacity: 0;
+  height: 0;
+  --animation-direction: normal;
+  --animation-timing-function: #{$ease-out};
+  --move-animation-duration: #{$item-comment-move-in-duration};
+  --move-animation-delay: 0s;
+  --fade-animation-duration: #{$item-comment-fade-in-duration};
+  --fade-animation-delay: #{$item-comment-fade-in-delay};
+}
+
+.sd-selectbase__item-comment--leave {
+  --animation-direction: reverse;
+  --animation-timing-function: #{$reverse-ease-out};
+  --move-animation-duration: #{$item-comment-move-out-duration};
+  --move-animation-delay: #{$item-comment-move-out-delay};
+  --fade-animation-duration: #{$item-comment-fade-out-duration};
+  --fade-animation-delay: 0s;
+}

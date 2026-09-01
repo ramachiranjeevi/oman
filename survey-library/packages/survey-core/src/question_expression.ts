@@ -1,0 +1,437 @@
+import { HashTable, Helpers, createDate } from "./helpers";
+import { Question } from "./question";
+import { Serializer } from "./jsonobject";
+import { property } from "./decorators";
+import { QuestionFactory } from "./questionfactory";
+import { settings } from "./settings";
+
+/**
+ * A class that describes the Expression question type. It is a read-only question type that calculates a value based on a specified expression.
+ *
+ * [View Demo](https://surveyjs.io/form-library/examples/questiontype-expression/ (linkStyle))
+ */
+export class QuestionExpressionModel extends Question {
+  private isExecutionLocked: boolean;
+  protected onPropertyValueChanged(name: string, oldValue: any, newValue: any): void {
+    super.onPropertyValueChanged(name, oldValue, newValue);
+    const formatProps = ["format", "currency", "displayStyle"];
+    if (formatProps.indexOf(name) > -1) {
+      this.updateFormatedValue();
+    }
+  }
+  public getType(): string {
+    return "expression";
+  }
+  public get hasInput(): boolean {
+    return false;
+  }
+  /**
+   * A string that formats a question value. Use `{0}` to reference the question value in the format string.
+   * @see displayStyle
+   */
+  @property({ localizable: true }) format: string;
+  /**
+   * An expression used to calculate the question value.
+   *
+   * Refer to the following help topic for more information: [Expressions](https://surveyjs.io/form-library/documentation/design-survey-conditional-logic#expressions).
+   *
+   * [View Demo](https://surveyjs.io/form-library/examples/expression-question-for-dynamic-form-calculations/ (linkStyle))
+   */
+  @property() expression: string;
+  public locCalculation() {
+    this.isExecutionLocked = true;
+  }
+  public unlocCalculation() {
+    this.isExecutionLocked = false;
+  }
+  protected runConditionCore(properties: HashTable<any>) {
+    super.runConditionCore(properties);
+    if (this.isExecutionLocked || !this.runIfReadOnly && this.isReadOnly) return;
+    if (settings.expressionQuestionTrackDependencies && this.canSkipRunningExpression("expression")) return;
+    this.runExpressionByProperty("expression", properties, (val: any) => {
+      this.value = this.roundValue(val);
+    });
+  }
+  protected canCollectErrors(): boolean {
+    return true;
+  }
+  public hasRequiredError(): boolean {
+    return false;
+  }
+  /**
+   * The maximum number of fraction digits. Applies only if the `displayStyle` property is not `"none"`. Accepts values in the range from -1 to 20, where -1 disables the property.
+   *
+   * Default value: -1
+   * @see displayStyle
+   * @see minimumFractionDigits
+   * @see precision
+   */
+  @property({ onSetting: (val) => val < -1 ? -1 : val > 20 ? 20 : val }) maximumFractionDigits: number;
+  /**
+   * The minimum number of fraction digits. Applies only if the `displayStyle` property is not `"none"`. Accepts values in the range from -1 to 20, where -1 disables the property.
+   *
+   * Default value: -1
+   * @see displayStyle
+   * @see maximumFractionDigits
+   */
+  @property({ onSetting: (val) => val < -1 ? -1 : val > 20 ? 20 : val }) minimumFractionDigits: number;
+
+  private runIfReadOnlyValue: boolean;
+  public get runIfReadOnly(): boolean {
+    return this.runIfReadOnlyValue === true;
+  }
+  public set runIfReadOnly(val: boolean) {
+    this.runIfReadOnlyValue = val;
+  }
+  public get formatedValue(): string {
+    return this.getPropertyValue("formatedValue", "");
+  }
+  protected updateFormatedValue(): void {
+    this.setPropertyValue("formatedValue", this.getDisplayValueCore(false, this.value));
+  }
+  protected onValueChanged() {
+    this.updateFormatedValue();
+  }
+  updateValueFromSurvey(newValue: any, clearData: boolean): void {
+    super.updateValueFromSurvey(newValue, clearData);
+    this.updateFormatedValue();
+  }
+  protected getDisplayValueCore(keysAsText: boolean, value: any): any {
+    var val = value === undefined || value === null ? this.defaultValue : value;
+    var res = "";
+    if (!this.isValueEmpty(val)) {
+      var str = this.getValueAsStr(val);
+      res = !this.format ? str : (<any>this.format)["format"](str);
+    }
+    if (!!this.survey) {
+      res = this.titleSettings.getExpressionDisplayValue(this, val, res);
+    }
+    return res;
+  }
+  /**
+   * Specifies a display style for the question value.
+   *
+   * Possible values:
+   *
+   * - `"decimal"`
+   * - `"currency"`
+   * - `"percent"`
+   * - `"date"`
+   * - `"none"` (default)
+   *
+   * If you use the `"currency"` display style, you can also set the `currency` property to specify a currency other than USD.
+   *
+   * [View Demo](https://surveyjs.io/form-library/examples/expression-question-for-dynamic-form-calculations/ (linkStyle))
+   * @see currency
+   * @see minimumFractionDigits
+   * @see maximumFractionDigits
+   * @see format
+   */
+  @property() displayStyle: string;
+  /**
+   * A three-letter currency code. Applies only if the `displayStyle` property is set to `"currency"`.
+   *
+   * Default value: "USD".
+   * @see displayStyle
+   * @see minimumFractionDigits
+   * @see maximumFractionDigits
+   * @see format
+   */
+  @property({ onSetting: (val: string, obj: QuestionExpressionModel) => getCurrecyCodes().indexOf(val) < 0 ? obj.currency : val }) currency: string;
+
+  /**
+   * Specifies whether to use grouping separators in number representation. Separators depend on the selected [locale](https://surveyjs.io/form-library/documentation/surveymodel#locale).
+   *
+   * Default value: `true`
+   */
+  @property() useGrouping: boolean;
+  /**
+   * Specifies how many decimal digits to keep in the expression value.
+   *
+   * Default value: -1 (unlimited)
+   * @see maximumFractionDigits
+   */
+  @property() precision: number;
+
+  private roundValue(val: any): any {
+    if (val === Infinity) return undefined;
+    if (this.precision < 0) return val;
+    if (!Helpers.isNumber(val)) return val;
+    return parseFloat(val.toFixed(this.precision));
+  }
+  protected getValueAsStr(val: any): string {
+    if (this.displayStyle == "date") {
+      const d = createDate("question-expression", val);
+      if (!!d && !!d.toLocaleDateString) return d.toLocaleDateString();
+    }
+    if (this.displayStyle != "none" && Helpers.isNumber(val)) {
+      var locale = this.getLocale();
+      if (!locale) locale = "en";
+      var options = {
+        style: this.displayStyle,
+        currency: this.currency,
+        useGrouping: this.useGrouping,
+      };
+      if (this.maximumFractionDigits > -1) {
+        (<any>options)["maximumFractionDigits"] = this.maximumFractionDigits;
+      }
+      if (this.minimumFractionDigits > -1) {
+        (<any>options)["minimumFractionDigits"] = this.minimumFractionDigits;
+      }
+      return val.toLocaleString(locale, options);
+    }
+    return val.toString();
+  }
+  //a11y
+  public get ariaRole(): string {
+    return "presentation";
+  }
+  // EO a11y
+}
+
+export function getCurrecyCodes(): Array<string> {
+  return [
+    "AED",
+    "AFN",
+    "ALL",
+    "AMD",
+    "ANG",
+    "AOA",
+    "ARS",
+    "AUD",
+    "AWG",
+    "AZN",
+    "BAM",
+    "BBD",
+    "BDT",
+    "BGN",
+    "BHD",
+    "BIF",
+    "BMD",
+    "BND",
+    "BOB",
+    "BOV",
+    "BRL",
+    "BSD",
+    "BTN",
+    "BWP",
+    "BYN",
+    "BZD",
+    "CAD",
+    "CDF",
+    "CHE",
+    "CHF",
+    "CHW",
+    "CLF",
+    "CLP",
+    "CNY",
+    "COP",
+    "COU",
+    "CRC",
+    "CUC",
+    "CUP",
+    "CVE",
+    "CZK",
+    "DJF",
+    "DKK",
+    "DOP",
+    "DZD",
+    "EGP",
+    "ERN",
+    "ETB",
+    "EUR",
+    "FJD",
+    "FKP",
+    "GBP",
+    "GEL",
+    "GHS",
+    "GIP",
+    "GMD",
+    "GNF",
+    "GTQ",
+    "GYD",
+    "HKD",
+    "HNL",
+    "HRK",
+    "HTG",
+    "HUF",
+    "IDR",
+    "ILS",
+    "INR",
+    "IQD",
+    "IRR",
+    "ISK",
+    "JMD",
+    "JOD",
+    "JPY",
+    "KES",
+    "KGS",
+    "KHR",
+    "KMF",
+    "KPW",
+    "KRW",
+    "KWD",
+    "KYD",
+    "KZT",
+    "LAK",
+    "LBP",
+    "LKR",
+    "LRD",
+    "LSL",
+    "LYD",
+    "MAD",
+    "MDL",
+    "MGA",
+    "MKD",
+    "MMK",
+    "MNT",
+    "MOP",
+    "MRO",
+    "MUR",
+    "MVR",
+    "MWK",
+    "MXN",
+    "MXV",
+    "MYR",
+    "MZN",
+    "NAD",
+    "NGN",
+    "NIO",
+    "NOK",
+    "NPR",
+    "NZD",
+    "OMR",
+    "PAB",
+    "PEN",
+    "PGK",
+    "PHP",
+    "PKR",
+    "PLN",
+    "PYG",
+    "QAR",
+    "RON",
+    "RSD",
+    "RUB",
+    "RWF",
+    "SAR",
+    "SBD",
+    "SCR",
+    "SDG",
+    "SEK",
+    "SGD",
+    "SHP",
+    "SLL",
+    "SOS",
+    "SRD",
+    "SSP",
+    "STD",
+    "SVC",
+    "SYP",
+    "SZL",
+    "THB",
+    "TJS",
+    "TMT",
+    "TND",
+    "TOP",
+    "TRY",
+    "TTD",
+    "TWD",
+    "TZS",
+    "UAH",
+    "UGX",
+    "USD",
+    "USN",
+    "UYI",
+    "UYU",
+    "UZS",
+    "VEF",
+    "VND",
+    "VUV",
+    "WST",
+    "XAF",
+    "XAG",
+    "XAU",
+    "XBA",
+    "XBB",
+    "XBC",
+    "XBD",
+    "XCD",
+    "XDR",
+    "XOF",
+    "XPD",
+    "XPF",
+    "XPT",
+    "XSU",
+    "XTS",
+    "XUA",
+    "XXX",
+    "YER",
+    "ZAR",
+    "ZMW",
+    "ZWL",
+  ];
+}
+
+function getCorrectMinMax(min: any, max: any, isMax: boolean): any {
+  let val = isMax ? max : min;
+  if (min == -1 || max == -1) return val;
+  if (min > max) return isMax ? min : max;
+  return val;
+}
+
+Serializer.addClass(
+  "expression",
+  [
+    "expression:expression",
+    { name: "format", serializationProperty: "locFormat" },
+    {
+      name: "displayStyle",
+      default: "none",
+      choices: ["none", "decimal", "currency", "percent", "date"],
+    },
+    {
+      name: "currency",
+      choices: () => {
+        return getCurrecyCodes();
+      },
+      default: "USD",
+      visibleIf: (obj: QuestionExpressionModel): boolean => {
+        return obj.displayStyle === "currency";
+      }
+    },
+    {
+      name: "maximumFractionDigits:number",
+      onSettingValue: (obj: any, val: any): any => {
+        return getCorrectMinMax(obj.minimumFractionDigits, val, true);
+      },
+      default: -1
+    },
+    {
+      name: "minimumFractionDigits:number",
+      onSettingValue: (obj: any, val: any): any => {
+        return getCorrectMinMax(val, obj.maximumFractionDigits, false);
+      },
+      default: -1
+    },
+    { name: "useGrouping:boolean", default: true },
+    { name: "precision:number", default: -1 },
+    { name: "enableIf", visible: false, isSerializable: false },
+    { name: "isRequired", visible: false, isSerializable: false },
+    { name: "readOnly", visible: false, isSerializable: false },
+    { name: "requiredErrorText", visible: false, isSerializable: false },
+    { name: "resetValueIf", visible: false, isSerializable: false },
+    { name: "setValueIf", visible: false, isSerializable: false },
+    { name: "setValueExpression", visible: false, isSerializable: false },
+    { name: "defaultValueExpression", visible: false, isSerializable: false },
+    { name: "defaultValue", visible: false, isSerializable: false },
+    { name: "correctAnswer", visible: false, isSerializable: false },
+    { name: "requiredIf", visible: false, isSerializable: false }
+  ],
+  function() {
+    return new QuestionExpressionModel("");
+  },
+  "question"
+);
+QuestionFactory.Instance.registerQuestion("expression", (name) => {
+  return new QuestionExpressionModel(name);
+});

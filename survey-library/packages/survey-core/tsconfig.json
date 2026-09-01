@@ -1,0 +1,23 @@
+{
+  "compilerOptions": {
+    "target": "ES2019",
+    "module": "ES2020",
+    "lib": [
+      "DOM",
+      "ES2019"
+    ],
+    "sourceMap": true,
+    "noImplicitAny": false,
+    "allowSyntheticDefaultImports": true,
+    "experimentalDecorators": true,
+    "importHelpers": false,
+    "moduleResolution": "node",
+    "baseUrl": ".",
+    "declaration": true,
+    "declarationDir": "build/typings/",
+    "types": []
+  },
+  "include": [
+    "./entries/index.ts"
+  ]
+}

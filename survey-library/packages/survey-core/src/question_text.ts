@@ -1,0 +1,1096 @@
+import { QuestionFactory } from "./questionfactory";
+import { Serializer } from "./jsonobject";
+import { property } from "./decorators";
+import { LocalizableString, LocalizableStrings } from "./localizablestring";
+import { Helpers, HashTable, createDate } from "./helpers";
+import { EmailValidator } from "./validator";
+import { SurveyError } from "./survey-error";
+import { CustomError, PatternIncompleteError } from "./error";
+import { settings } from "./settings";
+import { QuestionTextBase } from "./question_textbase";
+import { CssClassBuilder } from "./utils/cssClassBuilder";
+import { InputElementAdapter } from "./mask/input_element_adapter";
+import { InputMaskBase } from "./mask/mask_base";
+import { getAvailableMaskTypeChoices, IInputMask } from "./mask/mask_utils";
+import { getRootNode } from "./utils/dom-utils";
+
+/**
+ * A class that describes the Single-Line Input question type, which is used to create textual, numeric, date-time, and color input fields.
+ *
+ * [Text Entry Demo](https://surveyjs.io/form-library/examples/text-entry-question/ (linkStyle))
+ *
+ * [Date-Time Entry Demo](https://surveyjs.io/form-library/examples/datetime-entry-question/ (linkStyle))
+ *
+ * [Numeric Entry Demo](https://surveyjs.io/form-library/examples/numeric-entry-question/ (linkStyle))
+ *
+ * [Color Input Demo](https://surveyjs.io/form-library/examples/color-input-question/ (linkStyle))
+ */
+export class QuestionTextModel extends QuestionTextBase {
+  private maskInputAdapter: InputElementAdapter;
+  private doNotUpdateInputValue: boolean = false;
+
+  private createMaskAdapter() {
+    if (!!this.input && !this.maskTypeIsEmpty) {
+      this.maskInputAdapter = new InputElementAdapter(this.maskInstance as InputMaskBase, this.input, this.value);
+    }
+  }
+  private deleteMaskAdapter() {
+    if (this.maskInputAdapter) {
+      this.maskInputAdapter.dispose();
+      this.maskInputAdapter = undefined;
+    }
+  }
+  public updateInputValueFromMask() {
+    if (this.maskInputAdapter) {
+      this.maskInputAdapter.updateInputValue();
+    }
+  }
+  private updateMaskAdapter() {
+    this.deleteMaskAdapter();
+    this.createMaskAdapter();
+  }
+  onSetMaskType(newValue: string) {
+    this.setNewMaskSettingsProperty();
+    this.updateMaskAdapter();
+  }
+
+  /**
+   * Specifies the type of a mask applied to the input.
+   *
+   * Possible values:
+   *
+   * - `"none"` (default)
+   * - `"numeric"`
+   * - `"currency"`
+   * - `"datetime"`
+   * - `"pattern"`
+   *
+   * [View Demo](https://surveyjs.io/form-library/examples/masked-input-fields/ (linkStyle))
+   * @see maskSettings
+   */
+  @property({
+    onSet: (newValue: string, target: QuestionTextModel) => { target.onSetMaskType(newValue); }
+  }) maskType: string;
+  /**
+   * Specifies text alignment within the input field.
+   *
+   * Possible values:
+   *
+   * - `"left"` - Aligns input text to the left side.
+   * - `"right"` - Aligns input text to the right side.
+   * - `"auto"` (default) - Applies right alignment if a [numeric or currency input mask](https://surveyjs.io/form-library/documentation/api-reference/text-entry-question-model#maskType) is specified. Otherwise, applies left alignment.
+   */
+  @property() inputTextAlignment: "left" | "right" | "auto";
+
+  get maskTypeIsEmpty(): boolean {
+    switch(this.inputType) {
+      case "tel":
+      case "text": return this.maskType === "none";
+      default: return true;
+    }
+  }
+
+  /**
+   * An object with properties that configure the mask applied to the input.
+   *
+   * Available properties depend on the specified [`maskType`](https://surveyjs.io/form-library/documentation/api-reference/text-entry-question-model#maskType) and belong to corresponding classes. Refer to the class APIs for a full list of properties:
+   *
+   * | `maskType` | Class |
+   * | ---------- | ----- |
+   * | `"numeric"` | [`InputMaskNumeric`](https://surveyjs.io/form-library/documentation/api-reference/inputmasknumeric) |
+   * | `"currency"` | [`InputMaskCurrency`](https://surveyjs.io/form-library/documentation/api-reference/inputmaskcurrency) |
+   * | `"datetime"` | [`InputMaskDateTime`](https://surveyjs.io/form-library/documentation/api-reference/inputmaskdatetime) |
+   * | `"pattern"` | [`InputMaskPattern`](https://surveyjs.io/form-library/documentation/api-reference/inputmaskpattern) |
+   *
+   * [View Demo](https://surveyjs.io/form-library/examples/masked-input-fields/ (linkStyle))
+   */
+  public get maskSettings(): InputMaskBase {
+    return this.getPropertyValue("maskSettings");
+  }
+  public set maskSettings(val: InputMaskBase) {
+    if (!val) return;
+    const oldValue = this.maskSettings;
+    if (oldValue) {
+      oldValue.dispose();
+    }
+    this.setNewMaskSettingsProperty();
+    this.maskSettings.fromJSON(val.toJSON());
+    this.updateMaskAdapter();
+  }
+  private setNewMaskSettingsProperty() {
+    this.setPropertyValue("maskSettings", this.createMaskSettings());
+  }
+  protected createMaskSettings(): InputMaskBase {
+    let maskClassName = (!this.maskType || this.maskType === "none") ? "masksettings" : (this.maskType + "mask");
+    if (!Serializer.findClass(maskClassName)) {
+      maskClassName = "masksettings";
+    }
+    const inputMask = Serializer.createClass(maskClassName);
+    inputMask.onPropertyChanged.add((_, options) => {
+      this.onNestedPropertyChanged.fire(this, { name: "maskSettings", newValue: options.newValue, nestedName: options.name });
+      this.updateInputValue();
+    });
+    inputMask.owner = this;
+    return inputMask;
+  }
+
+  constructor(name: string) {
+    super(name);
+    this.setNewMaskSettingsProperty();
+  }
+  protected onPropertyValueChanged(name: string, oldValue: any, newValue: any): void {
+    super.onPropertyValueChanged(name, oldValue, newValue);
+    const renderedMaxMinProps = ["min", "max", "inputType", "minValueExpression", "maxValueExpression"];
+    if (renderedMaxMinProps.indexOf(name) > -1) {
+      this.setRenderedMinMax();
+    }
+    if (name === "inputType" || name === "inputSize") {
+      this.resetInputSize();
+      this.resetRenderedPlaceholder();
+    }
+  }
+  protected isTextValue(): boolean {
+    return this.isDateInputType || ["text", "number", "password"].indexOf(this.inputType) > -1;
+  }
+  public getType(): string {
+    return "text";
+  }
+  public onSurveyLoad(): void {
+    super.onSurveyLoad();
+    this.setRenderedMinMax();
+  }
+  /**
+   * A value passed on to the [`type`](https://developer.mozilla.org/en-US/docs/Web/HTML/Element/input#input_types) attribute of the underlying `<input>` element.
+   *
+   * Default value: `"text"`
+   *
+   * [Text Entry Demo](https://surveyjs.io/form-library/examples/text-entry-question/ (linkStyle))
+   *
+   * [Date-Time Entry Demo](https://surveyjs.io/form-library/examples/datetime-entry-question/ (linkStyle))
+   *
+   * [Numeric Entry Demo](https://surveyjs.io/form-library/examples/numeric-entry-question/ (linkStyle))
+   *
+   * [Color Input Demo](https://surveyjs.io/form-library/examples/color-input-question/ (linkStyle))
+   */
+  public get inputType(): string {
+    return this.getPropertyValue("inputType");
+  }
+  public set inputType(val: string) {
+    val = val.toLowerCase();
+    if (val === "datetime_local" || val === "datetime") val = "datetime-local";
+    this.setPropertyValue("inputType", val.toLowerCase());
+    if (!this.isLoadingFromJson) {
+      this.min = undefined;
+      this.max = undefined;
+      this.step = undefined;
+    }
+    this.updateMaskAdapter();
+  }
+  public getMaxLength(): any {
+    if (!this.isTextInput) return null;
+    return super.getMaxLength();
+  }
+  public getSupportedValidators(): Array<string> {
+    const supportedHash: HashTable<Array<string>> = {};
+    const textTypes = ["text", "email", "tel", "password", "url"];
+    supportedHash["text"] = textTypes;
+    supportedHash["regex"] = textTypes;
+    supportedHash["email"] = ["email"];
+    supportedHash["numeric"] = ["number", "range"];
+    const res = super.getSupportedValidators();
+    for (let i = res.length - 1; i >= 0; i--) {
+      const v = res[i];
+      if (supportedHash[v] && supportedHash[v].indexOf(this.inputType) < 0) {
+        res.splice(i, 1);
+      }
+    }
+    return res;
+  }
+  protected runConditionCore(properties: HashTable<any>): void {
+    super.runConditionCore(properties);
+    if (!!this.minValueExpression || !!this.maxValueExpression) {
+      this.setRenderedMinMax(properties);
+    }
+  }
+  protected getDisplayValueCore(keysAsText: boolean, value: any): any {
+    if (!this.maskTypeIsEmpty && !Helpers.isValueEmpty(value)) return this.maskInstance.getMaskedValue(value);
+    return super.getDisplayValueCore(keysAsText, value);
+  }
+  isLayoutTypeSupported(layoutType: string): boolean {
+    return true;
+  }
+  /**
+   * A value passed on to the [`size`](https://developer.mozilla.org/en-US/docs/Web/HTML/Attributes/size) attribute of the underlying `<input>` element.
+   */
+  @property() inputSize: number;
+  /**
+   * @deprecated Use the [`inputSize`](https://surveyjs.io/form-library/documentation/api-reference/text-entry-question-model#inputSize) property instead.
+   * @hidden
+   */
+  public get size(): number {
+    return this.inputSize;
+  }
+  public set size(val: number) {
+    this.inputSize = val;
+  }
+  public get isTextInput(): boolean {
+    return (
+      ["text", "search", "tel", "url", "email", "password"].indexOf(
+        this.inputType
+      ) > -1
+    );
+  }
+  public get renderedInputSize(): number {
+    return this.getPropertyValue("renderedInputSize", undefined, () => {
+      const size = this.calInputSize();
+      return size > 0 ? size : undefined;
+    });
+  }
+  public get inputWidth(): string {
+    return this.getPropertyValue("inputWidth", undefined, () => {
+      return this.calInputSize() > 0 ? "auto" : "";
+    });
+  }
+  private calInputSize(): number {
+    if (!this.isTextInput) return 0;
+    let size = this.inputSize > 0 ? this.inputSize : 0;
+    if (size < 1 && this.parent && !!(<any>this.parent)["inputSize"]) {
+      size = (<any>this.parent)["inputSize"];
+    }
+    return size;
+  }
+  public resetInputSize(): void {
+    this.resetPropertyValue("renderedInputSize");
+    this.resetPropertyValue("inputWidth");
+  }
+  /**
+   * A value passed on to the [`autocomplete`](https://developer.mozilla.org/en-US/docs/Web/HTML/Attributes/autocomplete) attribute of the underlying `<input>` element.
+   */
+  @property() autocomplete: string;
+  /**
+   * A value passed on to the [`min`](https://developer.mozilla.org/en-US/docs/Web/HTML/Attributes/min) attribute of the underlying `<input>` element.
+   * @see minValueExpression
+   * @see minErrorText
+   */
+  public get min(): string {
+    return this.getPropertyValue("min");
+  }
+  public set min(val: string) {
+    if (this.isValueExpression(val)) {
+      this.minValueExpression = val.substring(1);
+      return;
+    }
+    this.setPropertyValue("min", val);
+  }
+  /**
+   * A value passed on to the [`max`](https://developer.mozilla.org/en-US/docs/Web/HTML/Attributes/max) attribute of the underlying `<input>` element.
+   * @see maxValueExpression
+   * @see maxErrorText
+   */
+  public get max(): string {
+    return this.getPropertyValue("max");
+  }
+  public set max(val: string) {
+    if (this.isValueExpression(val)) {
+      this.maxValueExpression = val.substring(1);
+      return;
+    }
+    this.setPropertyValue("max", val);
+  }
+  /**
+   * The minimum value specified as an [expression](https://surveyjs.io/form-library/documentation/design-survey/conditional-logic#expressions). For example, `"minValueExpression": "today(-1)"` sets the minimum value to yesterday.
+   * @see min
+   * @see minErrorText
+   */
+  @property() minValueExpression: string;
+  /**
+   * The maximum value specified as an [expression](https://surveyjs.io/form-library/documentation/design-survey/conditional-logic#expressions). For example, `"maxValueExpression": "today(1)"` sets the maximum value to tomorrow.
+   * @see max
+   * @see maxErrorText
+   */
+  @property() maxValueExpression: string;
+  public get renderedMin(): any {
+    return this.getPropertyValue("renderedMin");
+  }
+  public get renderedMax(): any {
+    return this.getPropertyValue("renderedMax");
+  }
+  /**
+   * An error message to display when the entered value is less than the minimum accepted value.
+   * @see min
+   * @see minValueExpression
+   */
+  @property({ localizable: { defaultStr: "minError", markdown: true } }) minErrorText: string;
+  /**
+   * An error message to display when the entered value exceeds the maximum accepted value.
+   * @see max
+   * @see maxValueExpression
+   */
+  @property({ localizable: { defaultStr: "maxError", markdown: true } }) maxErrorText: string;
+  /**
+   * An error message to display when the entered value does not match the [step size](#step).
+   * @since 2.5.15
+   */
+  @property({ localizable: { defaultStr: "stepError", markdown: true } }) stepErrorText: string;
+  @property({ localizable: { defaultStr: "invalidInputError", markdown: true } }) invalidInputErrorText: string;
+
+  /**
+   * Returns `true` if the specified `inputType` supports the `min` and `max` properties.
+   * @see inputType
+   * @see min
+   * @see max
+   */
+  public get isMinMaxType(): boolean {
+    return isMinMaxType(this);
+  }
+
+  @property() _inputValue: string;
+  public get maskInstance(): IInputMask {
+    return this.maskSettings;
+  }
+  public get inputValue(): string {
+    if (!this._inputValue && !this.maskTypeIsEmpty) return this.maskInstance.getMaskedValue("");
+    return this._inputValue;
+  }
+  public set inputValue(val: string) {
+    let value = val;
+    let _inputValue = val;
+    let keepEnteredText = false;
+    if (!this.maskTypeIsEmpty) {
+      value = this.maskInstance.getUnmaskedValue(val);
+      if (value === undefined || value === null || value === "") {
+        keepEnteredText = true;
+        value = undefined;
+      } else {
+        _inputValue = this.maskInstance.getMaskedValue(value);
+        if (!!value && this.maskSettings.saveMaskedValue) {
+          value = _inputValue;
+        }
+      }
+    }
+    this._inputValue = _inputValue;
+    if (!Helpers.isTwoValueEquals(this.value, value, false, true, false)) {
+      this.doNotUpdateInputValue = keepEnteredText;
+      this.value = value;
+      this.doNotUpdateInputValue = false;
+    }
+  }
+  public getFilteredValue(): any {
+    return this.getExpressionValue(this.value);
+  }
+  //TODO remove this method in the future
+  getExpressionValue(val: any): any {
+    if (!this.maskTypeIsEmpty && this.maskSettings.saveMaskedValue)
+      return this.maskInstance.getUnmaskedValue(val);
+    return val;
+  }
+  private tryPreserveMaskedStringValue(val: any): any {
+    if (typeof val !== "string") return undefined;
+    const unmaskedVal = this.maskInstance.getUnmaskedValue(val);
+    if (!!unmaskedVal) return val;
+
+    const maskedVal = this.maskInstance.getMaskedValue(val);
+    const emptyMaskedVal = this.maskInstance.getMaskedValue("");
+    if (maskedVal === emptyMaskedVal && val !== emptyMaskedVal) return val;
+
+    if (!this.maskInstance.getUnmaskedValue(maskedVal)) return val;
+    return undefined;
+  }
+
+  protected convertToCorrectValue(val: any): any {
+    if (val !== undefined && val !== null && val !== "" && !this.maskTypeIsEmpty) {
+      if (this.maskSettings.saveMaskedValue) {
+        const preserved = this.tryPreserveMaskedStringValue(val);
+        if (preserved !== undefined) return preserved;
+        return this.maskInstance.getMaskedValue(val);
+      }
+      if (this.maskType === "pattern" && val === this.maskInstance.getMaskedValue(val)) {
+        return this.maskInstance.getUnmaskedValue(val);
+      }
+    }
+    return super.convertToCorrectValue(val);
+  }
+
+  protected onChangeQuestionValue(newValue: any): void {
+    super.onChangeQuestionValue(newValue);
+    this.updateInputValue();
+  }
+
+  private updateInputValue() {
+    if (this.doNotUpdateInputValue) return;
+    const _value = this.value;
+    if (this.maskTypeIsEmpty) {
+      this._inputValue = _value;
+    } else if (this.maskSettings.saveMaskedValue) {
+      this._inputValue = (_value !== undefined && _value !== null) ? _value : this.maskInstance.getMaskedValue("");
+    } else {
+      this._inputValue = this.maskInstance.getMaskedValue(_value);
+    }
+    if (!!this.maskInputAdapter) {
+      this.maskInputAdapter.updateInputElementValue(_value);
+    }
+  }
+  private hasToConvertToUTC(val: any): boolean {
+    return settings.storeUtcDates && this.isDateTimeLocaleType() && !!val;
+  }
+  private createDate(val?: number | string | Date): Date {
+    return createDate("question-text", val);
+  }
+  protected valueForSurveyCore(val: any): any {
+    if (this.hasToConvertToUTC(val)) {
+      val = this.createDate(val).toISOString();
+    }
+    return super.valueForSurveyCore(val);
+  }
+  protected valueFromDataCore(val: any): any {
+    if (this.hasToConvertToUTC(val)) {
+      const d = this.createDate(val);
+      const locale_d = this.createDate(d.getTime() - d.getTimezoneOffset() * 60 * 1000);
+      let res = locale_d.toISOString();
+      val = res.substring(0, res.length - 2);
+    }
+    return super.valueFromDataCore(val);
+  }
+  private dateValidationMessage: string;
+  private isMaskInputIncomplete(): boolean {
+    if (this.maskTypeIsEmpty) return false;
+    if (!this.isEmpty()) return false;
+    const inputVal = this._inputValue;
+    if (!inputVal) return false;
+    const emptyMaskedValue = this.maskInstance.getMaskedValue("");
+    return inputVal !== emptyMaskedValue;
+  }
+  protected onCheckForErrors(errors: Array<SurveyError>, isOnValueChanged: boolean, fireCallback: boolean): void {
+    super.onCheckForErrors(errors, isOnValueChanged, fireCallback);
+    if (this.isMaskInputIncomplete()) {
+      const reqIdx = errors.findIndex(e => e.getErrorType() === "required");
+      if (reqIdx >= 0) errors.splice(reqIdx, 1);
+      errors.push(new PatternIncompleteError(null, this));
+    }
+    const isInputUpdate = this.getIsInputTextUpdate();
+    if (isOnValueChanged && isInputUpdate) return;
+    if (this?.input?.validity?.badInput) {
+      errors.push(new CustomError(this.invalidInputErrorText, this));
+    }
+    if (!this.isOnValueChanged) {
+      if (this.isValueLessMin) {
+        const minError = new CustomError(
+          this.getMinMaxErrorText(
+            this.minErrorText,
+            this.getCalculatedMinMax(this.renderedMin)
+          ),
+          this
+        );
+        minError.onUpdateErrorTextCallback = err => {
+          err.text = this.getMinMaxErrorText(
+            this.minErrorText,
+            this.getCalculatedMinMax(this.renderedMin)
+          );
+        };
+        errors.push(minError);
+      }
+      if (this.isValueGreaterMax) {
+        const maxError = new CustomError(
+          this.getMinMaxErrorText(
+            this.maxErrorText,
+            this.getCalculatedMinMax(this.renderedMax)
+          ),
+          this
+        );
+        maxError.onUpdateErrorTextCallback = err => {
+          err.text = this.getMinMaxErrorText(
+            this.maxErrorText,
+            this.getCalculatedMinMax(this.renderedMax)
+          );
+        };
+        errors.push(maxError);
+      }
+      if (this.isStepNumberIncorrect) {
+        errors.push(new CustomError(this.getStepErrorText(), this));
+      }
+      if (errors.length === 0 && !!this.dateValidationMessage) {
+        errors.push(new CustomError(this.dateValidationMessage, this));
+      }
+    }
+    if (this.inputType === "email" && !this.validators.some((v) => v.getType() === "emailvalidator")) {
+      const valName = this.getValidatorTitle();
+      const emailValidator = new EmailValidator();
+      emailValidator.owner = this;
+      const validateResult = emailValidator.validate(this.value, valName);
+
+      if (!!validateResult && !!validateResult.error) {
+        errors.push(validateResult.error);
+      }
+    }
+  }
+
+  protected canSetValueToSurvey(): boolean {
+    if (!this.isMinMaxType) return true;
+    const isValid = !this.isValueLessMin && !this.isValueGreaterMax;
+    if ((!isValid || this.errors.length > 0) && !!this.survey &&
+      (this.validationCallbacks.isValidateOnValueChanging || this.validationCallbacks.isValidateOnValueChanged)) {
+      this.validate();
+    }
+    return isValid;
+  }
+  protected convertFuncValuetoQuestionValue(val: any): any {
+    let type = this.maskTypeIsEmpty ? this.inputType : this.maskSettings.getTypeForExpressions();
+    const res = Helpers.convertValToQuestionVal(val, type);
+    if (!this.maskTypeIsEmpty && this.maskSettings.saveMaskedValue && typeof res === "string") {
+      const preserved = this.tryPreserveMaskedStringValue(res);
+      if (preserved !== undefined) return preserved;
+      return this.maskInstance.getMaskedValue(res);
+    }
+    return res;
+  }
+  private getMinMaxErrorText(errorText: string, value: any): string {
+    if (Helpers.isValueEmpty(value)) return errorText;
+    let errorValue = value.toString();
+    if (this.inputType === "date" && !!value.toDateString) {
+      errorValue = value.toDateString();
+    }
+    return errorText.replace("{0}", errorValue);
+  }
+  private getStepErrorText(): string {
+    const text = this.stepErrorText;
+    return text.replace("{0}", this.renderedStep);
+  }
+  private get isValueLessMin(): boolean {
+    return (
+      !this.isValueEmpty(this.renderedMin) && !this.isEmpty() &&
+      this.getCalculatedMinMax(this.value) <
+        this.getCalculatedMinMax(this.renderedMin)
+    );
+  }
+  private get isValueGreaterMax(): boolean {
+    return (
+      !this.isValueEmpty(this.renderedMax) && !this.isEmpty() &&
+      this.getCalculatedMinMax(this.value) >
+        this.getCalculatedMinMax(this.renderedMax)
+    );
+  }
+  private get isStepNumberIncorrect() : boolean {
+    if (this.inputType !== "number" || this.isEmpty()
+      || !Helpers.isNumber(this.renderedStep) || !Helpers.isNumber(this.value)) return false;
+    let val = Helpers.getNumber(this.value);
+    let step = Helpers.getNumber(this.renderedStep);
+    let pw = 1;
+    while((Math.round(step * pw) / pw !== step || Math.round(val * pw) / pw !== val) && pw < 1000000) {
+      pw *= 10;
+    }
+    val = Math.round(val * pw);
+    step = Math.round(step * pw);
+    return step > 0 && (val % step) !== 0;
+  }
+  private get isDateInputType(): boolean {
+    return this.inputType === "date" || this.isDateTimeLocaleType();
+  }
+  private isDateTimeLocaleType(): boolean {
+    return this.inputType === "datetime-local";
+  }
+  private getCalculatedMinMax(minMax: any): any {
+    if (this.isValueEmpty(minMax)) return minMax;
+    return this.isDateInputType ? this.createDate(minMax) : minMax;
+  }
+  private setRenderedMinMax(properties: HashTable<any> = null) {
+    const setProp = (name: string, val: any) => {
+      this.setPropertyValue(name, this.convertFuncValuetoQuestionValue(val));
+    };
+    const setMin = (val: any) => {
+      if (!val && this.isDateInputType && !!settings.minDate) {
+        val = settings.minDate;
+      }
+      setProp("renderedMin", val);
+    };
+    const setMax = (val: any) => {
+      if (!val && this.isDateInputType) {
+        val = settings.maxDate;
+      }
+      setProp("renderedMax", val);
+    };
+    if (!this.runExpressionByProperty("minValueExpression", properties, (val: any) => {
+      setMin(val);
+    })) {
+      setMin(this.min);
+    }
+    if (!this.runExpressionByProperty("maxValueExpression", properties, (val: any) => {
+      setMax(val);
+    })) {
+      setMax(this.max);
+    }
+  }
+
+  /**
+   * A value passed on to the [`step`](https://developer.mozilla.org/en-US/docs/Web/HTML/Attributes/step) attribute of the underlying `<input>` element.
+   * @see stepErrorText
+   */
+  @property() step: string;
+  public get renderedStep(): string {
+    if (this.isValueEmpty(this.step)) {
+      return this.inputType !== "number" ? undefined : "any";
+    }
+    return this.step;
+  }
+  protected getIsInputTextUpdate(): boolean {
+    return this.maskTypeIsEmpty ? super.getIsInputTextUpdate() : false;
+  }
+  supportAutoAdvance(): boolean {
+    return !this.getIsInputTextUpdate() && !this.isDateInputType;
+  }
+  public supportGoNextPageError(): boolean {
+    return !this.isDateInputType;
+  }
+  /**
+   * An array of predefined options from which users can select. This property configures an HTML [`<datalist>`](https://developer.mozilla.org/en-US/docs/Web/HTML/Element/datalist) element and associates it with the underlying `input` element.
+   */
+  public get dataList(): Array<string> {
+    return this.locDataList.value;
+  }
+  public set dataList(val: Array<string>) {
+    this.locDataList.value = val;
+  }
+  private locDataListValue: LocalizableStrings;
+  get locDataList(): LocalizableStrings {
+    if (!this.locDataListValue) {
+      this.locDataListValue = new LocalizableStrings(this);
+      this.locDataListValue.onValueChanged = (oldValue: any, newValue: any) => {
+        this.propertyValueChanged("dataList", oldValue, newValue);
+      };
+    }
+    return this.locDataListValue;
+  }
+  public get dataListId(): string {
+    return this.locDataListValue?.hasValue() ? this.renderedId + "_datalist" : undefined;
+  }
+  protected isPropertyStoredInHash(name: string): boolean {
+    if (name === "dataList") return !this.locDataListValue;
+    return super.isPropertyStoredInHash(name);
+  }
+  protected setNewValue(newValue: any): void {
+    this.setIsValueChanged();
+    newValue = this.correctValueType(newValue);
+    if (!!newValue) {
+      this.dateValidationMessage = undefined;
+    }
+    super.setNewValue(newValue);
+  }
+  public updateValueFromSurvey(newValue: any, clearData: boolean = false): void {
+    super.updateValueFromSurvey(newValue, clearData);
+    if (!this.isEmpty()) {
+      this.setIsValueChanged();
+    }
+    const val = this.value;
+    if (!this.maskTypeIsEmpty && !this.isValueEmpty(newValue) && !this.isTwoValueEquals(val, newValue)) {
+      this.setValueCore(val);
+    }
+  }
+  protected correctValueType(newValue: any): any {
+    if (!newValue) return newValue;
+    if (this.inputType === "number" || this.inputType === "range") {
+      return Helpers.isNumber(newValue) ? Helpers.getNumber(newValue) : "";
+    }
+    if (this.inputType === "month") {
+      const d = this.createDate(newValue);
+      const isUtc = d.toISOString().indexOf(newValue) == 0 && newValue.indexOf("T") == -1;
+      const month = isUtc ? d.getUTCMonth() : d.getMonth();
+      let year = (isUtc ? d.getUTCFullYear() : d.getFullYear()).toString();
+      while(year.length < 4) {
+        year = "0" + year;
+      }
+      const m = month + 1;
+      return year + "-" + (m < 10 ? "0" : "") + m;
+    }
+    return newValue;
+  }
+  protected hasPlaceholder(): boolean {
+    return !this.isReadOnly && this.inputType !== "range";
+  }
+  public getControlClass(): string {
+    return new CssClassBuilder()
+      .append(super.getControlClass())
+      .append(this.cssClasses.isValueChanged, this._isValueChanged)
+      .toString();
+  }
+  public isReadOnlyRenderDiv(): boolean {
+    return this.isReadOnly && settings.readOnly.textRenderMode === "div";
+  }
+  get inputStyle(): any {
+    var style: any = {};
+    style.width = this.inputWidth;
+    this.updateTextAlign(style);
+    return style;
+  }
+  private updateTextAlign(style: any) {
+    if (this.inputTextAlignment !== "auto") {
+      style.textAlign = this.inputTextAlignment;
+    } else if (!this.maskTypeIsEmpty && this.maskSettings.getTextAlignment() !== "auto") {
+      style.textAlign = this.maskSettings.getTextAlignment();
+    }
+  }
+  //web-based methods
+  private _isWaitingForEnter = false;
+  private _isValueChanged = false;
+  private setIsValueChanged(): void {
+    if (this._isValueChanged) return;
+    this._isValueChanged = true;
+    if (this.input && this.cssClasses.isValueChanged) {
+      this.input.classList.add(this.cssClasses.isValueChanged);
+    }
+  }
+  private updateValueOnEvent(event: any) {
+    if (this.inputType === "color" && !this._isValueChanged) return;
+    const newValue = event.target.value;
+    if (!this.isTwoValueEquals(this.value, newValue)) {
+      this.inputValue = newValue;
+    }
+  }
+  private prevNumberValue: string;
+  private updateNumericValue(event: any): void {
+    if (this.inputType !== "number" || event.key !== "-") return;
+    // Browsers returns empty string for invalid values in type="number" input. We need to store the value before it becomes empty and restore it here.
+    const value = event.target?.value || this.prevNumberValue;
+    // For input type="number", clean up "-" symbols that are not at the first position
+    // This handles the case when renderedMin is undefined (selectionStart is null for type="number")
+    if (typeof value === "string" && value.length > 0) {
+      event.target.value = value[0] + value.substring(1).replace(/-/g, "");
+    }
+    this.prevNumberValue = undefined;
+  }
+  onCompositionUpdate = (event: any) => {
+    if (this.isInputTextUpdate) {
+      setTimeout(() => {
+        this.updateValueOnEvent(event);
+      }, 1);
+    }
+    this.updateRemainingCharacterCounter(event.target.value);
+  };
+  public onKeyUp = (event: any) => {
+    this.updateDateValidationMessage(event);
+    this.updateNumericValue(event);
+    if (this.isInputTextUpdate) {
+      if (!this._isWaitingForEnter || event.keyCode === 13) {
+        this.updateValueOnEvent(event);
+        this._isWaitingForEnter = false;
+      }
+    } else {
+      if (event.keyCode === 13) {
+        this.updateValueOnEvent(event);
+      }
+    }
+    this.updateRemainingCharacterCounter(event.target.value);
+  };
+  private updateDateValidationMessage(event: any): void {
+    this.dateValidationMessage = this.isDateInputType && !!event.target ? event.target.validationMessage : undefined;
+  }
+  private isClickBlocked() {
+    return this.isReadOnlyAttr && ["color", "range"].indexOf(this.inputType) > -1;
+  }
+  public readOnlyBlocker = (event: any) => {
+    if (this.isClickBlocked()) {
+      event.preventDefault();
+      return true;
+    }
+  };
+  public onKeyDown = (event: any) => {
+    if (this.readOnlyBlocker(event)) {
+      return;
+    }
+    this.setIsValueChanged();
+    this.onKeyDownPreprocess && this.onKeyDownPreprocess(event);
+    if (this.inputType === "number" && this.shouldPreventNumberInput(event)) {
+      event.preventDefault();
+      return;
+    }
+    if (this.isInputTextUpdate) {
+      this._isWaitingForEnter = event.keyCode === 229;
+    }
+    this.onTextKeyDownHandler(event);
+  };
+  private shouldPreventNumberInput(event: any): boolean {
+    const key = event.key;
+
+    // Allow keyboard shortcuts (Ctrl+C, Ctrl+V, etc.)
+    if (event.ctrlKey || event.metaKey || event.altKey) return false;
+
+    // Do not allow "e", "E", or "+" symbols
+    if (["e", "E", "+"].indexOf(key) > -1) return true;
+
+    // Handle "-" symbol
+    // For input type="number", selectionStart is null, so we can only prevent "-" when renderedMin >= 0
+    // When renderedMin is undefined, we'll clean up "-" in onKeyUp event
+    if (key === "-") {
+      if (!Helpers.isValueEmpty(this.renderedMin)) {
+        const minValue = Helpers.getNumber(this.renderedMin);
+        if (!isNaN(minValue) && minValue >= 0) return true;
+      }
+      this.prevNumberValue = event.target?.value || "";
+    }
+    return false;
+  }
+  public onChange = (event: any): void => {
+    this.setIsValueChanged();
+    this.updateDateValidationMessage(event);
+    const root = getRootNode(this.input);
+    if (!root) return;
+    const elementIsFocused = event.target === root.activeElement;
+    if (!elementIsFocused || this.isInputTextUpdate) {
+      this.updateValueOnEvent(event);
+    }
+    this.updateRemainingCharacterCounter(event.target.value);
+  };
+  protected onBlurCore(event: any): void {
+    this.updateDateValidationMessage(event);
+    this.updateValueOnEvent(event);
+    this.updateRemainingCharacterCounter(event.target.value);
+    super.onBlurCore(event);
+  }
+  protected onFocusCore(event: any): void {
+    this.updateRemainingCharacterCounter(event.target.value);
+    super.onFocusCore(event);
+  }
+  public afterRenderQuestionElement(el: HTMLElement) {
+    if (!!el) {
+      this.input = el instanceof HTMLInputElement ? el : el.querySelector("input");
+      this.createMaskAdapter();
+    }
+    super.afterRenderQuestionElement(el);
+  }
+  public beforeDestroyQuestionElement(el: HTMLElement) {
+    this.deleteMaskAdapter();
+    this.input = undefined;
+  }
+  public onContainerClick(event: Event) {
+    if (event.target == event.currentTarget && !this.isClickBlocked()) {
+      this.input?.focus();
+    }
+  }
+}
+
+const minMaxTypes = [
+  "number",
+  "range",
+  "date",
+  "datetime-local",
+  "month",
+  "time",
+  "week",
+];
+
+export function isMinMaxType(obj: any): boolean {
+  const t = !!obj ? obj.inputType : "";
+  if (!t) return false;
+  return minMaxTypes.indexOf(t) > -1;
+}
+function getWeekTimeNumber(str: string, delimiter: string): number {
+  const strs = str.split(delimiter);
+  if (strs.length !== 2) return -1;
+  if (!Helpers.isNumber(strs[0]) || !Helpers.isNumber(strs[1])) return -1;
+  return parseFloat(strs[0]) * 60 + parseFloat(strs[1]);
+}
+function isMinBiggerWeekTime(minStr: string, maxStr: string, delimiter: string): boolean {
+  const min = getWeekTimeNumber(minStr, delimiter);
+  const max = getWeekTimeNumber(maxStr, delimiter);
+  if (min < 0 || max < 0) return false;
+  return min > max;
+}
+function getCorrectMinMax(obj: QuestionTextBase, min: any, max: any, isMax: boolean): any {
+  let val = isMax ? max : min;
+  if (!isMinMaxType(obj)) return val;
+  if (Helpers.isValueEmpty(min) || Helpers.isValueEmpty(max)) return val;
+  if (obj.inputType.indexOf("date") === 0 || obj.inputType === "month") {
+    const isMonth = obj.inputType === "month";
+    const reason = "question-text-minmax";
+    const dMin = createDate(reason, isMonth ? min + "-01" : min);
+    const dMax = createDate(reason, isMonth ? max + "-01" : max);
+    if (!dMin || !dMax) return val;
+    if (dMin > dMax) return isMax ? min : max;
+  }
+  if (obj.inputType === "week" || obj.inputType === "time") {
+    const delimiter = obj.inputType === "week" ? "-W" : ":";
+    if (isMinBiggerWeekTime(min, max, delimiter)) return isMax ? min : max;
+    return val;
+  }
+  if (obj.inputType === "number") {
+    if (!Helpers.isNumber(min) || !Helpers.isNumber(max)) return val;
+    if (Helpers.getNumber(min) > Helpers.getNumber(max)) return isMax ? min : max;
+  }
+  if (typeof min === "string" || typeof max === "string") return val;
+  if (min > max) return isMax ? min : max;
+  return val;
+}
+
+function propertyEditorMinMaxUpdate(obj: QuestionTextBase, propertyEditor: any): void {
+  if (!!obj && !!obj.inputType) {
+    propertyEditor.inputType = obj.inputType !== "range" ? obj.inputType : "number";
+    propertyEditor.textUpdateMode = "onBlur";
+  }
+}
+function isStepVisible(obj: QuestionTextModel) : boolean {
+  return obj.inputType === "number" || obj.inputType === "range";
+}
+
+Serializer.addClass(
+  "text",
+  [
+    {
+      name: "inputType",
+      default: "text",
+      choices: settings.questions.inputTypes,
+    },
+    {
+      name: "inputSize:number", alternativeName: "size", minValue: 0, dependsOn: "inputType",
+      visibleIf: function(obj: any) {
+        if (!obj) return false;
+        return obj.isTextInput;
+      }
+    },
+    {
+      name: "textUpdateMode",
+      default: "default",
+      choices: ["default", "onBlur", "onTyping"],
+      dependsOn: "inputType",
+      visibleIf: function(obj: any) {
+        if (!obj) return false;
+        return obj.isTextInput;
+      },
+    },
+    {
+      name: "autocomplete",
+      alternativeName: "autoComplete",
+      choices: settings.questions.dataList,
+    },
+    {
+      name: "min",
+      dependsOn: "inputType",
+      visibleIf: function(obj: any) {
+        return isMinMaxType(obj);
+      },
+      onPropertyEditorUpdate: function(obj: any, propertyEditor: any) {
+        propertyEditorMinMaxUpdate(obj, propertyEditor);
+      },
+      onSettingValue: (obj: any, val: any): any => {
+        return getCorrectMinMax(obj, val, obj.max, false);
+      },
+    },
+    {
+      name: "max",
+      dependsOn: "inputType",
+      nextToProperty: "*min",
+      visibleIf: function(obj: any) {
+        return isMinMaxType(obj);
+      },
+      onSettingValue: (obj: any, val: any): any => {
+        return getCorrectMinMax(obj, obj.min, val, true);
+      },
+      onPropertyEditorUpdate: function(obj: any, propertyEditor: any) {
+        propertyEditorMinMaxUpdate(obj, propertyEditor);
+      },
+    },
+    {
+      name: "minValueExpression:expression",
+      dependsOn: "inputType",
+      visibleIf: function(obj: any) {
+        return isMinMaxType(obj);
+      },
+    },
+    {
+      name: "maxValueExpression:expression",
+      dependsOn: "inputType",
+      visibleIf: function(obj: any) {
+        return isMinMaxType(obj);
+      },
+    },
+    {
+      name: "minErrorText",
+      serializationProperty: "locMinErrorText",
+      dependsOn: "inputType",
+      visibleIf: function(obj: any) {
+        return isMinMaxType(obj);
+      },
+    },
+    {
+      name: "maxErrorText",
+      serializationProperty: "locMaxErrorText",
+      dependsOn: "inputType",
+      visibleIf: function(obj: any) {
+        return isMinMaxType(obj);
+      },
+    },
+    {
+      name: "stepErrorText",
+      serializationProperty: "locStepErrorText",
+      dependsOn: "inputType",
+      visibleIf: (obj: any) => isStepVisible(obj)
+    },
+    { name: "inputTextAlignment", default: "auto", choices: ["left", "right", "auto"] },
+    {
+      name: "maskType",
+      default: "none",
+      visibleIndex: 0,
+      dependsOn: "inputType",
+      visibleIf: (obj: any) => {
+        return obj.inputType === "text" || obj.inputType === "tel";
+      },
+      choices: (obj: any) => {
+        const choices = getAvailableMaskTypeChoices();
+        return choices;
+      }
+    },
+    {
+      name: "maskSettings:masksettings",
+      className: "masksettings",
+      visibleIndex: 1,
+      dependsOn: ["inputType", "maskType"],
+      visibleIf: (obj: any) => {
+        return obj.inputType === "text" || obj.inputType === "tel";
+      },
+      onGetValue: function (obj: any) {
+        return obj.maskSettings.getData();
+      },
+      onSetValue: function (obj: any, value: any) {
+        obj.maskSettings.setData(value);
+      },
+    },
+    {
+      name: "step:number",
+      dependsOn: "inputType",
+      visibleIf: (obj: any) => isStepVisible(obj)
+    },
+    {
+      name: "maxLength:number",
+      default: -1,
+      dependsOn: "inputType",
+      visibleIf: function(obj: any) {
+        if (!obj) return false;
+        return obj.isTextInput;
+      },
+    },
+    {
+      name: "placeholder",
+      alternativeName: "placeHolder",
+      serializationProperty: "locPlaceholder",
+      dependsOn: "inputType",
+      visibleIf: function(obj: any) {
+        if (!obj) return false;
+        return obj.isTextInput;
+      },
+    },
+    {
+      name: "dataList:string[]",
+      serializationProperty: "locDataList",
+      dependsOn: "inputType",
+      visibleIf: function(obj: any) {
+        if (!obj) return false;
+        return obj.inputType === "text";
+      },
+    },
+  ],
+  function() {
+    return new QuestionTextModel("");
+  },
+  "textbase"
+);
+
+QuestionFactory.Instance.registerQuestion("text", (name) => {
+  return new QuestionTextModel(name);
+});
