@@ -45,7 +45,9 @@ the tender's phased demo script:
 
 ```
 # 1. Directus (already built — see ./directus/CLAUDE.md)
-cd directus/api && pnpm run dev            # http://localhost:8055
+cd directus/api && run-with-node22.bat     # http://localhost:8055
+# (pins the bundled Node 22 in .tools/ — isolated-vm's native module is
+#  compiled against Node 22's ABI and crashes on newer/older Node)
 
 # 2. Camunda
 cd camunda-module && run-with-jdk17.bat    # http://localhost:8080

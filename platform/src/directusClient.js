@@ -61,7 +61,7 @@ export async function updateApplication(id, payload) {
 }
 
 export async function listApplications() {
-  const { data } = await directusFetch('/items/license_applications?sort=-date_created&limit=50');
+  const { data } = await directusFetch('/items/license_applications?sort=-date_created&limit=500');
   return data;
 }
 
@@ -86,6 +86,12 @@ export async function addField(fieldDef) {
   await directusFetch('/fields/license_applications', {
     method: 'POST',
     body: JSON.stringify(fieldDef),
+  });
+}
+
+export async function deleteField(field) {
+  await directusFetch(`/fields/license_applications/${encodeURIComponent(field)}`, {
+    method: 'DELETE',
   });
 }
 

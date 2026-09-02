@@ -53,6 +53,14 @@ export async function completeTask(taskId, variables = {}) {
   });
 }
 
+// After completing a task, this tells us whether the token is still
+// somewhere in the process (more steps ahead) or the instance just ended —
+// Camunda 404s a process-instance id the moment it completes.
+export async function isProcessInstanceActive(processInstanceId) {
+  const res = await fetch(`${CAMUNDA_URL}/process-instance/${processInstanceId}`);
+  return res.ok;
+}
+
 export async function getProcessInstanceByBusinessKey(processKey, businessKey) {
   const results = await camundaFetch(
     `/process-instance?processDefinitionKey=${processKey}&businessKey=${encodeURIComponent(businessKey)}`
@@ -197,12 +205,6 @@ async function deployResource(filename, xml, deploymentNamePrefix) {
 }
 
 const deployDecisionXml = (xml, prefix) => deployResource('cinema_eligibility_and_fee.dmn', xml, prefix);
-
-// Raw BPMN XML fetch, used by the embedded bpmn-js "Advanced Editor".
-export async function getProcessXml(processKey) {
-  const { bpmn20Xml } = await camundaFetch(`/process-definition/key/${processKey}/xml`);
-  return bpmn20Xml;
-}
 
 // Generic BPMN deploy used by the process designer — any process key/xml.
 export async function deployProcessXml(processKey, xml, prefix = 'process-designer') {

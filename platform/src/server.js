@@ -1,5 +1,6 @@
 import 'dotenv/config';
 import express from 'express';
+import session from 'express-session';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import * as directus from './directusClient.js';
@@ -9,17 +10,63 @@ import * as platformConfig from './config.js';
 import * as mockIntegrations from './mockIntegrations.js';
 import * as pipelineLog from './pipelineLog.js';
 import * as processCanvas from './processCanvas.js';
+import { findUser, ROLE_CANDIDATE_GROUP } from './users.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const app = express();
 app.use(express.json());
+app.use(
+  session({
+    secret: process.env.SESSION_SECRET || 'oman-info-platform-dev-secret',
+    resave: false,
+    saveUninitialized: false,
+    cookie: { httpOnly: true, maxAge: 8 * 60 * 60 * 1000 },
+  })
+);
 app.use(express.static(path.join(__dirname, '..', 'public')));
 
 const PROCESS_KEY = 'cinema_film_screening_license';
 
+// --- Auth (Platform's own session — deliberately not Directus's RBAC) ---
+
+app.post('/api/auth/login', (req, res) => {
+  const { username, password } = req.body || {};
+  const user = findUser(username, password);
+  if (!user) return res.status(401).json({ error: 'Invalid username or password' });
+  req.session.user = user;
+  res.json(user);
+});
+
+app.post('/api/auth/logout', (req, res) => {
+  req.session.destroy(() => res.status(204).end());
+});
+
+app.get('/api/auth/me', (req, res) => {
+  if (!req.session.user) return res.status(401).json({ error: 'Not logged in' });
+  res.json(req.session.user);
+});
+
+function requireAuth(req, res, next) {
+  if (!req.session.user) return res.status(401).json({ error: 'Not logged in' });
+  next();
+}
+
+function requireRole(...roles) {
+  return (req, res, next) => {
+    if (!req.session.user) return res.status(401).json({ error: 'Not logged in' });
+    if (!roles.includes(req.session.user.role)) return res.status(403).json({ error: 'Forbidden for this role' });
+    next();
+  };
+}
+
+app.use('/api', (req, res, next) => {
+  if (req.path.startsWith('/auth/') || req.path === '/health') return next();
+  return requireAuth(req, res, next);
+});
+
 // --- Applications (Directus-backed) -----------------------------------
 
-app.post('/api/applications', async (req, res) => {
+app.post('/api/applications', requireRole('applicant', 'admin'), async (req, res) => {
   try {
     const record = await directus.createApplication({
       status: 'submitted',
@@ -88,19 +135,40 @@ app.post('/api/integrations/practice-license-lookup', (req, res) => {
 
 app.get('/api/tasks', async (req, res) => {
   try {
-    const group = req.query.group || 'specialist';
+    const { role } = req.session.user;
+    // Non-admin roles can only ever see their own candidate group's queue —
+    // the group is derived from the session, never trusted from the client,
+    // regardless of what ?group= is passed.
+    const group = role === 'admin' ? req.query.group || 'specialist' : ROLE_CANDIDATE_GROUP[role];
+    if (!group) return res.status(403).json({ error: 'This role has no task queue' });
     res.json(await camunda.listTasksForGroup(group));
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
 });
 
+// Statuses the fixed task-completion buttons below set on the ASSUMPTION
+// that more steps follow (built for the original multi-step flow). If a
+// custom canvas routes that same task straight to an End event instead,
+// the process instance is genuinely finished right after this task
+// completes — so we check with Camunda and correct the status to
+// 'completed' rather than leaving a stale "still in progress" label.
+// 'approved' / 'rejected' / 'revision_requested' are already specific,
+// intentional terminal-or-looping outcomes and are left alone.
+const NON_TERMINAL_STATUSES = new Set(['field_visit_scheduled', 'under_review']);
+
 app.post('/api/tasks/:id/complete', async (req, res) => {
   try {
     const { variables, applicationId, applicationUpdate } = req.body;
+    const task = applicationUpdate ? await camunda.getTask(req.params.id).catch(() => null) : null;
     await camunda.completeTask(req.params.id, variables || {});
     if (applicationId && applicationUpdate) {
-      await directus.updateApplication(applicationId, applicationUpdate);
+      let finalUpdate = applicationUpdate;
+      if (task?.processInstanceId && NON_TERMINAL_STATUSES.has(applicationUpdate.status)) {
+        const stillActive = await camunda.isProcessInstanceActive(task.processInstanceId);
+        if (!stillActive) finalUpdate = { ...finalUpdate, status: 'completed' };
+      }
+      await directus.updateApplication(applicationId, finalUpdate);
     }
     res.status(204).end();
   } catch (err) {
@@ -125,11 +193,14 @@ app.get('/api/health', async (_req, res) => {
 // only — the platform never touches either module's filesystem or DB
 // directly, matching the "REST calls only" module boundary.
 
+app.use('/api/admin', requireRole('admin'));
+
 const FIELD_TYPE_PRESETS = {
   text: { type: 'string', interface: 'input' },
   longtext: { type: 'text', interface: 'input-multiline' },
   number: { type: 'float', interface: 'input' },
   boolean: { type: 'boolean', interface: 'boolean' },
+  date: { type: 'date', interface: 'datetime' },
 };
 
 app.post('/api/admin/fields', async (req, res) => {
@@ -149,6 +220,26 @@ app.post('/api/admin/fields', async (req, res) => {
   } catch (err) {
     const exists = /already exists|duplicate|RECORD_NOT_UNIQUE/i.test(err.message);
     res.status(exists ? 409 : 500).json({ error: exists ? `Field "${req.body.field}" already exists` : err.message });
+  }
+});
+
+// Fields the eligibility DMN, dashboard aggregates, or the submit/task-
+// completion handlers above read by exact name — deleting these would break
+// the app, not just the form, so they're not deletable from this panel.
+const PROTECTED_FIELDS = new Set([
+  'film_title', 'classification', 'applicant_name', 'has_riyada_card',
+  'valid_commercial_registration', 'valid_prior_practice_license', 'final_fee',
+]);
+
+app.delete('/api/admin/fields/:field', async (req, res) => {
+  if (PROTECTED_FIELDS.has(req.params.field)) {
+    return res.status(400).json({ error: `"${req.params.field}" is a core field the process relies on and can't be deleted.` });
+  }
+  try {
+    await directus.deleteField(req.params.field);
+    res.status(204).end();
+  } catch (err) {
+    res.status(500).json({ error: err.message });
   }
 });
 
@@ -282,33 +373,6 @@ app.post('/api/admin/process-canvas/:key', async (req, res) => {
   }
 });
 
-// --- Advanced Editor: raw BPMN XML in/out for the embedded bpmn-js editor -
-// Same deploy mechanism as everything else, just no compiler in between —
-// this is for whoever actually knows BPMN and wants the real editing
-// surface instead of the plain-language canvas.
-
-app.get('/api/admin/process-xml/:key', async (req, res) => {
-  try {
-    res.json({ xml: await camunda.getProcessXml(req.params.key) });
-  } catch (err) {
-    res.status(500).json({ error: err.message });
-  }
-});
-
-app.post('/api/admin/process-xml/:key', async (req, res) => {
-  try {
-    const xml = req.body.xml || '';
-    const looksLikeBpmn = xml.includes('<bpmn:definitions') || xml.includes('<definitions');
-    if (!looksLikeBpmn) {
-      return res.status(400).json({ error: 'No valid BPMN XML provided.' });
-    }
-    const { version } = await camunda.deployProcessXml(req.params.key, xml, 'advanced-editor');
-    res.json({ ok: true, version });
-  } catch (err) {
-    res.status(400).json({ ok: false, error: err.message });
-  }
-});
-
 // --- CI/CD Promotion (Phase 3 demo) --------------------------------------
 // SIMULATED: this sandbox has one environment, not a real DEV/UAT split —
 // disclosed as such in the UI. The snapshot itself is not fake: it's read
@@ -361,7 +425,7 @@ function currentQuarterStart() {
   return new Date(now.getFullYear(), quarterMonth, 1).toISOString();
 }
 
-app.get('/api/dashboard/metrics', async (_req, res) => {
+app.get('/api/dashboard/metrics', requireRole('admin'), async (_req, res) => {
   try {
     // The RFP's three headline KPIs are explicitly time-windowed: Requests
     // Received is monthly, % Meeting Conditions is quarterly, % Completed
@@ -492,7 +556,8 @@ async function runStartupProvisioning() {
       schema: { is_nullable: true },
     });
     await directus.ensureStatusChoice('revision_requested', 'Revision Requested');
-    console.log('[startup] support fields verified (eligible, review_comments, field_visit_date, sla_breached, revision_loop_used, license_qr, status:revision_requested)');
+    await directus.ensureStatusChoice('completed', 'Completed');
+    console.log('[startup] support fields verified (eligible, review_comments, field_visit_date, sla_breached, revision_loop_used, license_qr, status:revision_requested, status:completed)');
   } catch (err) {
     console.error('[startup] provisioning failed:', err.message);
     return;
