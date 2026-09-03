@@ -4,6 +4,9 @@ node_modules/
 # Secrets — live credentials, never commit
 .env
 .env.*
+# ...except the templates, which are meant to be committed
+!.env.example
+!**/.env.example
 
 # Runtime data / generated at run time
 directus/api/data.db
