@@ -13,12 +13,22 @@ $Root = $PSScriptRoot
 $ToolsDir = Join-Path $Root '.tools'
 New-Item -ItemType Directory -Force -Path $ToolsDir | Out-Null
 
+# The console window this runs in (especially when the .bat is
+# double-clicked rather than run from an already-open terminal) closes the
+# instant this script exits, whether it succeeded or crashed -- so without
+# a transcript + a guaranteed pause at the end, a failure is invisible.
+# Both are unconditional (see the try/finally wrapping everything below).
+$TranscriptPath = Join-Path $Root 'setup-and-run.log'
+try { Start-Transcript -Path $TranscriptPath -Append | Out-Null } catch {}
+
 $NodeVersion = '22.22.0'
 $NodeDir = Join-Path $ToolsDir "node-v$NodeVersion-win-x64"
 $CamundaVersion = '7.22.0'
 
 function Log($msg)  { Write-Host "`n== $msg ==" }
 function Warn($msg) { Write-Host "!! $msg" -ForegroundColor Yellow }
+
+try {
 
 # ---------------------------------------------------------------- 1. Node
 Log '[1/8] Node' $NodeVersion
@@ -84,7 +94,13 @@ if (Test-Path $camundaInternal) {
 
 # ------------------------------------------------ 4. Install dependencies
 Log '[4/8] Installing dependencies'
-corepack enable 2>$null
+try {
+  corepack enable
+} catch {
+  Warn "corepack enable failed ($($_.Exception.Message)) -- if this machine's global npm is installed"
+  Warn "under Program Files, this usually means it needs an elevated (Run as Administrator) shell."
+  Warn "Continuing anyway; pnpm/npm install below will fail loudly if this actually matters."
+}
 Push-Location (Join-Path $Root 'directus')
 pnpm install
 if ($LASTEXITCODE -ne 0) { Write-Host 'FATAL: pnpm install failed in directus/' -ForegroundColor Red; Pop-Location; exit 1 }
@@ -150,14 +166,19 @@ if (-not (Wait-ForPort 8055 'Directus')) { Warn "check $Root\directus-dev.log" }
 
 # --------------------------------- 7. Restore schema, start Camunda
 Log '[7/8] Restoring Directus schema + starting Camunda'
-$adminEmail = (Select-String -Path $directusEnv -Pattern '^ADMIN_EMAIL=(.*)$').Matches[0].Groups[1].Value
-$adminPassword = (Select-String -Path $directusEnv -Pattern '^ADMIN_PASSWORD=(.*)$').Matches[0].Groups[1].Value
-$env:DIRECTUS_URL = 'http://localhost:8055'
-$env:DIRECTUS_ADMIN_EMAIL = $adminEmail
-$env:DIRECTUS_ADMIN_PASSWORD = $adminPassword
-node (Join-Path $Root 'ops\promote-directus-schema.mjs') (Join-Path $Root 'directus\schema\directus-schema.json')
-if ($LASTEXITCODE -ne 0) {
-  Warn 'Schema promotion failed -- confirm Directus is up, then re-run: node ops/promote-directus-schema.mjs directus/schema/directus-schema.json'
+$emailMatch = Select-String -Path $directusEnv -Pattern '^ADMIN_EMAIL=(.*)$'
+$passwordMatch = Select-String -Path $directusEnv -Pattern '^ADMIN_PASSWORD=(.*)$'
+if (-not $emailMatch -or -not $passwordMatch) {
+  Warn "Could not read ADMIN_EMAIL/ADMIN_PASSWORD from $directusEnv -- skipping schema restore."
+  Warn 'Once fixed, run manually: node ops/promote-directus-schema.mjs directus/schema/directus-schema.json'
+} else {
+  $env:DIRECTUS_URL = 'http://localhost:8055'
+  $env:DIRECTUS_ADMIN_EMAIL = $emailMatch.Matches[0].Groups[1].Value
+  $env:DIRECTUS_ADMIN_PASSWORD = $passwordMatch.Matches[0].Groups[1].Value
+  node (Join-Path $Root 'ops\promote-directus-schema.mjs') (Join-Path $Root 'directus\schema\directus-schema.json')
+  if ($LASTEXITCODE -ne 0) {
+    Warn 'Schema promotion failed -- confirm Directus is up, then re-run: node ops/promote-directus-schema.mjs directus/schema/directus-schema.json'
+  }
 }
 
 if ($JdkDir -and (Test-Path $camundaInternal)) {
@@ -178,3 +199,13 @@ Write-Host "`n============================================"
 Write-Host ' Open http://localhost:4000'
 Write-Host ' Demo logins: applicant/applicant123, specialist/specialist123, head/head123, admin/admin123'
 Write-Host '============================================'
+
+} catch {
+  Write-Host "`nFATAL ERROR: $($_.Exception.Message)" -ForegroundColor Red
+  Write-Host $_.ScriptStackTrace -ForegroundColor Red
+  Write-Host "`nFull details were also written to $TranscriptPath" -ForegroundColor Yellow
+} finally {
+  try { Stop-Transcript | Out-Null } catch {}
+  Write-Host "`n(Log saved to $TranscriptPath)"
+  Read-Host 'Press Enter to close this window'
+}
