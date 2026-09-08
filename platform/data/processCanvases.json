@@ -151,69 +151,96 @@
         "id": "start",
         "type": "start",
         "name": "Application Submitted",
-        "x": 40,
+        "x": 20,
         "y": 160
+      },
+      {
+        "id": "pay",
+        "type": "task",
+        "name": "Applicant Pays Fee",
+        "x": 180,
+        "y": 140,
+        "candidateGroup": "applicant"
       },
       {
         "id": "shape_10",
         "type": "task",
         "name": "specialist approval",
-        "x": 221,
-        "y": 47,
+        "x": 380,
+        "y": 140,
         "candidateGroup": "specialist"
       },
       {
         "id": "shape_1",
         "type": "approval",
         "name": "Head of Section Review",
-        "x": 409,
-        "y": 389,
+        "x": 580,
+        "y": 140,
         "candidateGroup": "head_of_section",
         "timer": null
       },
       {
+        "id": "issue",
+        "type": "automatic",
+        "name": "Issue License + Notify + QR",
+        "x": 820,
+        "y": 140,
+        "action": "issue-license"
+      },
+      {
         "id": "shape_3",
         "type": "end",
-        "name": "New End",
-        "x": 813,
-        "y": 163
+        "name": "Completed",
+        "x": 1040,
+        "y": 150
       },
       {
         "id": "shape_4",
         "type": "end",
         "name": "reject",
-        "x": 882,
-        "y": 413
+        "x": 820,
+        "y": 340
       }
     ],
     "connections": [
       {
-        "id": "conn_11",
+        "id": "conn_pay",
         "from": "start",
+        "to": "pay"
+      },
+      {
+        "id": "conn_to_specialist",
+        "from": "pay",
         "to": "shape_10"
       },
       {
-        "id": "conn_2",
+        "id": "conn_1",
         "from": "shape_10",
-        "to": "shape_1"
+        "to": "shape_1",
+        "label": "yes"
+      },
+      {
+        "id": "conn_2",
+        "from": "shape_1",
+        "to": "shape_10",
+        "label": "comments"
       },
       {
         "id": "conn_4",
         "from": "shape_1",
-        "to": "shape_3",
+        "to": "issue",
         "label": "approve"
-      },
-      {
-        "id": "conn_1",
-        "from": "shape_1",
-        "to": "shape_10",
-        "label": "comments"
       },
       {
         "id": "conn_5",
         "from": "shape_1",
         "to": "shape_4",
         "label": "reject"
+      },
+      {
+        "id": "conn_issued",
+        "from": "issue",
+        "to": "shape_3"
       }
     ],
     "processKey": "cinema_film_screening_license"

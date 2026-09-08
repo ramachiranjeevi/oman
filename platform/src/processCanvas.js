@@ -1,8 +1,6 @@
 // PowerPoint-style process designer: shapes dragged anywhere on a canvas,
 // connected by drawn arrows. Compiles the resulting graph straight to BPMN
-// — using the user's own x/y positions for the diagram, so there's no
-// auto-layout guessing (unlike processDesigner.js's linear step-list,
-// which still exists but is no longer wired to the UI).
+// using the user's own x/y positions for the diagram.
 //
 // Shape types (plain language, no BPMN vocabulary):
 //   start      - exactly one, where the process begins
@@ -38,7 +36,7 @@ function writeAll(all) {
 export const AUTOMATIC_ACTIONS = [
   { value: 'auto-schedule-field-visit', label: 'Auto-schedule a field visit' },
   { value: 'escalate-sla-breach', label: 'Send an escalation notice' },
-  { value: 'issue-license', label: 'Issue the license / certificate' },
+  { value: 'issue-license', label: 'Issue license, notify applicant & publish QR' },
 ];
 
 // The real, currently-deployed shape of the cinema license process,
@@ -252,8 +250,4 @@ ${diagram}</bpmn:definitions>
 `;
 
   return { xml, gatewayFor };
-}
-
-export function compileAndValidate(canvas) {
-  return compileCanvas(canvas);
 }

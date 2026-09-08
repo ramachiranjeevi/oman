@@ -3,9 +3,14 @@
 Camunda Platform 7 ("Camunda Run" distribution), running under a portable JDK 17
 (`../.tools/jdk-17.0.13+11`), independent of the Directus and Platform modules.
 
+Process data is stored in Postgres database `oman_camunda` (see repo-root
+`docker-compose.yml` and `configuration/default.yml`). The Postgres JDBC driver
+must be present in `configuration/userlib/` (`ops/ensure-postgres.ps1` downloads it).
+
 ## Start
 
 ```
+# Postgres must already be up (docker compose up -d postgres)
 run-with-jdk17.bat
 ```
 

@@ -1,5 +1,6 @@
 # Dependencies — regenerate via the relevant package manager, never commit
 node_modules/
+node_modules*/
 
 # Secrets — live credentials, never commit
 .env
@@ -11,8 +12,12 @@ node_modules/
 # Runtime data / generated at run time
 directus/api/data.db
 *.log
+*.pid
 
-# Locally downloaded dev tool runtimes (JDK, Node) — not source
+# Camunda Postgres JDBC driver (downloaded by ops/ensure-postgres.*)
+camunda-module/configuration/userlib/postgresql-*.jar
+
+# Locally downloaded dev tool runtimes (JDK, Node, Postgres installer) — not source
 /.tools/
 
 # Claude Code local session/config data

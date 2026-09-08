@@ -23,6 +23,14 @@ if (!DIRECTUS_URL || !DIRECTUS_ADMIN_EMAIL || !DIRECTUS_ADMIN_PASSWORD) {
 const { readFileSync } = await import('node:fs');
 const snapshot = JSON.parse(readFileSync(snapshotPath, 'utf8'));
 
+// This repo runs Directus on Postgres (see ops/ensure-postgres*). Older
+// snapshots may still declare vendor "sqlite"; schema/diff rejects that
+// mismatch even when the collection/field payload is otherwise valid.
+if (snapshot.vendor && snapshot.vendor !== 'postgres') {
+  console.log(`Rewriting snapshot vendor "${snapshot.vendor}" → "postgres"`);
+  snapshot.vendor = 'postgres';
+}
+
 const loginRes = await fetch(`${DIRECTUS_URL}/auth/login`, {
   method: 'POST',
   headers: { 'Content-Type': 'application/json' },

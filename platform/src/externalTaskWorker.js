@@ -1,6 +1,7 @@
 import 'dotenv/config';
 import * as directus from './directusClient.js';
 import { getConfig } from './config.js';
+import { issueLicenseAndNotify } from './licenseService.js';
 
 const CAMUNDA_URL = process.env.CAMUNDA_URL;
 const WORKER_ID = 'platform-worker';
@@ -55,12 +56,9 @@ const handlers = {
   },
   'issue-license': async (task) => {
     const applicationId = task.variables.applicationId?.value;
-    const qr = `LICENSE-${applicationId}-${Date.now()}`;
-    console.log(`[worker] issuing license for application #${applicationId}, QR: ${qr}`);
-    if (applicationId) {
-      await directus.updateApplication(applicationId, { status: 'approved', license_qr: qr });
-    }
-    await complete(task.id, { licenseQr: qr });
+    console.log(`[worker] issuing cinema film screening license for application #${applicationId}`);
+    const issued = applicationId ? await issueLicenseAndNotify(applicationId) : {};
+    await complete(task.id, { licenseQr: issued.license_qr || null });
   },
 };
 

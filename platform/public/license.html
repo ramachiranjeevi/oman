@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Cinema Film Screening License Verification</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@400;500;600;700&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <style>
+    :root { --red:#c8102e; --gold:#b8963e; --ink:#201b18; --muted:#71675f; --paper:#fffdf8; }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0; min-height: 100vh; padding: 24px;
+      display: grid; place-items: center;
+      font-family: "IBM Plex Sans", "IBM Plex Sans Arabic", sans-serif;
+      color: var(--ink);
+      background: radial-gradient(circle at top, #f7f1e7, #e9e1d7 70%);
+    }
+    .page { width: min(760px, 100%); }
+    .toolbar { display:flex; justify-content:flex-end; gap:8px; margin-bottom:10px; }
+    button {
+      border:1px solid #d9cec2; border-radius:6px; background:#fff; color:var(--ink);
+      padding:8px 12px; cursor:pointer; font:inherit;
+    }
+    .certificate {
+      position:relative; overflow:hidden; padding:34px;
+      border:1px solid #d8cab3; outline:5px double var(--gold); outline-offset:-12px;
+      border-radius:4px; background:var(--paper);
+      box-shadow:0 18px 50px rgba(55,35,20,.14);
+    }
+    .watermark {
+      position:absolute; inset:40% auto auto 50%; transform:translate(-50%,-50%) rotate(-20deg);
+      color:rgba(200,16,46,.045); font-size:6rem; font-weight:700; white-space:nowrap;
+      pointer-events:none;
+    }
+    .head { display:flex; align-items:center; justify-content:space-between; gap:20px; padding-bottom:18px; border-bottom:3px solid var(--red); }
+    .brand { display:flex; align-items:center; gap:14px; }
+    .brand img { width:70px; height:70px; object-fit:contain; }
+    .kicker { color:var(--red); font-size:.72rem; font-weight:700; letter-spacing:.08em; text-transform:uppercase; }
+    h1 { margin:3px 0 0; font-size:1.45rem; line-height:1.25; }
+    .verified {
+      display:inline-flex; align-items:center; gap:6px; white-space:nowrap;
+      padding:6px 10px; border-radius:999px; background:#e8f5ed; color:#247448; font-weight:700; font-size:.8rem;
+    }
+    .intro { text-align:center; margin:24px auto; max-width:600px; color:var(--muted); line-height:1.7; }
+    .license-no { color:var(--red); font-weight:700; }
+    .details { display:grid; grid-template-columns:1fr 1fr; gap:0 28px; border-block:1px solid #e5dacb; padding:12px 0; }
+    .field { padding:11px 4px; border-bottom:1px dashed #e8dfd4; }
+    .label { display:block; color:var(--muted); font-size:.75rem; margin-bottom:3px; }
+    .value { display:block; font-size:.98rem; font-weight:600; min-height:1.4em; }
+    .foot { display:flex; justify-content:space-between; align-items:end; gap:20px; margin-top:24px; }
+    .seal { color:var(--muted); font-size:.78rem; line-height:1.6; }
+    .signature { min-width:210px; text-align:center; padding-top:28px; border-bottom:1px solid #777; font-family:"Segoe Script",cursive; color:var(--red); }
+    .demo { margin-top:12px; text-align:center; color:#8a7d72; font-size:.72rem; }
+    .state { text-align:center; padding:50px 20px; }
+    .error { color:#9e0c24; }
+    [dir="rtl"] .toolbar { justify-content:flex-start; }
+    @media (max-width:600px) {
+      body { padding:10px; align-items:start; }
+      .certificate { padding:25px 22px; }
+      .head, .foot { align-items:flex-start; flex-direction:column; }
+      .details { grid-template-columns:1fr; }
+      h1 { font-size:1.15rem; }
+      .brand img { width:55px; height:55px; }
+      .watermark { font-size:3.5rem; }
+      .signature { align-self:stretch; }
+    }
+    @media print {
+      body { padding:0; background:#fff; }
+      .toolbar { display:none; }
+      .certificate { box-shadow:none; }
+      .demo { color:#555; }
+    }
+  </style>
+</head>
+<body>
+  <main class="page">
+    <div class="toolbar">
+      <button type="button" id="langBtn" onclick="toggleLanguage()">العربية</button>
+      <button type="button" onclick="window.print()" data-en="Print / Save PDF" data-ar="طباعة / حفظ PDF">Print / Save PDF</button>
+    </div>
+    <article class="certificate" id="certificate">
+      <div class="watermark">DEMO</div>
+      <div class="state" id="loading">Verifying license…</div>
+      <div id="content" hidden>
+        <header class="head">
+          <div class="brand">
+            <img src="/assets/oman-license-logo.png" alt="Sultanate of Oman emblem" />
+            <div>
+              <div class="kicker" data-en="Sultanate of Oman · Ministry of Information" data-ar="سلطنة عُمان · وزارة الإعلام">Sultanate of Oman · Ministry of Information</div>
+              <h1 data-en="Cinema Film Screening License" data-ar="إجازة عرض فيلم سينمائي">Cinema Film Screening License</h1>
+            </div>
+          </div>
+          <div class="verified" data-en="✓ Verified" data-ar="✓ تم التحقق">✓ Verified</div>
+        </header>
+        <p class="intro">
+          <span data-en="This certifies that the film shown below has a valid screening license recorded by the e-services portal." data-ar="تشهد هذه الوثيقة بأن الفيلم الموضح أدناه لديه إجازة عرض سارية ومسجلة في بوابة الخدمات الإلكترونية.">This certifies that the film shown below has a valid screening license recorded by the e-services portal.</span>
+          <br /><span class="license-no" id="licenseNumber"></span>
+        </p>
+        <section class="details">
+          <div class="field"><span class="label" data-en="Film title" data-ar="عنوان الفيلم">Film title</span><span class="value" id="filmTitle"></span></div>
+          <div class="field"><span class="label" data-en="Director" data-ar="المخرج">Director</span><span class="value" id="directorName"></span></div>
+          <div class="field"><span class="label" data-en="Classification" data-ar="التصنيف">Classification</span><span class="value" id="classification"></span></div>
+          <div class="field"><span class="label" data-en="Language" data-ar="اللغة">Language</span><span class="value" id="language"></span></div>
+          <div class="field"><span class="label" data-en="Production country" data-ar="بلد الإنتاج">Production country</span><span class="value" id="productionCountry"></span></div>
+          <div class="field"><span class="label" data-en="Production year" data-ar="سنة الإنتاج">Production year</span><span class="value" id="productionYear"></span></div>
+          <div class="field"><span class="label" data-en="Issue date" data-ar="تاريخ الإصدار">Issue date</span><span class="value" id="issueDate"></span></div>
+          <div class="field"><span class="label" data-en="Application reference" data-ar="مرجع الطلب">Application reference</span><span class="value" id="applicationId"></span></div>
+        </section>
+        <footer class="foot">
+          <div class="seal">
+            <strong data-en="Electronic license" data-ar="رخصة إلكترونية">Electronic license</strong><br />
+            <span data-en="Authenticity verified using the QR reference." data-ar="تم التحقق من صحتها باستخدام مرجع رمز QR.">Authenticity verified using the QR reference.</span>
+          </div>
+          <div class="signature" data-en="Ministry of Information" data-ar="وزارة الإعلام">Ministry of Information</div>
+        </footer>
+      </div>
+      <div class="demo" data-en="Demonstration certificate — not an official government document" data-ar="شهادة تجريبية — ليست وثيقة حكومية رسمية">Demonstration certificate — not an official government document</div>
+    </article>
+  </main>
+  <script>
+    let language = 'en';
+    function setLanguage(next) {
+      language = next;
+      document.documentElement.lang = next;
+      document.documentElement.dir = next === 'ar' ? 'rtl' : 'ltr';
+      document.querySelectorAll('[data-en]').forEach((el) => {
+        el.textContent = el.dataset[next];
+      });
+      document.getElementById('langBtn').textContent = next === 'ar' ? 'English' : 'العربية';
+    }
+    function toggleLanguage() { setLanguage(language === 'en' ? 'ar' : 'en'); }
+    function setValue(id, value) { document.getElementById(id).textContent = value || '—'; }
+    async function loadLicense() {
+      const code = new URLSearchParams(location.search).get('code');
+      const loading = document.getElementById('loading');
+      if (!code) {
+        loading.classList.add('error');
+        loading.textContent = 'Invalid license link.';
+        return;
+      }
+      try {
+        const res = await fetch(`/api/public/licenses/${encodeURIComponent(code)}`);
+        const data = await res.json();
+        if (!res.ok || !data.valid) throw new Error(data.error || 'License not found');
+        setValue('licenseNumber', data.licenseNumber);
+        setValue('filmTitle', data.filmTitle);
+        setValue('directorName', data.directorName);
+        setValue('classification', data.classification);
+        setValue('language', data.language);
+        setValue('productionCountry', data.productionCountry);
+        setValue('productionYear', data.productionYear);
+        setValue('applicationId', `#${data.applicationId}`);
+        setValue('issueDate', data.issueDate ? new Date(data.issueDate).toLocaleDateString() : '');
+        loading.hidden = true;
+        document.getElementById('content').hidden = false;
+      } catch (err) {
+        loading.classList.add('error');
+        loading.textContent = `License could not be verified: ${err.message}`;
+      }
+    }
+    setLanguage('en');
+    loadLicense();
+  </script>
+</body>
+</html>

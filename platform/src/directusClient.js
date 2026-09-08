@@ -65,10 +65,18 @@ export async function listApplications() {
   return data;
 }
 
+export async function getApplicationByLicenseQr(code) {
+  const filter = encodeURIComponent(String(code || ''));
+  const { data } = await directusFetch(
+    `/items/license_applications?filter%5Blicense_qr%5D%5B_eq%5D=${filter}&limit=1`,
+  );
+  return data[0] || null;
+}
+
 export async function getFormSchema(collection) {
   const { data } = await directusFetch(`/fields/${collection}`);
   return data
-    .filter((f) => !f.meta?.hidden && !['id', 'date_created', 'status', 'review_outcome', 'field_visit_notes', 'eligible', 'review_comments', 'field_visit_date', 'sla_breached', 'revision_loop_used', 'license_qr'].includes(f.field))
+    .filter((f) => !f.meta?.hidden && !['id', 'date_created', 'status', 'review_outcome', 'field_visit_notes', 'eligible', 'review_comments', 'field_visit_date', 'sla_breached', 'revision_loop_used', 'license_qr', 'payment_method', 'license_issued_at', 'applicant_notified', 'notification_message'].includes(f.field))
     .sort((a, b) => (a.meta?.sort ?? 0) - (b.meta?.sort ?? 0))
     .map((f) => ({
       field: f.field,
@@ -142,8 +150,49 @@ export async function avgOf(field, sinceIso) {
   return data[0]?.avg?.[field] ?? null;
 }
 
-// --- Live role/permission admin (Phase 1.2 demo) ---------------------------
 export async function listApplicationsPendingEligibility() {
   const { data } = await directusFetch('/items/license_applications?filter%5Beligible%5D%5B_null%5D=true&limit=-1');
   return data;
+}
+
+/**
+ * Authenticate a portal user against Directus. Returns the Directus user
+ * record (with role.name), or null if credentials are invalid.
+ *
+ * Portal roles have no Directus app permissions, so /users/me under the
+ * user token only returns `id`. After a successful login we load the full
+ * profile with the service account.
+ */
+export async function authenticatePortalUser(email, password) {
+  const res = await fetch(`${DIRECTUS_URL}/auth/login`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ email, password }),
+  });
+  if (!res.ok) return null;
+
+  const { data: tokens } = await res.json();
+  let userId = null;
+  try {
+    const payload = JSON.parse(Buffer.from(tokens.access_token.split('.')[1], 'base64url').toString('utf8'));
+    userId = payload.id;
+  } catch {
+    userId = null;
+  }
+  if (!userId) return null;
+
+  // Best-effort logout of the ephemeral Directus session.
+  fetch(`${DIRECTUS_URL}/auth/logout`, {
+    method: 'POST',
+    headers: {
+      Authorization: `Bearer ${tokens.access_token}`,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({ refresh_token: tokens.refresh_token }),
+  }).catch(() => {});
+
+  const { data: me } = await directusFetch(
+    `/users/${userId}?fields=id,email,first_name,last_name,role.id,role.name`,
+  );
+  return me;
 }

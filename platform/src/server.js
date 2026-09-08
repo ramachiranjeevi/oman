@@ -2,6 +2,7 @@ import 'dotenv/config';
 import express from 'express';
 import session from 'express-session';
 import path from 'node:path';
+import os from 'node:os';
 import { fileURLToPath } from 'node:url';
 import * as directus from './directusClient.js';
 import * as camunda from './camundaClient.js';
@@ -10,31 +11,71 @@ import * as platformConfig from './config.js';
 import * as mockIntegrations from './mockIntegrations.js';
 import * as pipelineLog from './pipelineLog.js';
 import * as processCanvas from './processCanvas.js';
-import { findUser, ROLE_CANDIDATE_GROUP } from './users.js';
+import { issueLicenseAndNotify } from './licenseService.js';
+import {
+  ROLE_CANDIDATE_GROUP,
+  ROLE_DISPLAY_NAME,
+  DIRECTUS_ROLE_TO_PLATFORM,
+  resolveLoginEmail,
+  emailToUsername,
+} from './users.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const app = express();
+if (process.env.TRUST_PROXY === 'true') app.set('trust proxy', 1);
 app.use(express.json());
 app.use(
   session({
     secret: process.env.SESSION_SECRET || 'oman-info-platform-dev-secret',
     resave: false,
     saveUninitialized: false,
-    cookie: { httpOnly: true, maxAge: 8 * 60 * 60 * 1000 },
+    cookie: {
+      httpOnly: true,
+      sameSite: 'lax',
+      secure: process.env.SESSION_COOKIE_SECURE === 'true',
+      maxAge: 8 * 60 * 60 * 1000,
+    },
   })
 );
 app.use(express.static(path.join(__dirname, '..', 'public')));
 
 const PROCESS_KEY = 'cinema_film_screening_license';
 
-// --- Auth (Platform's own session — deliberately not Directus's RBAC) ---
+// --- Auth (Directus users/roles; Platform session + requireRole enforce) ---
 
-app.post('/api/auth/login', (req, res) => {
-  const { username, password } = req.body || {};
-  const user = findUser(username, password);
-  if (!user) return res.status(401).json({ error: 'Invalid username or password' });
-  req.session.user = user;
-  res.json(user);
+app.post('/api/auth/login', async (req, res) => {
+  try {
+    const { username, password } = req.body || {};
+    const email = resolveLoginEmail(username);
+    if (!email || !password) return res.status(401).json({ error: 'Invalid username or password' });
+
+    const me = await directus.authenticatePortalUser(email, password);
+    if (!me) return res.status(401).json({ error: 'Invalid username or password' });
+
+    const directusRoleName = me.role?.name;
+    const role = DIRECTUS_ROLE_TO_PLATFORM[directusRoleName];
+    if (!role) {
+      return res.status(403).json({ error: `Directus role "${directusRoleName || 'none'}" is not mapped to a Platform role` });
+    }
+
+    const displayName =
+      [me.first_name, me.last_name].filter(Boolean).join(' ') ||
+      ROLE_DISPLAY_NAME[role] ||
+      email;
+
+    const user = {
+      id: me.id,
+      email: me.email,
+      username: emailToUsername(me.email),
+      role,
+      displayName,
+    };
+    req.session.user = user;
+    res.json(user);
+  } catch (err) {
+    console.error('[auth/login]', err.message);
+    res.status(502).json({ error: 'Identity provider unavailable' });
+  }
 });
 
 app.post('/api/auth/logout', (req, res) => {
@@ -60,24 +101,70 @@ function requireRole(...roles) {
 }
 
 app.use('/api', (req, res, next) => {
-  if (req.path.startsWith('/auth/') || req.path === '/health') return next();
+  if (req.path.startsWith('/auth/') || req.path.startsWith('/public/licenses/') || req.path === '/public/app-origin' || req.path === '/health') return next();
   return requireAuth(req, res, next);
 });
 
 // --- Applications (Directus-backed) -----------------------------------
 
+// Public QR verification endpoint. The QR payload is an unguessable license
+// code; only certificate-safe fields are returned (never the full application).
+app.get('/api/public/app-origin', (req, res) => {
+  const requestHost = req.get('host') || '';
+  if (requestHost && !/^(localhost|127\.0\.0\.1|\[::1\])(?::|$)/i.test(requestHost)) {
+    return res.json({ origin: `${req.protocol}://${requestHost}` });
+  }
+  const addresses = Object.values(os.networkInterfaces())
+    .flat()
+    .filter((item) => item && item.family === 'IPv4' && !item.internal)
+    .map((item) => item.address);
+  const preferred = addresses.find((address) => /^(192\.168\.|10\.|172\.(1[6-9]|2\d|3[01])\.)/.test(address));
+  res.json({ origin: preferred ? `${req.protocol}://${preferred}:${port}` : `${req.protocol}://${requestHost}` });
+});
+
+app.get('/api/public/licenses/:code', async (req, res) => {
+  try {
+    const record = await directus.getApplicationByLicenseQr(req.params.code);
+    if (!record?.license_qr) return res.status(404).json({ valid: false, error: 'License not found' });
+    res.json({
+      valid: true,
+      licenseNumber: record.license_qr,
+      applicationId: record.id,
+      filmTitle: record.film_title || '',
+      directorName: record.applicant_name || '',
+      classification: record.classification || '',
+      language: record.language || '',
+      productionCountry: record.production_country || '',
+      productionYear: record.production_year || '',
+      issueDate: record.license_issued_at || record.date_updated || record.date_created,
+      status: record.status,
+      issuer: 'Ministry of Information — Sultanate of Oman',
+      service: 'Cinema Film Screening License',
+    });
+  } catch (err) {
+    res.status(500).json({ valid: false, error: err.message });
+  }
+});
+
 app.post('/api/applications', requireRole('applicant', 'admin'), async (req, res) => {
   try {
+    const role = req.session.user.role;
+    // Drop fields the caller's role may not write (Phase 1.2 live RBAC).
+    const writable = {};
+    for (const [key, value] of Object.entries(req.body || {})) {
+      if (key === 'status') continue;
+      if (platformConfig.getFieldAccess(key, role) === 'write') writable[key] = value;
+    }
     const record = await directus.createApplication({
       status: 'submitted',
-      ...req.body,
+      ...writable,
     });
     const eligibilityInputs = {
-      validCommercialRegistration: !!req.body.valid_commercial_registration,
-      validPriorPracticeLicense: !!req.body.valid_prior_practice_license,
-      hasRiyadaCard: !!req.body.has_riyada_card,
+      validCommercialRegistration: !!writable.valid_commercial_registration,
+      validPriorPracticeLicense: !!writable.valid_prior_practice_license,
+      hasRiyadaCard: !!writable.has_riyada_card,
     };
-    await camunda.startProcess(PROCESS_KEY, record.id, {
+    const started = await camunda.startProcess(PROCESS_KEY, record.id, {
       applicationId: String(record.id),
       ...eligibilityInputs,
     });
@@ -90,15 +177,24 @@ app.post('/api/applications', requireRole('applicant', 'admin'), async (req, res
       record.eligible = evaluated.eligible;
       record.final_fee = evaluated.finalFee;
     }
+    // Custom canvases can route Start straight to End — Camunda finishes
+    // immediately with no user task, so status would otherwise stay "submitted".
+    // Treat a finished instance as process end: completed + license + notify.
+    const instanceId = started?.id;
+    if (instanceId && !(await camunda.isProcessInstanceActive(instanceId))) {
+      const issued = await issueLicenseAndNotify(record.id);
+      Object.assign(record, issued);
+    }
     res.status(201).json(record);
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
 });
 
-app.get('/api/applications', async (_req, res) => {
+app.get('/api/applications', async (req, res) => {
   try {
-    res.json(await directus.listApplications());
+    const rows = await directus.listApplications();
+    res.json(rows.map((row) => redactApplicationForRole(row, req.session.user.role)));
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
@@ -108,11 +204,34 @@ app.get('/api/applications/:id', async (req, res) => {
   try {
     const record = await directus.getApplication(req.params.id);
     const process = await camunda.getProcessInstanceByBusinessKey(PROCESS_KEY, req.params.id);
-    res.json({ ...record, processInstanceId: process?.id ?? null });
+    const visible = redactApplicationForRole(record, req.session.user.role);
+    res.json({ ...visible, processInstanceId: process?.id ?? null });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
 });
+
+/** System / process columns never gated by the portal field-permission matrix. */
+const PERMISSION_EXEMPT_FIELDS = new Set([
+  'id', 'status', 'date_created', 'date_updated', 'user_created', 'user_updated',
+  'eligible', 'final_fee', 'review_outcome', 'review_comments', 'field_visit_notes',
+  'field_visit_date', 'sla_breached', 'revision_loop_used', 'license_qr',
+  'payment_method', 'license_issued_at', 'applicant_notified', 'notification_message',
+]);
+
+function redactApplicationForRole(record, role) {
+  if (!record || typeof record !== 'object') return record;
+  const out = {};
+  for (const [key, value] of Object.entries(record)) {
+    if (PERMISSION_EXEMPT_FIELDS.has(key)) {
+      out[key] = value;
+      continue;
+    }
+    if (platformConfig.getFieldAccess(key, role) === 'hidden') continue;
+    out[key] = value;
+  }
+  return out;
+}
 
 // --- Phase 3 demo: simulated external/internal lookups ------------------
 // Disclosed as simulated in both the response payload and the UI — see
@@ -152,10 +271,8 @@ app.get('/api/tasks', async (req, res) => {
 // custom canvas routes that same task straight to an End event instead,
 // the process instance is genuinely finished right after this task
 // completes — so we check with Camunda and correct the status to
-// 'completed' rather than leaving a stale "still in progress" label.
-// 'approved' / 'rejected' / 'revision_requested' are already specific,
-// intentional terminal-or-looping outcomes and are left alone.
-const NON_TERMINAL_STATUSES = new Set(['field_visit_scheduled', 'under_review']);
+// 'completed' (and issue license + notify when the path is not a reject).
+const NON_TERMINAL_STATUSES = new Set(['field_visit_scheduled', 'under_review', 'submitted']);
 
 app.post('/api/tasks/:id/complete', async (req, res) => {
   try {
@@ -163,10 +280,21 @@ app.post('/api/tasks/:id/complete', async (req, res) => {
     const task = applicationUpdate ? await camunda.getTask(req.params.id).catch(() => null) : null;
     await camunda.completeTask(req.params.id, variables || {});
     if (applicationId && applicationUpdate) {
-      let finalUpdate = applicationUpdate;
-      if (task?.processInstanceId && NON_TERMINAL_STATUSES.has(applicationUpdate.status)) {
+      let finalUpdate = { ...applicationUpdate };
+      if (task?.processInstanceId) {
         const stillActive = await camunda.isProcessInstanceActive(task.processInstanceId);
-        if (!stillActive) finalUpdate = { ...finalUpdate, status: 'completed' };
+        if (!stillActive) {
+          if (applicationUpdate.status === 'rejected') {
+            // Reject end — leave rejected, no license.
+          } else if (
+            NON_TERMINAL_STATUSES.has(applicationUpdate.status)
+            || applicationUpdate.status === 'approved'
+            || applicationUpdate.status === 'completed'
+          ) {
+            const issued = await issueLicenseAndNotify(applicationId, { skipIfHasQr: true });
+            finalUpdate = { ...finalUpdate, ...issued };
+          }
+        }
       }
       await directus.updateApplication(applicationId, finalUpdate);
     }
@@ -178,7 +306,15 @@ app.post('/api/tasks/:id/complete', async (req, res) => {
 
 app.get('/api/form-schema/:collection', async (req, res) => {
   try {
-    res.json(await directus.getFormSchema(req.params.collection));
+    const role = req.session.user.role;
+    const schema = await directus.getFormSchema(req.params.collection);
+    const filtered = [];
+    for (const f of schema) {
+      const access = platformConfig.getFieldAccess(f.field, role);
+      if (access === 'hidden') continue;
+      filtered.push({ ...f, access, readonly: access === 'read' });
+    }
+    res.json(filtered);
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
@@ -205,9 +341,17 @@ const FIELD_TYPE_PRESETS = {
 
 app.post('/api/admin/fields', async (req, res) => {
   try {
-    const { field, label, kind } = req.body;
+    const raw = req.body?.field;
+    const field = String(raw || '')
+      .trim()
+      .replace(/([a-z0-9])([A-Z])/g, '$1_$2')
+      .replace(/[^a-zA-Z0-9]+/g, '_')
+      .replace(/_+/g, '_')
+      .replace(/^_|_$/g, '')
+      .toLowerCase();
+    const { label, kind } = req.body || {};
     if (!field || !/^[a-z][a-z0-9_]*$/.test(field)) {
-      return res.status(400).json({ error: 'field key must be snake_case, e.g. accessibility_requirements' });
+      return res.status(400).json({ error: 'field key must be snake_case, e.g. screening_date' });
     }
     const preset = FIELD_TYPE_PRESETS[kind] || FIELD_TYPE_PRESETS.text;
     await directus.addField({
@@ -240,6 +384,37 @@ app.delete('/api/admin/fields/:field', async (req, res) => {
     res.status(204).end();
   } catch (err) {
     res.status(500).json({ error: err.message });
+  }
+});
+
+// Phase 1.2 demo: live role → field permissions for the portal form.
+// Stored in platform config (same live-edit pattern as schedule lead time);
+// enforced on form-schema + application create/list/get for non-exempt fields.
+app.get('/api/admin/field-permissions', async (_req, res) => {
+  try {
+    const fields = await directus.getFormSchema('license_applications');
+    const fieldKeys = fields.map((f) => f.field);
+    res.json({
+      roles: platformConfig.PERMISSION_ROLES,
+      accessLevels: platformConfig.ACCESS_LEVELS,
+      fields: fields.map((f) => ({ field: f.field, type: f.type, note: f.note })),
+      matrix: platformConfig.getPermissionsMatrix(fieldKeys),
+    });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.put('/api/admin/field-permissions', (req, res) => {
+  try {
+    const { field, role, access } = req.body || {};
+    if (!field || !role || !access) {
+      return res.status(400).json({ error: 'field, role, and access are required' });
+    }
+    const next = platformConfig.setFieldAccess(field, role, access);
+    res.json({ field, role, access: next });
+  } catch (err) {
+    res.status(400).json({ error: err.message });
   }
 });
 
@@ -351,20 +526,10 @@ app.get('/api/admin/process-canvas-actions', (_req, res) => {
   res.json(processCanvas.AUTOMATIC_ACTIONS);
 });
 
-app.post('/api/admin/process-canvas/:key/preview', (req, res) => {
-  try {
-    const canvas = { ...req.body, processKey: req.params.key };
-    processCanvas.compileAndValidate(canvas); // throws on invalid; success just needs to not throw
-    res.json({ ok: true });
-  } catch (err) {
-    res.status(400).json({ ok: false, error: err.message, validationErrors: err.validationErrors ?? [err.message] });
-  }
-});
-
 app.post('/api/admin/process-canvas/:key', async (req, res) => {
   try {
     const canvas = { ...req.body, processKey: req.params.key };
-    const { xml } = processCanvas.compileAndValidate(canvas);
+    const { xml } = processCanvas.compileCanvas(canvas);
     const saved = processCanvas.saveCanvas(req.params.key, canvas);
     const { version } = await camunda.deployProcessXml(req.params.key, xml, 'process-canvas');
     res.json({ ok: true, canvas: saved, version });
@@ -552,15 +717,48 @@ async function runStartupProvisioning() {
     await directus.ensureField({
       field: 'license_qr',
       type: 'string',
-      meta: { interface: 'input', note: 'QR payload set when the license is issued.' },
+      meta: { interface: 'input', note: 'QR payload set when the license is issued.', hidden: true },
+      schema: { is_nullable: true },
+    });
+    await directus.ensureField({
+      field: 'payment_method',
+      type: 'string',
+      meta: { interface: 'input', note: 'Mock payment channel chosen by the applicant (e-payment / e-wallet / Apple Pay / Samsung Pay).', hidden: true },
+      schema: { is_nullable: true },
+    });
+    await directus.ensureField({
+      field: 'license_issued_at',
+      type: 'timestamp',
+      meta: { interface: 'datetime', note: 'When the cinema film screening license was issued.', hidden: true },
+      schema: { is_nullable: true },
+    });
+    await directus.ensureField({
+      field: 'applicant_notified',
+      type: 'boolean',
+      meta: { interface: 'boolean', note: 'Mock e-services notification flag after license issuance.', hidden: true, options: { label: 'Applicant notified' } },
+      schema: { is_nullable: true, default_value: false },
+    });
+    await directus.ensureField({
+      field: 'notification_message',
+      type: 'text',
+      meta: { interface: 'input-multiline', note: 'Mock notification body shown in the applicant portal after license issuance.', hidden: true },
       schema: { is_nullable: true },
     });
     await directus.ensureStatusChoice('revision_requested', 'Revision Requested');
     await directus.ensureStatusChoice('completed', 'Completed');
-    console.log('[startup] support fields verified (eligible, review_comments, field_visit_date, sla_breached, revision_loop_used, license_qr, status:revision_requested, status:completed)');
+    console.log('[startup] support fields verified (eligible, review_comments, field_visit_date, sla_breached, revision_loop_used, license_qr, payment_method, license notify fields, status:revision_requested, status:completed)');
   } catch (err) {
     console.error('[startup] provisioning failed:', err.message);
     return;
+  }
+
+  try {
+    const canvas = processCanvas.loadCanvas(PROCESS_KEY);
+    const { xml } = processCanvas.compileCanvas(canvas);
+    const { version } = await camunda.deployProcessXml(PROCESS_KEY, xml, 'process-canvas');
+    console.log(`[startup] process canvas "${PROCESS_KEY}" redeployed as version ${version}`);
+  } catch (err) {
+    console.error('[startup] process canvas redeploy failed:', err.message);
   }
 
   try {

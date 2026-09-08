@@ -24,8 +24,8 @@ against the MOI Digital Platform tender's demo script (DTM-T-007-26).
 | Module | Path | Port | Owns |
 |---|---|---|---|
 | Platform | `./platform` | 4000 | Web UI, BFF/API gateway, orchestration between the other two |
-| Directus | `./directus` | 8055 | Data model (`license_applications`), RBAC, Insights dashboards |
-| Camunda | `./camunda-module` | 8080 | BPMN process, DMN decision tables, task assignment, SLA/escalation |
+| Directus | `./directus` | 8055 | Data model (`license_applications`), schema API; Postgres DB `oman_directus` |
+| Camunda | `./camunda-module` | 8080 | BPMN process, DMN decision tables, task assignment, SLA/escalation; Postgres DB `oman_camunda` |
 
 Each module is independently runnable and independently demoable, matching
 the tender's phased demo script:

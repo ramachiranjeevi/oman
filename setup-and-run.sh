@@ -1,10 +1,10 @@
 #!/usr/bin/env bash
 # Fully automated setup + run for a fresh checkout of this repo, on Linux.
 #
-# Downloads the pinned Node 22 / JDK 17 runtimes and Camunda Platform Run
-# into .tools/ if they aren't already there, installs JS dependencies,
-# creates .env files with dev-only defaults if they don't already exist,
-# restores the Directus schema snapshot, then starts all three modules.
+# Installs missing Ubuntu/Debian prerequisites when possible, downloads the
+# pinned Node 22 / JDK 17 runtimes and Camunda Platform Run into .tools/,
+# installs JS dependencies, creates .env files, restores the Directus schema,
+# then starts all services. Intended for a fresh x86_64 Linux VM.
 #
 # Safe to re-run: every step is skipped if its result already exists, so
 # this won't clobber a working setup or redownload anything twice.
@@ -20,9 +20,55 @@ CAMUNDA_VERSION="7.22.0"
 
 log()  { echo -e "\n== $1 =="; }
 warn() { echo "!! $1"; }
+fatal() { echo "FATAL: $1" >&2; exit 1; }
+
+# ---------------------------------------------------------- 0. VM prerequisites
+log "[0/9] Linux VM prerequisites"
+[ "$(uname -s)" = "Linux" ] || fatal "this script is for Linux; use the Windows launchers on Windows."
+case "$(uname -m)" in
+  x86_64|amd64) ;;
+  *) fatal "the pinned Node/JDK downloads require an x86_64 VM (found $(uname -m))." ;;
+esac
+
+missing=()
+for cmd in curl tar xz unzip openssl make g++ python3; do
+  command -v "$cmd" >/dev/null 2>&1 || missing+=("$cmd")
+done
+command -v docker >/dev/null 2>&1 || missing+=("docker")
+if command -v docker >/dev/null 2>&1 \
+  && ! docker compose version >/dev/null 2>&1 \
+  && ! command -v docker-compose >/dev/null 2>&1; then
+  missing+=("docker-compose")
+fi
+
+if [ ${#missing[@]} -gt 0 ]; then
+  echo "missing: ${missing[*]}"
+  if command -v apt-get >/dev/null 2>&1; then
+    if [ "$(id -u)" -eq 0 ]; then SUDO=""; elif command -v sudo >/dev/null 2>&1; then SUDO="sudo"; else fatal "sudo is required to install system packages."; fi
+    echo "installing required Ubuntu/Debian packages..."
+    $SUDO apt-get update
+    $SUDO apt-get install -y ca-certificates curl tar xz-utils unzip openssl build-essential python3 docker.io
+    $SUDO apt-get install -y docker-compose-v2 2>/dev/null \
+      || $SUDO apt-get install -y docker-compose-plugin 2>/dev/null \
+      || $SUDO apt-get install -y docker-compose
+  else
+    fatal "install curl, tar, xz, unzip, openssl, Docker and Docker Compose, then re-run."
+  fi
+fi
+
+if command -v systemctl >/dev/null 2>&1; then
+  if [ "$(id -u)" -eq 0 ]; then systemctl enable --now docker || true
+  elif command -v sudo >/dev/null 2>&1; then sudo systemctl enable --now docker || true
+  fi
+fi
+
+available_kb="$(df -Pk "$ROOT" | awk 'NR==2 {print $4}')"
+[ "${available_kb:-0}" -ge 8388608 ] || warn "Less than 8 GB free disk; the Directus source build may fail."
+memory_kb="$(awk '/MemTotal/ {print $2}' /proc/meminfo)"
+[ "${memory_kb:-0}" -ge 3145728 ] || warn "Less than 3 GB RAM; add swap before building Directus."
 
 # ---------------------------------------------------------------- 1. Node
-log "[1/8] Node ${NODE_VERSION}"
+log "[1/9] Node ${NODE_VERSION}"
 if [ -x "$NODE_DIR/bin/node" ]; then
   echo "already present, skipping download."
 else
@@ -39,7 +85,7 @@ fi
 export PATH="$NODE_DIR/bin:$PATH"
 
 # ------------------------------------------------------------- 2. JDK 17
-log "[2/8] JDK 17 (Temurin)"
+log "[2/9] JDK 17 (Temurin)"
 JDK_DIR="$(compgen -G "$TOOLS_DIR/jdk-17*" | head -n1 || true)"
 if [ -n "$JDK_DIR" ] && [ -x "$JDK_DIR/bin/java" ]; then
   echo "already present at $JDK_DIR, skipping download."
@@ -59,7 +105,7 @@ else
 fi
 
 # ------------------------------------------------- 3. Camunda Platform Run
-log "[3/8] Camunda Platform Run ${CAMUNDA_VERSION}"
+log "[3/9] Camunda Platform Run ${CAMUNDA_VERSION}"
 if [ -d "$ROOT/camunda-module/internal" ]; then
   echo "already present, skipping download."
 else
@@ -86,14 +132,23 @@ else
 fi
 
 # ------------------------------------------------ 4. Install dependencies
-log "[4/8] Installing dependencies"
+log "[4/9] Installing dependencies"
 corepack enable 2>/dev/null || true
-( cd "$ROOT/directus" && pnpm install ) || { echo "FATAL: pnpm install failed in directus/" >&2; exit 1; }
-( cd "$ROOT/platform" && npm install ) || { echo "FATAL: npm install failed in platform/" >&2; exit 1; }
+( cd "$ROOT/directus" && pnpm install --frozen-lockfile ) || { echo "FATAL: pnpm install failed in directus/" >&2; exit 1; }
+# Workspace packages export from dist/ (e.g. @directus/env). pnpm install
+# does not compile them, so `pnpm run dev` fails with ERR_MODULE_NOT_FOUND
+# until this runs once.
+if [ -f "$ROOT/directus/packages/env/dist/index.js" ]; then
+  echo "Directus workspace packages already built, skipping."
+else
+  echo "building Directus workspace packages (first run; this can take several minutes)..."
+  ( cd "$ROOT/directus" && pnpm --filter @directus/api... build ) || { echo "FATAL: pnpm build failed in directus/" >&2; exit 1; }
+fi
+( cd "$ROOT/platform" && npm ci ) || { echo "FATAL: npm ci failed in platform/" >&2; exit 1; }
 
 # ------------------------------------------------------- 5. .env files
-log "[5/8] Environment files"
-DEV_PASSWORD="ChangeMe123!"   # dev-only default — change for anything beyond local testing
+log "[5/9] Environment files"
+DEV_PASSWORD="${OMAN_ADMIN_PASSWORD:-ChangeMe123!}" # override on a non-demo VM
 
 gen_secret() { openssl rand -hex 32 2>/dev/null || cat /proc/sys/kernel/random/uuid 2>/dev/null || uuidgen; }
 
@@ -116,10 +171,12 @@ else
       "$ROOT/platform/.env.example" > "$ROOT/platform/.env"
 fi
 
+# Optional 3rd arg is a path (default /). Directus needs /server/ping because
+# / redirects to /admin which 404s when SERVE_APP=false.
 wait_for_port() {
-  local port=$1 name=$2 tries=60
+  local port=$1 name=$2 path=${3:-/} tries=60
   echo -n "waiting for $name on port $port"
-  while ! curl -sf "http://localhost:$port" -o /dev/null 2>/dev/null; do
+  while ! curl -sf "http://127.0.0.1:${port}${path}" -o /dev/null 2>/dev/null; do
     tries=$((tries - 1))
     [ $tries -le 0 ] && { echo " — timed out."; return 1; }
     echo -n "."; sleep 2
@@ -127,13 +184,25 @@ wait_for_port() {
   echo " up."
 }
 
-# --------------------------------------------------- 6. Start Directus
-log "[6/8] Starting Directus"
-( cd "$ROOT/directus/api" && PATH="$NODE_DIR/bin:$PATH" nohup pnpm run dev > "$ROOT/directus-dev.log" 2>&1 & )
-wait_for_port 8055 Directus || warn "check $ROOT/directus-dev.log"
+# -------------------------------------------------------- 6. Postgres
+log "[6/9] Postgres (Directus + Camunda databases)"
+bash "$ROOT/ops/ensure-postgres.sh" || { echo "FATAL: Postgres is required." >&2; exit 1; }
 
-# --------------------------------- 7. Restore schema, start Camunda
-log "[7/8] Restoring Directus schema + starting Camunda"
+# --------------------------------------------------- 7. Start Directus
+log "[7/9] Starting Directus"
+# Fresh DB has no Directus system tables; `pnpm run dev` exits if they
+# are missing. bootstrap is idempotent once the schema is initialized.
+if curl -sf http://127.0.0.1:8055/server/ping -o /dev/null 2>/dev/null; then
+  echo "Directus already running, leaving it untouched."
+else
+  ( cd "$ROOT/directus/api" && PATH="$NODE_DIR/bin:$PATH" pnpm cli bootstrap ) \
+    || { echo "FATAL: Directus bootstrap failed" >&2; exit 1; }
+  ( cd "$ROOT/directus/api" && PATH="$NODE_DIR/bin:$PATH" nohup pnpm cli start > "$ROOT/directus.log" 2>&1 & echo $! > "$ROOT/directus.pid" )
+  wait_for_port 8055 Directus /server/ping || warn "check $ROOT/directus.log"
+fi
+
+# --------------------------------- 8. Restore schema, start Camunda
+log "[8/9] Restoring Directus schema + starting Camunda"
 ADMIN_EMAIL_VAL=$(grep '^ADMIN_EMAIL=' "$ROOT/directus/api/.env" | cut -d= -f2)
 ADMIN_PASSWORD_VAL=$(grep '^ADMIN_PASSWORD=' "$ROOT/directus/api/.env" | cut -d= -f2)
 DIRECTUS_URL=http://localhost:8055 \
@@ -142,20 +211,36 @@ DIRECTUS_ADMIN_PASSWORD="$ADMIN_PASSWORD_VAL" \
   node "$ROOT/ops/promote-directus-schema.mjs" "$ROOT/directus/schema/directus-schema.json" \
   || warn "Schema promotion failed — confirm Directus is up, then re-run: node ops/promote-directus-schema.mjs directus/schema/directus-schema.json"
 
+DIRECTUS_URL=http://localhost:8055 \
+DIRECTUS_ADMIN_EMAIL="$ADMIN_EMAIL_VAL" \
+DIRECTUS_ADMIN_PASSWORD="$ADMIN_PASSWORD_VAL" \
+  node "$ROOT/ops/seed-directus-portal-users.mjs" \
+  || warn "Portal user seed failed — re-run: node ops/seed-directus-portal-users.mjs"
+
 if [ -n "$JDK_DIR" ] && [ -d "$ROOT/camunda-module/internal" ]; then
-  ( cd "$ROOT/camunda-module" && JAVA_HOME="$JDK_DIR" PATH="$JDK_DIR/bin:$PATH" \
-      nohup ./internal/run.sh start > "$ROOT/camunda-boot.log" 2>&1 & )
-  wait_for_port 8080 Camunda || warn "check $ROOT/camunda-boot.log"
+  if curl -sf http://127.0.0.1:8080/engine-rest/version -o /dev/null 2>/dev/null; then
+    echo "Camunda already running, leaving it untouched."
+  else
+    ( cd "$ROOT/camunda-module" && JAVA_HOME="$JDK_DIR" PATH="$JDK_DIR/bin:$PATH" \
+        nohup ./internal/run.sh start > "$ROOT/camunda-boot.log" 2>&1 & )
+    wait_for_port 8080 Camunda || warn "check $ROOT/camunda-boot.log"
+  fi
 else
   warn "Skipping Camunda start — JDK or Camunda binary is missing (see warnings above)."
 fi
 
-# --------------------------------------------------- 8. Start Platform
-log "[8/8] Starting Platform"
-( cd "$ROOT/platform" && nohup npm run dev > "$ROOT/platform-dev.log" 2>&1 & )
-wait_for_port 4000 Platform || warn "check $ROOT/platform-dev.log"
+# --------------------------------------------------- 9. Start Platform
+log "[9/9] Starting Platform"
+if curl -sf http://127.0.0.1:4000/api/health -o /dev/null 2>/dev/null; then
+  echo "Platform already running, leaving it untouched."
+else
+  ( cd "$ROOT/platform" && NODE_ENV=production nohup npm start > "$ROOT/platform.log" 2>&1 & echo $! > "$ROOT/platform.pid" )
+  wait_for_port 4000 Platform /api/health || warn "check $ROOT/platform.log"
+fi
 
 echo -e "\n============================================"
 echo " Open http://localhost:4000"
 echo " Demo logins: applicant/applicant123, specialist/specialist123, head/head123, admin/admin123"
+echo " Logs: directus.log, camunda-boot.log, platform.log"
+echo " VM firewall/security group: expose 4000 (or proxy it through HTTPS); keep 5432, 8055 and 8080 private."
 echo "============================================"

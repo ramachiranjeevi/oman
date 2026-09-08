@@ -31,7 +31,7 @@ function Warn($msg) { Write-Host "!! $msg" -ForegroundColor Yellow }
 try {
 
 # ---------------------------------------------------------------- 1. Node
-Log '[1/8] Node' $NodeVersion
+Log '[1/9] Node' $NodeVersion
 if (Test-Path (Join-Path $NodeDir 'node.exe')) {
   Write-Host 'already present, skipping download.'
 } else {
@@ -48,8 +48,35 @@ if (Test-Path (Join-Path $NodeDir 'node.exe')) {
 }
 $env:PATH = "$NodeDir;$env:PATH"
 
+# OneDrive (and similar sync clients) often leaves node_modules files that
+# exist on disk but cannot be read (EPERM / Access denied). Keep pnpm's
+# content-addressable store off the synced drive, and if Directus's
+# node_modules is a normal folder of locked files, move it aside so pnpm
+# can create a fresh one.
+$PnpmLocal = Join-Path $env:LOCALAPPDATA 'oman-app'
+New-Item -ItemType Directory -Force -Path $PnpmLocal | Out-Null
+$env:npm_config_store_dir = Join-Path $PnpmLocal 'pnpm-store'
+
+function Ensure-WritableNodeModules($projectDir) {
+  $nm = Join-Path $projectDir 'node_modules'
+  if (-not (Test-Path $nm)) { return }
+  $probe = Get-ChildItem -Path $nm -Recurse -File -ErrorAction SilentlyContinue |
+    Where-Object { $_.Extension -in '.js', '.mjs', '.cjs' } |
+    Select-Object -First 8
+  $unreadable = $false
+  foreach ($f in $probe) {
+    try { [void][System.IO.File]::ReadAllBytes($f.FullName) } catch { $unreadable = $true; break }
+  }
+  if (-not $unreadable) { return }
+  $bak = "$nm.onedrive-locked"
+  if (Test-Path $bak) { $bak = "$nm.onedrive-locked-$(Get-Random)" }
+  Warn "node_modules files under $projectDir are unreadable (common on OneDrive)."
+  Warn "Moving it to $bak so pnpm can install a fresh copy. Delete the backup later to reclaim disk."
+  Rename-Item $nm $bak
+}
+
 # ------------------------------------------------------------- 2. JDK 17
-Log '[2/8] JDK 17 (Temurin)'
+Log '[2/9] JDK 17 (Temurin)'
 $JdkDir = Get-ChildItem -Path $ToolsDir -Directory -Filter 'jdk-17*' -ErrorAction SilentlyContinue | Select-Object -First 1 -ExpandProperty FullName
 if ($JdkDir -and (Test-Path (Join-Path $JdkDir 'bin\java.exe'))) {
   Write-Host "already present at $JdkDir, skipping download."
@@ -71,7 +98,7 @@ if ($JdkDir -and (Test-Path (Join-Path $JdkDir 'bin\java.exe'))) {
 }
 
 # ------------------------------------------------- 3. Camunda Platform Run
-Log "[3/8] Camunda Platform Run $CamundaVersion"
+Log "[3/9] Camunda Platform Run $CamundaVersion"
 $camundaInternal = Join-Path $Root 'camunda-module\internal'
 if (Test-Path $camundaInternal) {
   Write-Host 'already present, skipping download.'
@@ -93,7 +120,7 @@ if (Test-Path $camundaInternal) {
 }
 
 # ------------------------------------------------ 4. Install dependencies
-Log '[4/8] Installing dependencies'
+Log '[4/9] Installing dependencies'
 try {
   corepack enable
 } catch {
@@ -101,9 +128,20 @@ try {
   Warn "under Program Files, this usually means it needs an elevated (Run as Administrator) shell."
   Warn "Continuing anyway; pnpm/npm install below will fail loudly if this actually matters."
 }
+Ensure-WritableNodeModules (Join-Path $Root 'directus')
 Push-Location (Join-Path $Root 'directus')
 pnpm install
 if ($LASTEXITCODE -ne 0) { Write-Host 'FATAL: pnpm install failed in directus/' -ForegroundColor Red; Pop-Location; exit 1 }
+# Workspace packages export from dist/ (e.g. @directus/env). pnpm install
+# does not compile them, so `pnpm run dev` fails with ERR_MODULE_NOT_FOUND
+# until this runs once.
+if (Test-Path (Join-Path $Root 'directus\packages\env\dist\index.js')) {
+  Write-Host 'Directus workspace packages already built, skipping.'
+} else {
+  Write-Host 'building Directus workspace packages (first run; this can take several minutes)...'
+  pnpm --filter @directus/api... build
+  if ($LASTEXITCODE -ne 0) { Write-Host 'FATAL: pnpm build failed in directus/' -ForegroundColor Red; Pop-Location; exit 1 }
+}
 Pop-Location
 Push-Location (Join-Path $Root 'platform')
 npm install
@@ -111,7 +149,7 @@ if ($LASTEXITCODE -ne 0) { Write-Host 'FATAL: npm install failed in platform/' -
 Pop-Location
 
 # ------------------------------------------------------- 5. .env files
-Log '[5/8] Environment files'
+Log '[5/9] Environment files'
 $DevPassword = 'ChangeMe123!'   # dev-only default -- change for anything beyond local testing
 
 $directusEnv = Join-Path $Root 'directus\api\.env'
@@ -142,11 +180,15 @@ if (Test-Path $platformEnv) {
     } | Set-Content $platformEnv
 }
 
-function Wait-ForPort($port, $name) {
+# $path defaults to / — for Directus use /server/ping, because / redirects
+# to /admin which 404s when SERVE_APP=false (API-only mode).
+# Use 127.0.0.1 not localhost: on Windows localhost often resolves to ::1
+# first, while Directus binds IPv4 only (0.0.0.0), so health checks hang.
+function Wait-ForPort($port, $name, $path = '/') {
   Write-Host -NoNewline "waiting for $name on port $port"
   for ($i = 0; $i -lt 60; $i++) {
     try {
-      $r = Invoke-WebRequest -Uri "http://localhost:$port" -UseBasicParsing -TimeoutSec 2 -ErrorAction Stop
+      $r = Invoke-WebRequest -Uri "http://127.0.0.1:${port}${path}" -UseBasicParsing -TimeoutSec 2 -ErrorAction Stop
       Write-Host ' up.'
       return $true
     } catch {
@@ -158,14 +200,28 @@ function Wait-ForPort($port, $name) {
   return $false
 }
 
-# --------------------------------------------------- 6. Start Directus
-Log '[6/8] Starting Directus'
+# -------------------------------------------------------- 5b. Postgres
+Log '[6/9] Postgres (Directus + Camunda databases)'
+& (Join-Path $Root 'ops\ensure-postgres.ps1') -Root $Root
+if ($LASTEXITCODE -ne 0) {
+  Write-Host 'FATAL: Postgres is required. See messages above.' -ForegroundColor Red
+  exit 1
+}
+
+# --------------------------------------------------- 7. Start Directus
+Log '[7/9] Starting Directus'
+# Fresh DB has no Directus system tables; `pnpm run dev` exits if they
+# are missing. bootstrap is idempotent once the schema is initialized.
+Push-Location (Join-Path $Root 'directus\api')
+pnpm cli bootstrap
+if ($LASTEXITCODE -ne 0) { Write-Host 'FATAL: Directus bootstrap failed' -ForegroundColor Red; Pop-Location; exit 1 }
+Pop-Location
 Start-Process -FilePath 'cmd.exe' -ArgumentList '/c', "run-with-node22.bat > `"$Root\directus-dev.log`" 2>&1" `
   -WorkingDirectory (Join-Path $Root 'directus\api') -WindowStyle Minimized
-if (-not (Wait-ForPort 8055 'Directus')) { Warn "check $Root\directus-dev.log" }
+if (-not (Wait-ForPort 8055 'Directus' '/server/ping')) { Warn "check $Root\directus-dev.log" }
 
-# --------------------------------- 7. Restore schema, start Camunda
-Log '[7/8] Restoring Directus schema + starting Camunda'
+# --------------------------------- 8. Restore schema, start Camunda
+Log '[8/9] Restoring Directus schema + starting Camunda'
 $emailMatch = Select-String -Path $directusEnv -Pattern '^ADMIN_EMAIL=(.*)$'
 $passwordMatch = Select-String -Path $directusEnv -Pattern '^ADMIN_PASSWORD=(.*)$'
 if (-not $emailMatch -or -not $passwordMatch) {
@@ -179,6 +235,10 @@ if (-not $emailMatch -or -not $passwordMatch) {
   if ($LASTEXITCODE -ne 0) {
     Warn 'Schema promotion failed -- confirm Directus is up, then re-run: node ops/promote-directus-schema.mjs directus/schema/directus-schema.json'
   }
+  node (Join-Path $Root 'ops\seed-directus-portal-users.mjs')
+  if ($LASTEXITCODE -ne 0) {
+    Warn 'Portal user seed failed -- re-run: node ops/seed-directus-portal-users.mjs'
+  }
 }
 
 if ($JdkDir -and (Test-Path $camundaInternal)) {
@@ -189,8 +249,8 @@ if ($JdkDir -and (Test-Path $camundaInternal)) {
   Warn 'Skipping Camunda start -- JDK or Camunda binary is missing (see warnings above).'
 }
 
-# --------------------------------------------------- 8. Start Platform
-Log '[8/8] Starting Platform'
+# --------------------------------------------------- 9. Start Platform
+Log '[9/9] Starting Platform'
 Start-Process -FilePath 'cmd.exe' -ArgumentList '/c', "npm run dev > `"$Root\platform-dev.log`" 2>&1" `
   -WorkingDirectory (Join-Path $Root 'platform') -WindowStyle Minimized
 if (-not (Wait-ForPort 4000 'Platform')) { Warn "check $Root\platform-dev.log" }

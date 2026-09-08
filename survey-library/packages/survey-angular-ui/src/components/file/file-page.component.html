@@ -1,7 +1,0 @@
-<ng-template #template>
-    <div [class]="page.css" [attr.id]="page.id">
-        <ng-container *ngFor="let item of page.items">
-            <ng-template [component]="{ name: 'sv-file-item', data: { item, question } }"></ng-template>
-        </ng-container>
-    </div>
-</ng-template>

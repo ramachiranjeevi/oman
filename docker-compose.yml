@@ -1,0 +1,31 @@
+# Local Postgres for Directus + Camunda (two databases, one server).
+# Requires Docker Desktop. From repo root:
+#   docker compose up -d postgres
+#
+# Connection defaults (dev only — change for UAT/prod):
+#   host: localhost  port: 5432
+#   user: oman       password: oman_dev
+#   databases: oman_directus, oman_camunda
+
+services:
+  postgres:
+    image: postgres:17
+    container_name: oman-postgres
+    restart: unless-stopped
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_USER: oman
+      POSTGRES_PASSWORD: oman_dev
+      POSTGRES_DB: oman_directus
+    volumes:
+      - oman_pgdata:/var/lib/postgresql/data
+      - ./ops/postgres-init:/docker-entrypoint-initdb.d:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U oman -d oman_directus"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+volumes:
+  oman_pgdata:

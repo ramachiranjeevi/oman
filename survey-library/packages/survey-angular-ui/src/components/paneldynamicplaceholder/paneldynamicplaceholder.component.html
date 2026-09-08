@@ -1,6 +1,0 @@
-<div *ngIf="question.getShowNoEntriesPlaceholder()" [class]="question.cssClasses.noEntriesPlaceholder">
-  <span>
-    <sv-ng-string [model]="question.locNoEntriesText"></sv-ng-string>
-  </span>
-  <ng-template [component]="{ name: 'sv-action-bar', data: { model: question.footerToolbar } }"></ng-template>
-</div> 
