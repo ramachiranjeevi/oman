@@ -155,6 +155,15 @@ app.post('/api/applications', requireRole('applicant', 'admin'), async (req, res
       if (key === 'status') continue;
       if (platformConfig.getFieldAccess(key, role) === 'write') writable[key] = value;
     }
+    if (writable.cr_number && writable.civil_id) {
+      const existing = await directus.findApplicationByIdentity(writable.cr_number, writable.civil_id);
+      if (existing) {
+        return res.status(409).json({
+          error: 'An application already exists for this CR Number and Civil ID.',
+          application: redactApplicationForRole(existing, role),
+        });
+      }
+    }
     const record = await directus.createApplication({
       status: 'submitted',
       ...writable,
@@ -200,6 +209,15 @@ app.get('/api/applications', async (req, res) => {
   }
 });
 
+app.post('/api/applications/find-existing', requireRole('applicant', 'admin'), async (req, res) => {
+  try {
+    const record = await directus.findApplicationByIdentity(req.body.crNumber, req.body.civilId);
+    res.json({ application: record ? redactApplicationForRole(record, req.session.user.role) : null });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 app.get('/api/applications/:id', async (req, res) => {
   try {
     const record = await directus.getApplication(req.params.id);
@@ -217,6 +235,7 @@ const PERMISSION_EXEMPT_FIELDS = new Set([
   'eligible', 'final_fee', 'review_outcome', 'review_comments', 'field_visit_notes',
   'field_visit_date', 'sla_breached', 'revision_loop_used', 'license_qr',
   'payment_method', 'license_issued_at', 'applicant_notified', 'notification_message',
+  'cr_number', 'civil_id',
 ]);
 
 function redactApplicationForRole(record, role) {
@@ -247,7 +266,7 @@ app.post('/api/integrations/civil-status-lookup', (req, res) => {
 });
 
 app.post('/api/integrations/practice-license-lookup', (req, res) => {
-  res.json(mockIntegrations.lookupPracticeLicense(req.body.civilId));
+  res.json(mockIntegrations.lookupPracticeLicense(req.body.civilId, req.body.crNumber));
 });
 
 // --- Task Inbox (Camunda-backed) ---------------------------------------
@@ -526,6 +545,28 @@ app.get('/api/admin/process-canvas-actions', (_req, res) => {
   res.json(processCanvas.AUTOMATIC_ACTIONS);
 });
 
+app.post('/api/admin/process-canvas/:key/save', (req, res) => {
+  try {
+    const canvas = { ...req.body, processKey: req.params.key };
+    processCanvas.compileCanvas(canvas);
+    const saved = processCanvas.saveCanvas(req.params.key, canvas);
+    res.json({ ok: true, canvas: saved });
+  } catch (err) {
+    res.status(400).json({ ok: false, error: err.message, validationErrors: err.validationErrors ?? [err.message] });
+  }
+});
+
+app.post('/api/admin/process-canvas/:key/deploy', async (req, res) => {
+  try {
+    const canvas = { ...req.body, processKey: req.params.key };
+    const { xml } = processCanvas.compileCanvas(canvas);
+    const { version } = await camunda.deployProcessXml(req.params.key, xml, 'process-canvas');
+    res.json({ ok: true, version });
+  } catch (err) {
+    res.status(400).json({ ok: false, error: err.message, validationErrors: err.validationErrors ?? [err.message] });
+  }
+});
+
 app.post('/api/admin/process-canvas/:key', async (req, res) => {
   try {
     const canvas = { ...req.body, processKey: req.params.key };
@@ -680,6 +721,18 @@ app.listen(port, () => {
 
 async function runStartupProvisioning() {
   try {
+    await directus.ensureField({
+      field: 'cr_number',
+      type: 'string',
+      meta: { interface: 'input', note: 'Verified Commercial Registration number.', hidden: true },
+      schema: { is_nullable: true },
+    });
+    await directus.ensureField({
+      field: 'civil_id',
+      type: 'string',
+      meta: { interface: 'input', note: 'Verified Civil ID.', hidden: true },
+      schema: { is_nullable: true },
+    });
     await directus.ensureField({
       field: 'eligible',
       type: 'boolean',

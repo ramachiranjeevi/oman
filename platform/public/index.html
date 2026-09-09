@@ -9,20 +9,20 @@
 <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet" />
 <style>
   :root {
-    --bg: #f6f4f2;
-    --text: #141414;
-    --text-muted: #4a4a4a;
+    --bg: #f5f7fb;
+    --text: #202938;
+    --text-muted: #5f6b7a;
     --card-bg: #ffffff;
-    --border: #ddd5cf;
+    --border: #dbe2ec;
     --input-bg: #ffffff;
     --log-bg: #f9f7f5;
     --kpi-bg: #faf8f6;
     --tag-bg: #f0ebe6;
-    --primary: #c8102e;
-    --primary-dark: #9e0c24;
-    --primary-light: #fce8eb;
-    --accent: #b8963e;
-    --accent-light: #f7f1e4;
+    --primary: #2850a0;
+    --primary-dark: #1d3c7d;
+    --primary-light: #e8effc;
+    --accent: #c6a15b;
+    --accent-light: #f7f1e5;
     --success: #2d7a4f;
     --success-bg: #eaf5ef;
     --danger: #a63d3d;
@@ -37,7 +37,7 @@
     --bg: #0e0e0e; --text: #f4f0ec; --text-muted: #c2b8ae;
     --card-bg: #1a1a1a; --border: #33302c; --input-bg: #22201e;
     --log-bg: #141414; --kpi-bg: #1a1a1a; --tag-bg: #2a2724;
-    --primary: #e85a6e; --primary-dark: #f08a98; --primary-light: #3a1a20;
+    --primary: #78a4ff; --primary-dark: #9bbcff; --primary-light: #1d3158;
     --accent: #d4b56a; --accent-light: #2a2418;
     --success: #6fc894; --success-bg: #163026;
     --danger: #e89a9a; --danger-bg: #3a2222;
@@ -201,7 +201,7 @@
     min-height: 58px; padding: .75rem .65rem .75rem .85rem;
     display: flex; align-items: center; gap: .4rem;
     color: var(--primary); background: var(--kpi-bg);
-    border-bottom: 1px solid var(--border); font-size: .75rem; font-weight: 700;
+    border-bottom: 1px solid var(--border); font-size: .75rem; font-weight: 600;
     letter-spacing: .045em; text-transform: uppercase;
   }
   .applicant-side-title > span { overflow: hidden; white-space: nowrap; }
@@ -247,7 +247,7 @@
   }
   .applicant-parent-link[aria-expanded="true"] .applicant-nav-chevron { transform: rotate(90deg); }
   [dir="rtl"] .applicant-parent-link[aria-expanded="true"] .applicant-nav-chevron { transform: rotate(-90deg); }
-  .applicant-parent-link.has-active-child { color: var(--primary); font-weight: 700; }
+  .applicant-parent-link.has-active-child { color: var(--primary); font-weight: 600; }
   .applicant-submenu { display: none; background: color-mix(in srgb, var(--kpi-bg) 55%, var(--card-bg)); }
   .applicant-submenu.open { display: block; }
   .applicant-side-nav .applicant-submenu button {
@@ -348,24 +348,27 @@
 
   #dynamicForm.applicant-form-grid {
     display: grid;
-    grid-template-columns: repeat(3, minmax(0, 1fr));
-    gap: .55rem .9rem;
-    margin-top: .4rem;
-    padding: .7rem .85rem;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: .45rem .7rem;
+    margin-top: .3rem;
+    padding: .65rem .75rem;
     border: 1px solid var(--border);
     border-radius: var(--radius);
     background: var(--card-bg);
     box-shadow: none;
   }
   #dynamicForm.applicant-form-grid .af-cell { display: flex; flex-direction: column; min-width: 0; }
-  #dynamicForm.applicant-form-grid .af-cell label { margin-top: 0; font-size: .875rem; }
+  #dynamicForm.applicant-form-grid .af-cell label { margin-top: 0; font-size: .8rem; font-weight: 600; }
   #dynamicForm.applicant-form-grid .af-cell input,
   #dynamicForm.applicant-form-grid .af-cell select,
   #dynamicForm.applicant-form-grid .af-cell textarea {
-    width: 100%; margin-top: .2rem; padding: .4rem .55rem; min-height: 2.15rem; font-size: .9375rem;
+    width: 100%; margin-top: .15rem; padding: .32rem .5rem; min-height: 1.95rem; font-size: .875rem;
   }
-  #dynamicForm.applicant-form-grid .af-cell .field-note { margin-top: .15rem; font-size: .75rem; line-height: 1.35; }
-  #dynamicForm.applicant-form-grid .af-cell .field-error { margin-top: .15rem; font-size: .75rem; }
+  #dynamicForm.applicant-form-grid .af-cell .field-note {
+    overflow: hidden; margin-top: .1rem; font-size: .68rem; line-height: 1.2;
+    text-overflow: ellipsis; white-space: nowrap;
+  }
+  #dynamicForm.applicant-form-grid .af-cell .field-error { margin-top: .1rem; font-size: .68rem; line-height: 1.2; }
   #dynamicForm.applicant-form-grid .af-cell .toggle-row { margin-top: .2rem; gap: .45rem; }
   #dynamicForm.applicant-form-grid .af-cell .toggle-label { font-size: .875rem; }
   #dynamicForm.applicant-form-grid .af-span-2 { grid-column: span 2; }
@@ -373,7 +376,7 @@
   #dynamicForm.applicant-form-grid .af-toggle-bar {
     grid-column: 1 / -1;
     display: grid;
-    grid-template-columns: repeat(3, minmax(0, 1fr));
+    grid-template-columns: repeat(4, minmax(0, 1fr));
     gap: .45rem .75rem;
     margin-top: .25rem;
     padding-top: .55rem;
@@ -394,7 +397,25 @@
   }
   #dynamicForm.applicant-form-grid .search-select-option:hover,
   #dynamicForm.applicant-form-grid .search-select-option.active { background: var(--kpi-bg); }
-  @media (max-width: 1100px) {
+  #app-pane-new .applicant-pane-card { padding: .75rem .9rem; }
+  #app-pane-new .section-head { margin: 0 0 .35rem; }
+  #app-pane-new .section-head h2 { margin: 0; }
+  #verifiedIdentitySummary { padding: .55rem .7rem; margin-bottom: .4rem !important; }
+  .verified-identity-grid {
+    display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: .35rem .75rem; margin-top: .35rem;
+  }
+  .verified-identity-item { min-width: 0; padding-inline-start: .55rem; border-inline-start: 2px solid var(--primary); }
+  .verified-identity-item span { display: block; margin: 0; color: var(--muted); font-size: .66rem; line-height: 1.2; }
+  .verified-identity-item strong {
+    display: block; overflow: hidden; margin-top: .08rem; font-size: .78rem;
+    font-weight: 600; text-overflow: ellipsis; white-space: nowrap;
+  }
+  @media (max-width: 1200px) {
+    #dynamicForm.applicant-form-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+    #dynamicForm.applicant-form-grid .af-toggle-bar { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+    .verified-identity-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  }
+  @media (max-width: 850px) {
     #dynamicForm.applicant-form-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
     #dynamicForm.applicant-form-grid .af-span-2 { grid-column: span 2; }
   }
@@ -403,6 +424,7 @@
     #dynamicForm.applicant-form-grid .af-span-2,
     #dynamicForm.applicant-form-grid .af-span-3 { grid-column: auto; }
     #dynamicForm.applicant-form-grid .af-toggle-bar { grid-template-columns: 1fr; }
+    .verified-identity-grid { grid-template-columns: 1fr; }
   }
   body.mobile-frame #dynamicForm.applicant-form-grid { grid-template-columns: 1fr; }
   body.mobile-frame #dynamicForm.applicant-form-grid .af-span-2,
@@ -410,42 +432,49 @@
   body.mobile-frame #dynamicForm.applicant-form-grid .af-toggle-bar { grid-template-columns: 1fr; }
 
   .field-grid { margin-top: .5rem; }
-  .fg-list { display: flex; flex-direction: column; gap: .45rem; }
-  .fg-card {
-    border: 1px solid var(--border); border-radius: var(--radius);
-    background: var(--card-bg); padding: .55rem .7rem;
-    display: grid; grid-template-columns: 1fr auto; gap: .35rem .65rem; align-items: start;
+  .fg-summary {
+    display: flex; align-items: center; justify-content: space-between; gap: 12px;
+    margin-bottom: 12px; padding: 10px 12px; border-radius: 10px;
+    color: var(--muted); background: var(--page-bg); font-size: .82rem;
   }
-  .fg-card-main { min-width: 0; display: flex; flex-direction: column; gap: .25rem; }
+  .fg-list { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: .75rem; }
+  .fg-card {
+    position: relative; min-height: 116px; border: 1px solid var(--border); border-radius: 12px;
+    background: var(--card-bg); padding: 14px;
+    display: flex; gap: 11px; align-items: flex-start;
+    transition: border-color .18s ease, box-shadow .18s ease, transform .18s ease;
+  }
+  .fg-card:hover { border-color: color-mix(in srgb, var(--primary) 45%, var(--border)); box-shadow: var(--shadow); transform: translateY(-1px); }
+  .fg-card-icon {
+    flex: 0 0 36px; display: grid; place-items: center; width: 36px; height: 36px;
+    border-radius: 10px; color: var(--primary); background: var(--primary-light); font-size: 16px; font-weight: 800;
+  }
+  .fg-card-main { min-width: 0; display: flex; flex: 1; flex-direction: column; gap: .3rem; padding-inline-end: 54px; }
   .fg-card-top { display: flex; flex-wrap: wrap; align-items: center; gap: .35rem .5rem; min-width: 0; }
   .fg-card-top code {
-    font-size: .8125rem; font-weight: 400; word-break: break-all; max-width: 100%;
+    color: var(--muted); background: transparent; font-size: .72rem; font-weight: 500; word-break: break-all; max-width: 100%;
   }
   .fg-card-label {
-    font-size: .875rem; color: var(--text); line-height: 1.4; word-break: break-word;
-    opacity: .9;
+    color: var(--text); font-size: .94rem; font-weight: 600; line-height: 1.35; word-break: break-word;
   }
-  .fg-card-label em { opacity: .7; font-style: normal; }
+  .fg-card-note { color: var(--muted); font-size: .75rem; line-height: 1.35; }
   .fg-card-actions {
+    position: absolute; inset-block-start: 12px; inset-inline-end: 12px;
     display: flex; align-items: center; justify-content: flex-end;
-    align-self: center;
   }
   .fg-card-actions .fg-delete {
-    margin: 0; padding: .3rem .55rem; font-size: .8125rem; font-weight: 500;
-    background: none; box-shadow: none; color: var(--danger);
-    border: 1px solid var(--border); border-radius: 4px; white-space: nowrap;
+    width: 32px; height: 32px; margin: 0; padding: 0; font-size: .9rem;
+    background: transparent; box-shadow: none; color: var(--danger);
+    border: 1px solid transparent; border-radius: 8px;
   }
   .fg-card-actions .fg-delete:hover { background: var(--danger-bg); border-color: var(--danger); }
   .fg-card-actions .fg-protected {
-    font-size: .8125rem; color: var(--text); opacity: .8; white-space: nowrap;
+    padding: 4px 7px; border-radius: 999px; color: var(--muted); background: var(--page-bg);
+    font-size: .68rem; font-weight: 500; white-space: nowrap;
   }
-  body.mobile-frame .fg-card {
-    grid-template-columns: 1fr;
-  }
-  body.mobile-frame .fg-card-actions {
-    justify-content: flex-start; align-self: stretch;
-  }
-  body.mobile-frame .fg-card-actions .fg-delete { width: 100%; text-align: center; }
+  body.mobile-frame .fg-list { grid-template-columns: 1fr; }
+  @media (max-width: 1100px) { .fg-list { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+  @media (max-width: 680px) { .fg-list { grid-template-columns: 1fr; } }
 
   .table-scroll {
     width: 100%; overflow-x: auto; -webkit-overflow-scrolling: touch;
@@ -592,7 +621,9 @@
   details.demo-note[open] .demo-note-state-closed { display: none; }
   details.demo-note[open] .demo-note-state-open { display: inline; }
   details.activity-drawer {
-    margin-top: 1.25rem; border-top: 1px solid var(--border); padding-top: .55rem;
+    width: calc(100% - 40px); max-width: 1400px; margin: 1.25rem auto 0;
+    padding: .55rem .75rem; border: 1px solid var(--border); border-radius: 12px;
+    background: var(--card-bg); box-sizing: border-box;
   }
   details.activity-drawer summary {
     cursor: pointer; font-size: .9375rem; font-weight: 500; color: var(--text);
@@ -692,6 +723,32 @@
   #licenseQrModal code { display: block; margin: .55rem 0; font-size: .75rem; word-break: break-all; }
   #licenseQrModal img[data-clickable="true"] { cursor: pointer; }
   .license-modal-actions { display: flex; justify-content: center; gap: .45rem; flex-wrap: wrap; }
+  #paymentGatewayModal {
+    position: fixed; inset: 0; z-index: 90; display: none; align-items: center; justify-content: center;
+    padding: 18px; background: rgba(8, 12, 18, .72); backdrop-filter: blur(4px);
+  }
+  #paymentGatewayModal.open { display: flex; }
+  .mock-gateway {
+    overflow: hidden; width: min(520px, 100%); border-radius: 18px;
+    background: var(--card-bg); color: var(--text); box-shadow: 0 24px 70px rgba(0,0,0,.35);
+  }
+  .mock-gateway-head { display: flex; align-items: center; gap: 12px; padding: 18px 22px; color: #fff; background: #244893; }
+  .mock-gateway-logo { display: grid; place-items: center; width: 42px; height: 42px; border-radius: 12px; background: var(--primary); font-weight: 900; }
+  .mock-gateway-head strong { display: block; font-size: 17px; }
+  .mock-gateway-head small { color: #dbe5fa; }
+  .mock-gateway-body { padding: 22px; }
+  .mock-gateway-demo { margin-bottom: 16px; padding: 8px 11px; border-radius: 8px; color: #7a4b00; background: #fff4d6; font-size: 12px; font-weight: 700; }
+  .mock-gateway-amount { margin-bottom: 18px; padding: 16px; border: 1px solid var(--border); border-radius: 12px; text-align: center; background: var(--page-bg); }
+  .mock-gateway-amount small { display: block; margin-bottom: 3px; color: var(--muted); }
+  .mock-gateway-amount strong { font-size: 30px; }
+  .mock-gateway-fields { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  .mock-gateway-fields label:first-child { grid-column: 1 / -1; }
+  .mock-gateway-actions { display: flex; gap: 10px; margin-top: 20px; }
+  .mock-gateway-actions button { flex: 1; }
+  @media (max-width: 520px) {
+    .mock-gateway-fields { grid-template-columns: 1fr; }
+    .mock-gateway-fields label:first-child { grid-column: auto; }
+  }
 
   [dir="rtl"] label, [dir="rtl"] .field-note, [dir="rtl"] .persona-note { text-align: right; }
   [dir="rtl"] .toggle-row { flex-direction: row-reverse; }
@@ -802,7 +859,9 @@
   }
   body.mobile-frame .grid { grid-template-columns: 1fr !important; gap: .55rem; }
   body.mobile-frame details.demo-note { margin: .25rem 0 .35rem; padding: .35rem .5rem; }
-  body.mobile-frame details.activity-drawer { margin-top: .75rem; padding-top: .35rem; }
+  body.mobile-frame details.activity-drawer {
+    width: calc(100% - 20px); margin: .75rem auto 0; padding: .4rem .55rem;
+  }
   body.mobile-frame .site-footer { margin: 1rem -.55rem 0; }
   body.mobile-frame .site-footer-banner { height: 84px; }
   body.mobile-frame .site-footer-overlay { padding: .55rem .75rem .5rem; }
@@ -876,9 +935,6 @@
     .site-footer { margin: 1rem -.65rem 0; }
     .site-footer-banner { height: 90px; }
     .site-footer-overlay span { display: none; }
-    .fg-card { grid-template-columns: 1fr; }
-    .fg-card-actions { justify-content: flex-start; }
-    .fg-card-actions .fg-delete { width: 100%; text-align: center; }
     .form-grid { grid-template-columns: 1fr; }
   }
 
@@ -947,10 +1003,10 @@
 
   /* MOI eServices Portal v3 visual system */
   :root {
-    --bg: #f5f7fa; --text: #111418; --text-muted: #5c6672;
-    --card-bg: #fff; --border: #e4e8ee; --input-bg: #fff;
-    --log-bg: #fafbfc; --kpi-bg: #eff2f6; --tag-bg: #eff2f6;
-    --primary: #d42027; --primary-dark: #b01a20; --primary-light: #fbdcdd;
+    --bg: #f5f7fb; --text: #202938; --text-muted: #5f6b7a;
+    --card-bg: #fff; --border: #dfe5ee; --input-bg: #fff;
+    --log-bg: #fafbfc; --kpi-bg: #edf2f8; --tag-bg: #edf2f8;
+    --primary: #2850a0; --primary-dark: #1d3c7d; --primary-light: #e8effc;
     --success: #0f7b5f; --success-bg: #e8f5f0;
     --danger: #d42027; --danger-bg: #fef3f3;
     --shadow: 0 1px 2px rgba(17,20,24,.05), 0 1px 3px rgba(17,20,24,.05);
@@ -960,7 +1016,7 @@
     --bg: #0f1318; --text: #f3f5f7; --text-muted: #a9b2be;
     --card-bg: #1b2027; --border: #343c47; --input-bg: #232a33;
     --log-bg: #151a20; --kpi-bg: #252c35; --tag-bg: #2a323c;
-    --primary: #ef444b; --primary-dark: #ff6268; --primary-light: #421f24;
+    --primary: #78a4ff; --primary-dark: #9bbcff; --primary-light: #1d3158;
     --success: #68c6a9; --success-bg: #17372f;
     --danger: #ff7379; --danger-bg: #411f23;
     --shadow: 0 1px 3px rgba(0,0,0,.35);
@@ -975,7 +1031,7 @@
   body.applicant-sidebar-visible:has(.applicant-shell.sidebar-collapsed) {
     margin-inline-start: 0; width: auto;
   }
-  .portal-government-bar { background: #111418; color: #fff; font-size: 11px; }
+  .portal-government-bar { background: #284a96; color: #fff; font-size: 11px; }
   .portal-government-inner,
   .portal-role-inner,
   .portal-mast-inner {
@@ -984,16 +1040,16 @@
   .portal-government-inner { min-height: 29px; display: flex; align-items: center; gap: 10px; }
   .portal-government-dot { width: 4px; height: 4px; border-radius: 50%; background: var(--primary); }
   .portal-government-spacer { flex: 1; }
-  .portal-government-bar a { color: #a9b2be; text-decoration: none; margin-inline-start: 14px; }
-  .portal-rolebar { background: #1b2027; color: #a9b2be; border-top: 1px solid #2a313a; }
+  .portal-government-bar a { color: #e8efff; text-decoration: none; margin-inline-start: 14px; }
+  .portal-rolebar { background: #fff; color: #5f6b7a; border-bottom: 1px solid var(--border); }
   .portal-role-inner { min-height: 43px; display: flex; align-items: center; gap: 12px; }
-  .portal-role-label { color: #6c7787; font-size: 10px; font-weight: 700; letter-spacing: 1.35px; text-transform: uppercase; }
+  .portal-role-label { color: #6a7686; font-size: 10px; font-weight: 700; letter-spacing: 1.35px; text-transform: uppercase; }
   .portal-role-pill {
     display: inline-flex; align-items: center; gap: 7px; padding: 6px 15px;
     border-radius: 999px; background: var(--primary); color: #fff; font-size: 12px; font-weight: 600;
   }
   .portal-role-pill::before { content: ""; width: 6px; height: 6px; border-radius: 50%; background: currentColor; }
-  .portal-role-hint { margin-inline-start: auto; color: #6c7787; font-size: 11px; }
+  .portal-role-hint { margin-inline-start: auto; color: #6a7686; font-size: 11px; }
   .portal-mast { background: #fff; border-bottom: 1px solid var(--border); box-shadow: var(--shadow); }
   .portal-mast-inner { min-height: 65px; display: flex; align-items: center; gap: 18px; }
   .portal-mast .brand-row { order: -1; margin: 0 auto 0 0; gap: 12px; }
@@ -1011,13 +1067,6 @@
   .portal-mast .user-badge { order: 3; }
   #langBtnEn, #langBtnAr { order: 1; }
   #langBtnEn.active-lang, #langBtnAr.active-lang { display: none; }
-  .portal-notification-button { order: 2; position: relative; width: 34px; height: 34px; padding: 0 !important; border-radius: 50% !important; }
-  .portal-notification-button svg { width: 16px; height: 16px; }
-  .portal-notification-count {
-    position: absolute; inset-block-start: -3px; inset-inline-end: -3px; min-width: 16px; height: 16px;
-    display: grid; place-items: center; padding: 0 4px; border-radius: 999px;
-    background: var(--primary); color: #fff; font-size: 9px; font-weight: 700;
-  }
   .portal-mast .text-size-group { order: 1; }
   #mobileViewBtn, #themeToggleBtn { order: 1; }
   .portal-mast .toolbar #mobileViewBtn.active-lang {
@@ -1065,14 +1114,20 @@
   #app-pane-btn-new { order: 3; }
   #app-pane-btn-payment { order: 4; }
   #app-pane-btn-license { order: 5; }
+  .applicant-side-nav button.is-locked {
+    opacity: .48; cursor: not-allowed; filter: grayscale(.35);
+  }
+  .applicant-side-nav button.is-locked::after {
+    content: "🔒"; margin-inline-start: auto; font-size: 11px; filter: grayscale(1);
+  }
   .applicant-nav-icon { width: 24px; height: 24px; border-radius: 7px; }
   .applicant-workspace { margin: 0; }
   .applicant-pane-card, .card {
     background: #fff; border: 1px solid var(--border); border-radius: 14px; box-shadow: var(--shadow);
   }
   .applicant-pane-card { padding: 14px 16px 18px; }
-  h2 { margin: 0 0 10px; padding: 0 0 9px; border-bottom: 1px solid #eff2f6; font-size: 18px; font-weight: 700; }
-  h3 { font-size: 14px; font-weight: 700; }
+  h2 { margin: 0 0 10px; padding: 0 0 9px; border-bottom: 1px solid #eff2f6; font-size: 18px; font-weight: 600; }
+  h3 { font-size: 14px; font-weight: 600; }
   label { color: var(--text-muted); font-size: 12px; font-weight: 600; }
   input, select, textarea {
     border: 1.5px solid var(--border); border-radius: 9px; padding: 9px 12px;
@@ -1081,7 +1136,7 @@
   input:focus, select:focus, textarea:focus { border-color: var(--primary); box-shadow: 0 0 0 3px var(--primary-light); }
   button {
     border-radius: 9px; padding: 9px 14px; font-size: 12.5px; font-weight: 600;
-    background: var(--primary); box-shadow: 0 5px 14px -4px rgba(212,32,39,.45);
+    background: var(--primary); box-shadow: 0 5px 14px -4px rgba(40,80,160,.4);
   }
   button.secondary { background: #fff; border: 1px solid var(--border); color: var(--text); box-shadow: none; }
   button.secondary:hover { border-color: #8d96a2; background: #fff; }
@@ -1094,7 +1149,7 @@
   tbody tr:nth-child(even) { background: transparent; }
   tbody tr:hover { background: #fafbfd; }
   .table-scroll { border: 1px solid var(--border); border-radius: 14px; overflow: auto; }
-  .tag { border-radius: 999px; padding: 3px 9px; font-size: 10.5px; font-weight: 700; }
+  .tag { border-radius: 999px; padding: 3px 9px; font-size: 10.5px; font-weight: 500; }
   .kpi { border-radius: 14px; box-shadow: var(--shadow); padding: 10px 13px; }
   .section-head { margin-bottom: 10px; }
   .section-head h2 { margin: 0; border: 0; }
@@ -1130,52 +1185,135 @@
   .application-stat.action::before { background: var(--primary); }
   .application-stat.progress::before { background: #2b5f8c; }
   .application-stat.complete::before { background: var(--success); }
-  .application-stat .stat-label { color: #8d96a2; font-size: 9.5px; font-weight: 700; letter-spacing: .7px; text-transform: uppercase; }
-  .application-stat .stat-value { margin-top: 1px; font-size: 22px; font-weight: 800; line-height: 1.15; }
+  .application-stat .stat-label { color: #8d96a2; font-size: 9.5px; font-weight: 600; letter-spacing: .7px; text-transform: uppercase; }
+  .application-stat .stat-value { margin-top: 1px; font-size: 22px; font-weight: 700; line-height: 1.15; }
   .application-stat .stat-note { color: var(--text-muted); font-size: 10px; }
   #app-pane-identity details.demo-note {
     padding: 20px 24px; border: 0; border-radius: 16px; color: #fff;
-    background: linear-gradient(155deg,#111418 0%,#1d232c 55%,#2a1b1d 100%);
+    background: linear-gradient(155deg,#10151c 0%,#171d25 58%,#211b20 100%);
     box-shadow: 0 24px 50px -14px rgba(17,20,24,.26);
   }
   #app-pane-identity details.demo-note summary { color: #fff; border-color: rgba(255,255,255,.1); }
-  #app-pane-identity details.demo-note .field-note { color: #a2acb9; }
+  #app-pane-identity details.demo-note .field-note { color: #d7e2f7; }
   #app-pane-identity details.demo-note .card { background: rgba(255,255,255,.05); border-color: rgba(255,255,255,.1); box-shadow: none; }
-  #app-pane-identity details.demo-note label { color: #a9b2be; }
+  #app-pane-identity details.demo-note label { color: #e2e9f8; }
   #app-pane-identity details.demo-note input { color: #fff; background: rgba(255,255,255,.06); border-color: rgba(255,255,255,.15); }
+  .identity-success-card { text-align: center; animation: identitySuccessIn .45s ease both; }
+  .identity-success-check {
+    display: grid; place-items: center; width: 58px; height: 58px; margin: 0 auto 10px;
+    border-radius: 50%; color: #fff; background: var(--success); font-size: 29px;
+    box-shadow: 0 0 0 0 rgba(15,123,95,.35); animation: identitySuccessPulse 1.1s ease-out;
+  }
+  .identity-checks {
+    display: flex; justify-content: center; gap: 9px; flex-wrap: wrap; margin-top: 12px;
+  }
+  .identity-check-item {
+    padding: 7px 10px; border-radius: 999px; color: var(--success);
+    background: color-mix(in srgb, var(--success) 10%, var(--card-bg)); font-size: 12px; font-weight: 600;
+  }
+  .identity-failure-list {
+    display: grid; gap: 6px; margin-top: 10px; padding: 10px 12px;
+    border-radius: 9px; background: rgba(255,255,255,.72);
+  }
+  .identity-failure-item {
+    display: flex; justify-content: space-between; gap: 12px;
+    color: #402427; font-size: 12px; font-weight: 600;
+  }
+  .identity-failure-item strong { color: #a31924; font-weight: 800; }
+  @keyframes identitySuccessIn {
+    from { opacity: 0; transform: translateY(8px) scale(.98); }
+    to { opacity: 1; transform: translateY(0) scale(1); }
+  }
+  @keyframes identitySuccessPulse {
+    0% { transform: scale(.75); box-shadow: 0 0 0 0 rgba(15,123,95,.4); }
+    55% { transform: scale(1.08); box-shadow: 0 0 0 14px rgba(15,123,95,0); }
+    100% { transform: scale(1); }
+  }
   .portal-payment-layout { display: grid; grid-template-columns: 1fr 300px; gap: 16px; }
-  .portal-payment-summary { padding: 18px; border-radius: 14px; color: #fff; background: #111418; }
+  .portal-payment-summary { padding: 18px; border: 1px solid #2d3540; border-radius: 14px; color: #fff; background: #10151c; }
   .portal-payment-summary .amount { margin: 12px 0 4px; font-size: 27px; font-weight: 800; }
-  .portal-payment-summary .field-note { color: #a9b2be; }
+  .portal-payment-summary .field-note { color: #b9c4d4; }
   .portal-payment-layout .pay-methods { grid-template-columns: 1fr 1fr; gap: 10px; }
-  .portal-payment-layout .pay-method { padding: 14px; border: 1.5px solid var(--border); border-radius: 12px; }
+  .portal-payment-layout .pay-method {
+    min-height: 68px; margin: 0; padding: 11px 13px;
+    border: 1.5px solid var(--border); border-radius: 12px;
+  }
   .portal-payment-layout .pay-method:has(input:checked) { border-color: var(--primary); background: var(--primary-light); }
+  .portal-payment-layout .pay-method input[type="radio"] {
+    order: 3; flex: 0 0 19px; width: 19px; height: 19px; min-height: 0;
+    margin: 0 0 0 auto; padding: 0; border-radius: 50%;
+  }
+  [dir="rtl"] .portal-payment-layout .pay-method input[type="radio"] { margin: 0 auto 0 0; }
+  .pay-method-logo {
+    flex: 0 0 42px; display: grid; place-items: center; width: 42px; height: 42px;
+    border-radius: 11px; color: #fff; background: #26384c; font-size: 17px; font-weight: 800;
+  }
+  .pay-method-logo.wallet { background: #087d68; }
+  .pay-method-logo.apple { background: #111; font-size: 13px; letter-spacing: -.4px; }
+  .pay-method-logo.samsung { background: #1565c0; font-size: 13px; }
+  .pay-method-name { flex: 1; color: var(--text); font-size: 13px; font-weight: 600; text-align: start; }
+  .pay-method-name small { display: block; margin-top: 2px; color: var(--muted); font-size: 10px; font-weight: 500; }
+  .payment-task-tabs {
+    display: flex; gap: 8px; margin-bottom: 12px; padding: 6px;
+    overflow-x: auto; border: 1px solid var(--border); border-radius: 12px; background: var(--page-bg);
+    scrollbar-width: thin;
+  }
+  .payment-task-tab {
+    flex: 0 0 auto; min-width: 175px; margin: 0; padding: 10px 12px; border: 1px solid transparent;
+    border-radius: 9px; color: var(--text); background: transparent; box-shadow: none; text-align: start;
+  }
+  .payment-task-tab:hover { border-color: var(--border); background: var(--card-bg); transform: none; box-shadow: none; }
+  .payment-task-tab.active { border-color: var(--primary); color: var(--primary); background: var(--card-bg); box-shadow: 0 2px 7px rgba(0,0,0,.06); }
+  .payment-task-tab strong, .payment-task-tab span { display: block; }
+  .payment-task-tab span { margin-top: 2px; color: var(--muted); font-size: 10px; font-weight: 500; }
+  .payment-task-tab.active span { color: var(--primary); }
+  .payment-task-panel { display: none; }
+  .payment-task-panel.active { display: block; }
+  .payment-task-panel .portal-payment-layout > .card { margin: 0; }
   .portal-permit {
     overflow: hidden; margin-bottom: 14px; border: 1px solid var(--border);
     border-radius: 14px; background: #fff; box-shadow: var(--shadow);
   }
-  .portal-permit-bar { height: 5px; background: linear-gradient(90deg,var(--primary),#8e1418); }
+  .portal-permit-bar { height: 5px; background: linear-gradient(90deg,var(--primary),#5f82c8); }
   .portal-permit-inner { padding: 20px 24px; }
   .portal-permit-head { display: flex; align-items: center; gap: 14px; padding-bottom: 14px; border-bottom: 1px solid #eff2f6; }
-  .portal-permit-seal { width: 52px; height: 52px; display: grid; place-items: center; border-radius: 11px; background: linear-gradient(135deg,var(--primary),#8e1418); }
+  .portal-permit-seal { width: 52px; height: 52px; display: grid; place-items: center; border-radius: 11px; background: linear-gradient(135deg,var(--primary),#5f82c8); }
   .portal-permit-seal img { width: 40px; height: 40px; object-fit: contain; }
   .portal-permit-title strong { display: block; font-size: 17px; }
   .portal-permit-title span { color: var(--text-muted); font-size: 13px; }
   .portal-permit-number { margin-inline-start: auto; text-align: end; color: var(--primary); font: 800 16px ui-monospace,Consolas,monospace; }
   .portal-permit-number small { display: block; color: #8d96a2; font: 700 9.5px "Segoe UI",sans-serif; letter-spacing: 1px; text-transform: uppercase; }
   .portal-permit-grid { display: grid; grid-template-columns: repeat(3,1fr); gap: 12px; margin-top: 14px; }
-  .portal-permit-field small { display: block; color: #8d96a2; font-size: 9.5px; font-weight: 700; text-transform: uppercase; }
-  .portal-permit-field strong { font-size: 13.5px; }
+  .portal-permit-field small { display: block; color: #8d96a2; font-size: 9.5px; font-weight: 500; text-transform: uppercase; }
+  .portal-permit-field strong { font-size: 13.5px; font-weight: 600; }
   .portal-permit-qr { display: flex; align-items: center; gap: 18px; margin-top: 16px; padding-top: 14px; border-top: 1px solid #eff2f6; }
   .portal-permit-qr img { width: 132px; height: 132px; padding: 8px; border: 1px solid var(--border); border-radius: 10px; cursor: pointer; }
   .portal-permit-actions { display: flex; gap: 7px; flex-wrap: wrap; margin-top: 10px; }
+  #app-pane-license .applicant-pane-card { padding: .7rem .85rem; }
+  #app-pane-license .section-head { margin: 0 0 .3rem; padding-bottom: .3rem; }
+  #app-pane-license > .applicant-pane-card > .field-note { margin: .2rem 0 .35rem; font-size: .75rem; }
+  #app-pane-license .portal-permit { margin-bottom: 8px; }
+  #app-pane-license .portal-permit-inner { padding: 12px 16px; }
+  #app-pane-license .portal-permit-head { gap: 10px; padding-bottom: 8px; }
+  #app-pane-license .portal-permit-seal { width: 42px; height: 42px; }
+  #app-pane-license .portal-permit-seal img { width: 34px; height: 34px; }
+  #app-pane-license .portal-permit-title strong { font-size: 15px; }
+  #app-pane-license .portal-permit-title span { font-size: 11px; }
+  #app-pane-license .license-notify { padding: .45rem .6rem; margin: 7px 0; font-size: .75rem; }
+  #app-pane-license .portal-permit-grid { gap: 7px 12px; margin-top: 8px; }
+  #app-pane-license .portal-permit-field small { font-size: 8.5px; }
+  #app-pane-license .portal-permit-field strong { font-size: 12px; }
+  #app-pane-license .portal-permit-qr { gap: 12px; margin-top: 8px; padding-top: 8px; }
+  #app-pane-license .portal-permit-qr img { width: 88px; height: 88px; padding: 5px; }
+  #app-pane-license .portal-permit-actions { margin-top: 5px; }
+  #app-pane-license .portal-permit-actions button { padding: .35rem .6rem; font-size: .75rem; }
   .role-dashboard-head { display: flex; align-items: center; gap: 12px; margin-bottom: 10px; }
   .role-dashboard-icon {
     width: 34px; height: 34px; flex: none; display: grid; place-items: center;
     border-radius: 11px; color: #fff; background: linear-gradient(135deg,#2b5f8c,#1b3d5c);
   }
   #tab-head .role-dashboard-icon { background: linear-gradient(135deg,#5b4a9e,#3a2e68); }
-  #tab-admin .role-dashboard-icon { background: linear-gradient(135deg,var(--primary),#8e1418); }
+  #tab-admin .role-dashboard-icon { background: linear-gradient(135deg,var(--primary),#5f82c8); }
   .role-dashboard-head h2 { margin: 0; padding: 0; border: 0; font-size: 18px; }
   .role-dashboard-head .field-note { margin: 0; }
   .role-queue-panel { overflow: hidden; border: 1px solid var(--border); border-radius: 14px; background: #fff; box-shadow: var(--shadow); }
@@ -1276,6 +1414,12 @@
   body.mobile-frame .portal-permit-number { margin-inline-start: 0; text-align: start; word-break: break-all; }
   body.mobile-frame .portal-permit-grid { grid-template-columns: 1fr 1fr; }
   body.mobile-frame .site-footer { margin-inline: 0; }
+  body.mobile-frame.applicant-sidebar-visible,
+  body.mobile-frame.applicant-sidebar-visible.applicant-sidebar-collapsed {
+    width: calc(100% - 16px);
+    max-width: 390px;
+    margin: 8px auto !important;
+  }
   @media (max-width: 760px) {
     .portal-role-hint, .portal-government-bar a, .text-size-group, #mobileViewBtn, #themeToggleBtn { display: none !important; }
     .portal-government-inner, .portal-role-inner, .portal-mast-inner { padding-inline: 12px; }
@@ -1286,6 +1430,89 @@
     .application-stats { grid-template-columns: 1fr 1fr; }
     .portal-payment-layout { grid-template-columns: 1fr; }
     .portal-permit-grid { grid-template-columns: 1fr 1fr; }
+  }
+  .digital-assistant-launcher {
+    position: fixed; inset-inline-end: 24px; bottom: 76px; z-index: 1200;
+    width: 58px; height: 58px; min-height: 58px; padding: 0;
+    border: 2px solid rgba(255,255,255,.82); border-radius: 50%;
+    display: grid; place-items: center; color: #fff;
+    background: linear-gradient(135deg, #315fd5, #2347a5);
+    box-shadow: 0 10px 30px rgba(35,71,165,.32); font-weight: 700;
+  }
+  .digital-assistant-launcher:hover { transform: translateY(-2px); }
+  .digital-assistant-launcher svg { width: 29px; height: 29px; fill: currentColor; stroke: none; }
+  .digital-assistant-launcher span { display: none; }
+  .digital-assistant-panel {
+    position: fixed; inset-inline-end: 22px; bottom: 86px; z-index: 9999; isolation: isolate;
+    width: min(400px, calc(100vw - 28px)); height: min(610px, calc(100vh - 120px));
+    background: var(--card-bg); color: var(--text); border: 1px solid var(--border);
+    border-radius: 22px; box-shadow: 0 22px 65px rgba(12,28,65,.25);
+    overflow: hidden; display: flex; flex-direction: column;
+  }
+  .digital-assistant-head {
+    min-height: 72px; padding: 15px 17px; display: flex; align-items: center; gap: 12px;
+    background: var(--kpi-bg); border-bottom: 1px solid var(--border);
+  }
+  .digital-assistant-mark {
+    width: 42px; height: 42px; flex: 0 0 42px; border-radius: 14px;
+    display: grid; place-items: center; color: #fff; background: var(--primary);
+  }
+  .digital-assistant-mark svg { width: 24px; stroke: currentColor; fill: none; stroke-width: 1.8; }
+  .digital-assistant-title { flex: 1; min-width: 0; }
+  .digital-assistant-title strong { display: block; color: var(--primary); font-size: 1.08rem; }
+  .digital-assistant-title span { display: block; color: var(--muted); font-size: .75rem; margin-top: 2px; }
+  .digital-assistant-close {
+    width: 36px; height: 36px; padding: 0; border-radius: 50%; color: var(--text);
+    background: transparent; border: 1px solid transparent; font-size: 22px;
+  }
+  .digital-assistant-close:hover { background: var(--input-bg); border-color: var(--border); }
+  .digital-assistant-messages {
+    flex: 1; min-height: 0; overflow-y: auto; padding: 18px 16px;
+    display: flex; flex-direction: column; gap: 13px; background: var(--card-bg);
+  }
+  .assistant-message { display: flex; flex-direction: column; max-width: 88%; }
+  .assistant-message.bot { align-self: flex-start; }
+  .assistant-message.user { align-self: flex-end; align-items: flex-end; }
+  .assistant-message-label { color: var(--muted); font-size: .72rem; margin: 0 8px 4px; }
+  .assistant-message-bubble {
+    padding: 12px 14px; border-radius: 18px; line-height: 1.5; font-size: .91rem;
+    background: var(--kpi-bg); border: 1px solid var(--border);
+  }
+  .assistant-message.user .assistant-message-bubble {
+    color: #fff; background: var(--primary); border-color: var(--primary); border-end-end-radius: 5px;
+  }
+  .assistant-message.bot .assistant-message-bubble { border-start-start-radius: 5px; }
+  .assistant-quick-actions { display: flex; flex-wrap: wrap; gap: 7px; margin-top: 8px; }
+  .assistant-chip {
+    width: auto; padding: 7px 10px; border-radius: 999px; font-size: .78rem;
+    color: var(--primary); background: var(--card-bg); border: 1px solid var(--primary);
+  }
+  .assistant-chip:hover { color: #fff; background: var(--primary); }
+  .assistant-message-bubble ol { margin: 8px 0 4px; padding-inline-start: 20px; }
+  .assistant-message-bubble li { margin: 4px 0; }
+  .assistant-composer { flex: 0 0 auto; padding: 11px 13px 8px; border-top: 1px solid var(--border); background: var(--card-bg); }
+  .assistant-input-row {
+    display: flex; align-items: center; gap: 8px; padding: 5px 5px 5px 13px;
+    border: 1px solid var(--border); border-radius: 999px; background: var(--input-bg);
+  }
+  [dir="rtl"] .assistant-input-row { padding: 5px 13px 5px 5px; }
+  .assistant-input-row input { flex: 1; min-width: 0; border: 0; box-shadow: none; background: transparent; padding: 7px 2px; }
+  .assistant-input-row input:focus { box-shadow: none; }
+  .assistant-send { width: 40px; height: 40px; padding: 0; border-radius: 50%; display: grid; place-items: center; }
+  .assistant-send svg { width: 21px; stroke: currentColor; fill: none; stroke-width: 2; }
+  [dir="rtl"] .assistant-send svg { transform: scaleX(-1); }
+  .assistant-disclaimer { text-align: center; color: var(--muted); font-size: .68rem; margin: 7px 0 0; }
+  body.mobile-frame .digital-assistant-launcher {
+    inset-inline-end: calc(50% - 195px + 16px);
+    bottom: 76px;
+    padding: 0;
+  }
+  body.mobile-frame .digital-assistant-panel {
+    inset: 8px; width: auto; height: auto; max-height: none; border-radius: 18px; box-shadow: 0 18px 70px rgba(0,0,0,.4);
+  }
+  @media (max-width: 560px) {
+    .digital-assistant-launcher { inset-inline-end: 16px; bottom: 76px; }
+    .digital-assistant-panel { inset: 8px; width: auto; height: auto; max-height: none; border-radius: 18px; box-shadow: 0 18px 70px rgba(0,0,0,.4); }
   }
 </style>
 </head>
@@ -1315,12 +1542,6 @@
     </div>
     <button id="langBtnEn" onclick="applyLanguage('en')">English</button>
     <button id="langBtnAr" onclick="applyLanguage('ar')">العربية</button>
-    <button class="portal-notification-button secondary" type="button" aria-label="Notifications" title="Notifications">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" aria-hidden="true">
-        <path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9M13.7 21a2 2 0 0 1-3.4 0"/>
-      </svg>
-      <span class="portal-notification-count">3</span>
-    </button>
     <span class="text-size-group" title="Text size" aria-label="Text size">
       <button type="button" id="textSizeDefault" onclick="applyTextSize('default')" title="Default text size" aria-label="Default text">A</button>
       <button type="button" id="textSizeComfortable" onclick="applyTextSize('comfortable')" title="Larger text" aria-label="Comfortable text">A+</button>
@@ -1358,7 +1579,6 @@
         <button type="submit" data-i18n="loginBtn">Sign In</button>
         <div class="login-error" id="loginError"></div>
       </form>
-      <p class="login-hint" data-i18n="loginHint">Demo accounts: applicant/applicant123, specialist/specialist123, head/head123, admin/admin123</p>
     </div>
   </div>
 
@@ -1414,9 +1634,14 @@
         </div>
         <div class="applicant-pane active" id="app-pane-new">
           <div class="applicant-pane-card">
-            <h2 data-i18n="submitAppHeading">Submit Application</h2>
+            <div class="section-head">
+              <h2 data-i18n="submitAppHeading">Submit Application</h2>
+              <div class="section-actions">
+                <button data-i18n="submitAppBtn" onclick="submitApplication()">Submit Application</button>
+              </div>
+            </div>
+            <div id="verifiedIdentitySummary" class="card hidden" style="margin-bottom:12px;"></div>
             <form id="dynamicForm" class="applicant-form-grid"></form>
-            <button data-i18n="submitAppBtn" onclick="submitApplication()">Submit Application</button>
           </div>
         </div>
 
@@ -1424,13 +1649,13 @@
           <div class="applicant-pane-card">
             <details class="demo-note" id="identityVerifyPanel" open>
               <summary>
-                <span class="demo-note-title" data-i18n="identityVerifyHeading">Identity verification (simulated)</span>
+                <span class="demo-note-title" data-i18n="identityVerifyHeading">Identity Verification</span>
                 <span class="demo-note-toggle" aria-hidden="true">
                   <span class="demo-note-state-closed" data-i18n="identityOpenBtn">Open ▾</span>
                   <span class="demo-note-state-open" data-i18n="identityCloseBtn">Close ▴</span>
                 </span>
               </summary>
-              <p class="field-note" style="margin:0;" data-i18n="identityLookupNote">Commercial Registration and Civil Status lookups are simulated for this demonstration environment.</p>
+              <p class="field-note" style="margin:0;" data-i18n="identityLookupNote">Enter the Commercial Registration number and Civil ID to retrieve applicant details.</p>
               <div class="card" style="margin-top:.4rem;">
                 <div class="form-grid">
                   <label for="lookupCr" data-i18n="crNumberLabel">CR Number</label>
@@ -1500,7 +1725,7 @@
                   <option value="rejected">Rejected</option>
                   <option value="completed">Completed</option>
                 </select>
-              </div></th><th>SLA</th><th></th></tr></thead><tbody></tbody></table>
+              </div></th><th>Service Time</th><th></th></tr></thead><tbody></tbody></table>
             </div>
             <div class="pagination-bar">
               <div class="pagination-nav">
@@ -1547,16 +1772,16 @@
   <section class="tab-panel" id="tab-admin">
     <div class="role-dashboard-head">
       <div class="role-dashboard-icon">⚙</div>
-      <div><h2>Service Administration</h2><p class="field-note" data-i18n="adminPersonaNote">Configure forms, fees, rules, and process without redeploying code.</p></div>
+      <div><h2>Service Administration</h2><p class="field-note" data-i18n="adminPersonaNote">Manage application forms, fees, requirements, schedules, and approval steps.</p></div>
     </div>
 
     <nav class="tabs subtabs" id="adminSubNav"></nav>
 
     <div class="admin-subpanel" id="adm-sub-addfield">
-      <h2 data-i18n="addFieldHeading">Add a Form Field — live</h2>
-      <p class="field-note" data-i18n="addFieldNote">Adds a real column + FormBuilder field via <code>POST /fields/license_applications</code>. It shows up on the Applicant tab's form immediately.</p>
+      <h2 data-i18n="addFieldHeading">Manage Application Fields</h2>
+      <p class="field-note" data-i18n="addFieldNote">Add a new field to the application form.</p>
       <div class="card form-grid">
-        <label for="admFieldKey" data-i18n="fieldKeyLabel">Field key (snake_case)</label>
+        <label for="admFieldKey" data-i18n="fieldKeyLabel">Field name for records</label>
         <input id="admFieldKey" placeholder="e.g. screening_date" oninput="clearFieldKeyError()" />
         <div class="field-note" id="fieldKeyError" style="color:var(--danger);display:none;"></div>
         <label for="admFieldLabel" data-i18n="fieldLabelEnLabel">Label / note shown on the form (English)</label>
@@ -1571,7 +1796,7 @@
           <option value="boolean" data-i18n="typeYesNo">Yes / No</option>
           <option value="date" data-i18n="typeDate">Date</option>
         </select>
-        <button id="addFieldBtn" onclick="addFieldLive()" data-i18n="addFieldBtn">Add Field Live</button>
+        <button id="addFieldBtn" onclick="addFieldLive()" data-i18n="addFieldBtn">Add Field</button>
       </div>
 
       <h3 data-i18n="existingFieldsHeading">Existing Fields</h3>
@@ -1579,8 +1804,8 @@
     </div>
 
     <div class="admin-subpanel" id="adm-sub-perms">
-      <h2 data-i18n="permsHeading">Role → Field Permissions — live</h2>
-      <p class="field-note" data-i18n="permsNote">Adjust who can write, only read, or not see each form field — no code, no restart. Hide a field from Applicant and it disappears from their submit form on the next refresh; set Specialist to Read to show the value on their task card without edit rights.</p>
+      <h2 data-i18n="permsHeading">Field Access by Role</h2>
+      <p class="field-note" data-i18n="permsNote">Choose whether each role can edit, view, or cannot see a field.</p>
       <div class="card">
         <button class="secondary small" onclick="loadFieldPermissions()" data-i18n="reloadCurrentBtn">Reload Current</button>
         <div class="perm-matrix-wrap" id="admPermMatrix"></div>
@@ -1588,8 +1813,8 @@
     </div>
 
     <div class="admin-subpanel" id="adm-sub-elig">
-      <h2 data-i18n="eligRuleHeading">Eligibility Rule — live</h2>
-      <p class="field-note" data-i18n="eligRuleNote">Toggles which conditions the DMN table requires for eligibility, then re-deploys it — Camunda regenerates the decision table, no code, no restart. Test both scenarios instantly below without submitting a real application.</p>
+      <h2 data-i18n="eligRuleHeading">Eligibility Requirements</h2>
+      <p class="field-note" data-i18n="eligRuleNote">Choose the requirements that applicants must meet. Changes apply to new applications.</p>
       <div class="card">
         <div class="toggle-row">
           <span class="toggle-switch"><input type="checkbox" id="admReqCr" checked /><span class="toggle-slider" onclick="document.getElementById('admReqCr').click()"></span></span>
@@ -1619,8 +1844,8 @@
     </div>
 
     <div class="admin-subpanel" id="adm-sub-fee">
-      <h2 data-i18n="feeConfigHeading">Fee Configuration — live</h2>
-      <p class="field-note" data-i18n="feeConfigNote">Reads and writes the actual deployed DMN decision table (<code>cinema_eligibility_and_fee</code>) via Camunda's REST API — changing it here changes what the next submitted application is charged, with no restart.</p>
+      <h2 data-i18n="feeConfigHeading">Service Fees</h2>
+      <p class="field-note" data-i18n="feeConfigNote">Set the standard fee and the discount for Riyada card holders. Changes apply to new applications.</p>
       <div class="card form-grid">
         <label for="admBaseFee" data-i18n="baseFeeLabel">Base Fee (OMR)</label>
         <input id="admBaseFee" type="number" step="0.5" oninput="recalcPricingPreview()" />
@@ -1631,26 +1856,26 @@
           <div class="kpi"><div class="label" data-i18n="smeFinalFeeLabel">SME / Riyada Final Fee</div><div class="value" id="admSmePreview">—</div></div>
           <div class="kpi"><div class="label" data-i18n="standardFeeLabel">Standard Final Fee</div><div class="value" id="admStandardPreview">—</div></div>
         </div>
-        <p class="field-note" data-i18n="feePreviewNote">Preview above recalculates instantly as you type. Nothing is live until you apply it.</p>
-        <button onclick="applyPricing()" data-i18n="applyEngineBtn">Apply to Process Engine</button>
+        <p class="field-note" data-i18n="feePreviewNote">The amounts update as you type. Select Save Changes to confirm.</p>
+        <button onclick="applyPricing()" data-i18n="applyEngineBtn">Save Changes</button>
         <button class="secondary" onclick="loadPricing()" data-i18n="reloadCurrentBtn">Reload Current</button>
       </div>
     </div>
 
     <div class="admin-subpanel" id="adm-sub-sla">
-      <h2 data-i18n="slaHeading">SLA Threshold — live</h2>
-      <p class="field-note" data-i18n="slaNote">Rewrites the boundary-timer duration on the deployed BPMN's Head of Section Review step and redeploys. Set it very low (e.g. 1 minute) to watch a real escalation fire during a demo instead of waiting an hour.</p>
+      <h2 data-i18n="slaHeading">Review Time Limit</h2>
+      <p class="field-note" data-i18n="slaNote">Set the maximum time allowed for the Head of Section to complete a review.</p>
       <div class="card form-grid">
-        <label for="admSlaMinutes" data-i18n="slaMinutesLabel">Head of Section review SLA (minutes)</label>
+        <label for="admSlaMinutes" data-i18n="slaMinutesLabel">Review time limit (minutes)</label>
         <input id="admSlaMinutes" type="number" step="1" min="1" />
-        <button onclick="applySla()" data-i18n="applyEngineBtn">Apply to Process Engine</button>
+        <button onclick="applySla()" data-i18n="applyEngineBtn">Save Changes</button>
         <button class="secondary" onclick="loadSla()" data-i18n="reloadCurrentBtn">Reload Current</button>
       </div>
     </div>
 
     <div class="admin-subpanel" id="adm-sub-schedule">
-      <h2 data-i18n="scheduleHeading">Field Visit Scheduling — live</h2>
-      <p class="field-note" data-i18n="scheduleNote">Worker-side parameter (not a DMN/BPMN edit) — takes effect on the very next application that reaches payment.</p>
+      <h2 data-i18n="scheduleHeading">Field Visit Scheduling</h2>
+      <p class="field-note" data-i18n="scheduleNote">Set how many days after payment the field visit should take place.</p>
       <div class="card form-grid">
         <label for="admLeadDays" data-i18n="leadDaysLabel">Lead time before field visit (days)</label>
         <input id="admLeadDays" type="number" step="1" min="0" />
@@ -1660,19 +1885,19 @@
     </div>
 
     <div class="admin-subpanel" id="adm-sub-cicd">
-      <h2><span data-i18n="cicdHeading">CI/CD Pipeline — Promote to UAT</span> <span class="tag" data-i18n="simulatedTag">Simulated</span></h2>
-      <p class="field-note" data-i18n="cicdNote">Disclosed per the demo script: this sandbox has a single environment, so the DEV→UAT promotion itself is simulated. The snapshot below is <strong>not</strong> fake — it's read live from the actual deployed DMN/BPMN and worker config, so it reflects whatever Phase 1/2 edits you just made.</p>
+      <h2><span data-i18n="cicdHeading">Configuration Approval</span></h2>
+      <p class="field-note" data-i18n="cicdNote">Review the current service settings and record an approval before applying them.</p>
       <div class="card form-grid">
-        <button onclick="snapshotPipeline()" data-i18n="snapshotBtn">1. Snapshot Current DEV Config</button>
+        <button onclick="snapshotPipeline()" data-i18n="snapshotBtn">1. Review Current Settings</button>
         <pre id="pipelineSnapshot" style="background:#f4f4f8;padding:.6rem;border-radius:4px;font-size:.78rem;overflow:auto;display:none;"></pre>
 
         <div class="toggle-row">
           <span class="toggle-switch"><input type="checkbox" id="pipelineApproved" /><span class="toggle-slider" onclick="document.getElementById('pipelineApproved').click()"></span></span>
-          <span class="toggle-label" data-i18n="approvalGateLabel">Approval Gate: I approve promoting this configuration to UAT</span>
+          <span class="toggle-label" data-i18n="approvalGateLabel">I approve these service settings</span>
         </div>
         <label for="pipelineApprover" data-i18n="approverNameLabel">Approver name</label>
         <input id="pipelineApprover" placeholder="e.g. Ministry Solution Architect" />
-        <button onclick="promotePipeline()" data-i18n="promoteBtn">2. Promote to UAT</button>
+        <button onclick="promotePipeline()" data-i18n="promoteBtn">2. Approve Settings</button>
 
         <h3 data-i18n="versionLogHeading">Version Log</h3>
         <div class="table-scroll">
@@ -1682,18 +1907,19 @@
     </div>
 
     <div class="admin-subpanel" id="adm-sub-designer">
-      <h2 data-i18n="designerHeading">Process Designer</h2>
-      <p class="field-note" data-i18n="designerSimpleNote">Click a shape in the palette to drop it on the canvas, drag it anywhere, then drag from its <strong>right-edge dot</strong> to another shape to connect them — same as building a flowchart in PowerPoint. Click a shape to fill in its details. Hover an arrow to reroute, <strong>drag the tip/start dots to reconnect</strong>, or delete it. No gateways, no conditions, no XML. "Save &amp; Deploy" compiles exactly what you've drawn into real BPMN and redeploys it to Camunda.</p>
+      <h2 data-i18n="designerHeading">Approval Process</h2>
+      <p class="field-note" data-i18n="designerSimpleNote">Add and arrange steps, then connect them in the required order. Save keeps your changes as a draft. Publish makes the process available for new applications.</p>
       <div class="card">
         <div style="display:flex;gap:.4rem;flex-wrap:wrap;margin-bottom:.5rem;">
           <button class="small" onclick="canvasAddShape('start')" style="background:#166534;" data-i18n="shapeStartBtn">+ Start</button>
           <button class="small" onclick="canvasAddShape('end')" style="background:#b91c1c;" data-i18n="shapeEndBtn">+ End</button>
-          <button class="small" onclick="canvasAddShape('task')" style="background:#1A5FA0;" data-i18n="shapeTaskBtn">+ Human Task</button>
-          <button class="small" onclick="canvasAddShape('automatic')" style="background:#4b5563;" data-i18n="shapeAutoBtn">+ Automatic Step</button>
+          <button class="small" onclick="canvasAddShape('task')" style="background:#1A5FA0;" data-i18n="shapeTaskBtn">+ Staff Action</button>
+          <button class="small" onclick="canvasAddShape('automatic')" style="background:#4b5563;" data-i18n="shapeAutoBtn">+ System Action</button>
           <button class="small" onclick="canvasAddShape('approval')" style="background:#B8831A;" data-i18n="shapeApprovalBtn">+ Approval Step</button>
-          <button class="small" onclick="canvasAddShape('decision')" style="background:#7A1A8A;" data-i18n="shapeDecisionBtn">+ Rule Check</button>
+          <button class="small" onclick="canvasAddShape('decision')" style="background:#7A1A8A;" data-i18n="shapeDecisionBtn">+ Requirement Check</button>
           <span style="flex:1;"></span>
-          <button onclick="saveCanvasProcess()" data-i18n="saveDeployBtn">Save &amp; Deploy</button>
+          <button class="secondary" onclick="saveCanvasProcess()" data-i18n="saveCanvasBtn">Save</button>
+          <button onclick="deployCanvasProcess()" data-i18n="deployCanvasBtn">Publish</button>
           <button class="secondary" onclick="loadCanvasProcess()" data-i18n="reloadSavedBtn">Reload Saved</button>
         </div>
         <div id="canvasStatus" class="field-note"></div>
@@ -1723,13 +1949,13 @@
 
   <!-- ================= DASHBOARD ================= -->
   <section class="tab-panel" id="tab-dashboard">
-    <p class="persona-note">Evaluation metrics — figures are computed from live application and process data.</p>
-    <h2 data-i18n="liveMetricsHeading">Live Transaction Metrics</h2>
-    <button class="small" onclick="loadDashboard()">Refresh Now</button>
+    <p class="persona-note">A summary of application activity and service performance.</p>
+    <h2 data-i18n="liveMetricsHeading">Service Overview</h2>
+    <button class="small" onclick="loadDashboard()">Refresh</button>
     <span class="field-note" id="dashUpdated"></span>
     <div class="grid" id="dashCore"></div>
 
-    <h3>Self-Service Widget Builder</h3>
+    <h3>Custom Service Summary</h3>
     <div class="card">
       <label for="widgetMetric">Metric</label>
       <select id="widgetMetric"></select>
@@ -1764,17 +1990,267 @@
     </div>
   </div>
 
+  <div id="paymentGatewayModal" onclick="if(event.target===this)closeMockPaymentGateway()" role="dialog" aria-modal="true" aria-labelledby="mockGatewayTitle">
+    <div class="mock-gateway">
+      <div class="mock-gateway-head">
+        <div class="mock-gateway-logo" id="mockGatewayLogo">EP</div>
+        <div><strong id="mockGatewayTitle">E-Payment Gateway</strong><small id="mockGatewaySubtitle">Secure payment</small></div>
+      </div>
+      <div class="mock-gateway-body">
+        <div class="mock-gateway-demo" id="mockGatewayDemo">TRAINING PAYMENT — No money will be charged.</div>
+        <div class="mock-gateway-amount">
+          <small id="mockGatewayAmountLabel">Amount payable</small>
+          <strong><span id="mockGatewayAmount">0.000</span> OMR</strong>
+        </div>
+        <div id="mockGatewayFields"></div>
+        <div class="mock-gateway-actions">
+          <button type="button" class="secondary" onclick="closeMockPaymentGateway()" id="mockGatewayCancel">Cancel</button>
+          <button type="button" onclick="confirmMockPayment()" id="mockGatewayPay">Pay 0.000 OMR</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <footer class="site-footer" aria-label="Site footer">
     <div class="site-footer-bar">
-      <span data-i18n="footerCopy">© Sultanate of Oman — Demo portal for MOI tender DTM-T-007-26</span>
+      <span data-i18n="footerCopy">© Ministry of Information, Sultanate of Oman</span>
       <span data-i18n="footerVision">Aligned with Oman Vision 2040 digital services</span>
     </div>
   </footer>
+
+  <button class="digital-assistant-launcher" id="digitalAssistantLauncher" onclick="toggleDigitalAssistant(true)" aria-label="Open Digital Assistant">
+    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9.2 2.4c.25-.9 1.53-.9 1.78 0l.48 1.72a4.5 4.5 0 0 0 3.12 3.12l1.72.48c.9.25.9 1.53 0 1.78l-1.72.48a4.5 4.5 0 0 0-3.12 3.12l-.48 1.72c-.25.9-1.53.9-1.78 0l-.48-1.72A4.5 4.5 0 0 0 5.6 9.98L3.88 9.5c-.9-.25-.9-1.53 0-1.78l1.72-.48a4.5 4.5 0 0 0 3.12-3.12l.48-1.72ZM17.8 13.5c.16-.58.98-.58 1.14 0l.25.9a2.6 2.6 0 0 0 1.8 1.8l.9.25c.58.16.58.98 0 1.14l-.9.25a2.6 2.6 0 0 0-1.8 1.8l-.25.9c-.16.58-.98.58-1.14 0l-.25-.9a2.6 2.6 0 0 0-1.8-1.8l-.9-.25c-.58-.16-.58-.98 0-1.14l.9-.25a2.6 2.6 0 0 0 1.8-1.8l.25-.9Z"/></svg>
+    <span id="digitalAssistantLauncherText">Digital Assistant</span>
+  </button>
+  <section class="digital-assistant-panel hidden" id="digitalAssistantPanel" role="dialog" aria-modal="false" aria-labelledby="digitalAssistantTitle">
+    <header class="digital-assistant-head">
+      <span class="digital-assistant-mark">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 18l-4 3v-5a7 7 0 0 1-2-5c0-4.4 4.5-8 10-8s10 3.6 10 8-4.5 8-10 8a12 12 0 0 1-4-.7"/><path d="M9 10h.01M12 10h.01M15 10h.01"/></svg>
+      </span>
+      <div class="digital-assistant-title">
+        <strong id="digitalAssistantTitle">Ministry Digital Assistant</strong>
+        <span id="digitalAssistantStatus">Online · Cinema Film Screening Services</span>
+      </div>
+      <button class="digital-assistant-close" onclick="toggleDigitalAssistant(false)" aria-label="Close Digital Assistant">−</button>
+    </header>
+    <div class="digital-assistant-messages" id="digitalAssistantMessages" aria-live="polite"></div>
+    <form class="assistant-composer" onsubmit="submitAssistantMessage(event)">
+      <div class="assistant-input-row">
+        <input id="digitalAssistantInput" autocomplete="off" placeholder="Ask about a service…" aria-label="Ask about a service" />
+        <button class="assistant-send" type="submit" aria-label="Send">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m4 4 17 8-17 8 3-8-3-8Z"/><path d="M7 12h14"/></svg>
+        </button>
+      </div>
+      <p class="assistant-disclaimer" id="digitalAssistantDisclaimer">This assistant provides guidance about Ministry portal services.</p>
+    </form>
+  </section>
 
 <script>
 function log(msg) {
   const el = document.getElementById('log');
   el.textContent = `[${new Date().toLocaleTimeString()}] ${msg}\n` + el.textContent;
+}
+
+// ============================= DIGITAL ASSISTANT =============================
+
+let digitalAssistantStarted = false;
+
+function assistantText(en, ar) {
+  return getLanguage() === 'ar' ? ar : en;
+}
+
+function assistantQuickActions() {
+  const role = currentUser?.role || 'applicant';
+  if (role === 'specialist') {
+    return [
+      ['queue-specialist', assistantText('Open review queue', 'فتح قائمة المراجعة')],
+      ['review-help', assistantText('How do reviews work?', 'كيف تعمل المراجعات؟')],
+      ['status', assistantText('Application status', 'حالة الطلب')],
+    ];
+  }
+  if (role === 'head_of_section') {
+    return [
+      ['queue-head', assistantText('Open decision queue', 'فتح قائمة القرارات')],
+      ['review-help', assistantText('Review decisions', 'قرارات المراجعة')],
+      ['status', assistantText('Application status', 'حالة الطلب')],
+    ];
+  }
+  if (role === 'admin') {
+    return [
+      ['admin-fields', assistantText('Service fields', 'حقول الخدمة')],
+      ['admin-process', assistantText('Approval process', 'إجراءات الموافقة')],
+      ['dashboard', assistantText('Reports', 'التقارير')],
+    ];
+  }
+  return [
+    ['ask-identity', assistantText('Verify my identity', 'التحقق من هويتي')],
+    ['ask-apply', assistantText('Apply for a film license', 'التقدم بطلب ترخيص فيلم')],
+    ['ask-payment', assistantText('Make a payment', 'إجراء الدفع')],
+    ['ask-status', assistantText('Check my application', 'متابعة طلبي')],
+    ['ask-license', assistantText('View my license', 'عرض ترخيصي')],
+  ];
+}
+
+function assistantActionButtons(actions = assistantQuickActions()) {
+  return `<div class="assistant-quick-actions">${actions.map(([action, label]) =>
+    `<button type="button" class="assistant-chip" onclick="assistantAction('${action}')">${label}</button>`
+  ).join('')}</div>`;
+}
+
+function addAssistantMessage(kind, html) {
+  const messages = document.getElementById('digitalAssistantMessages');
+  if (!messages) return;
+  const item = document.createElement('div');
+  item.className = `assistant-message ${kind}`;
+  item.innerHTML = `
+    <span class="assistant-message-label">${kind === 'bot'
+      ? assistantText('Digital Assistant', 'المساعد الرقمي')
+      : assistantText('You', 'أنت')}</span>
+    <div class="assistant-message-bubble">${html}</div>`;
+  messages.appendChild(item);
+  messages.scrollTop = messages.scrollHeight;
+}
+
+function startDigitalAssistant() {
+  if (digitalAssistantStarted) return;
+  digitalAssistantStarted = true;
+  const name = currentUser?.displayName ? ` ${escapeHtmlLite(currentUser.displayName)}` : '';
+  addAssistantMessage('bot',
+    assistantText(
+      `Hello${name}. I can guide you through the Cinema Film Screening License service.`,
+      `مرحباً${name}. يمكنني إرشادك خلال خدمة ترخيص عرض الأفلام السينمائية.`,
+    ) + assistantActionButtons()
+  );
+}
+
+function toggleDigitalAssistant(open) {
+  const panel = document.getElementById('digitalAssistantPanel');
+  const launcher = document.getElementById('digitalAssistantLauncher');
+  if (!panel || !launcher) return;
+  panel.classList.toggle('hidden', !open);
+  launcher.classList.toggle('hidden', open);
+  if (open) {
+    startDigitalAssistant();
+    setTimeout(() => document.getElementById('digitalAssistantInput')?.focus(), 50);
+  }
+}
+
+function resetDigitalAssistant() {
+  digitalAssistantStarted = false;
+  const messages = document.getElementById('digitalAssistantMessages');
+  if (messages) messages.innerHTML = '';
+  toggleDigitalAssistant(false);
+}
+
+function updateDigitalAssistantLanguage() {
+  const ar = getLanguage() === 'ar';
+  const values = {
+    digitalAssistantLauncherText: ar ? 'المساعد الرقمي' : 'Digital Assistant',
+    digitalAssistantTitle: ar ? 'المساعد الرقمي للوزارة' : 'Ministry Digital Assistant',
+    digitalAssistantStatus: ar ? 'متصل · خدمات عرض الأفلام السينمائية' : 'Online · Cinema Film Screening Services',
+    digitalAssistantDisclaimer: ar ? 'يقدم هذا المساعد إرشادات حول خدمات بوابة الوزارة.' : 'This assistant provides guidance about Ministry portal services.',
+  };
+  Object.entries(values).forEach(([id, value]) => {
+    const el = document.getElementById(id);
+    if (el) el.textContent = value;
+  });
+  const input = document.getElementById('digitalAssistantInput');
+  if (input) {
+    input.placeholder = ar ? 'اسأل عن خدمة…' : 'Ask about a service…';
+    input.setAttribute('aria-label', input.placeholder);
+  }
+}
+
+function submitAssistantMessage(event) {
+  event.preventDefault();
+  const input = document.getElementById('digitalAssistantInput');
+  const question = input?.value.trim();
+  if (!question) return;
+  addAssistantMessage('user', escapeHtmlLite(question));
+  input.value = '';
+  setTimeout(() => answerAssistantQuestion(question), 250);
+}
+
+function answerAssistantQuestion(question) {
+  const q = question.toLowerCase();
+  if (/هوية|مدني|سجل|identity|civil|\\bcr\\b|verification/.test(q)) {
+    addAssistantMessage('bot', assistantText(
+      '<strong>To verify your identity:</strong><ol><li>Keep your 7-digit CR Number ready.</li><li>Keep your 8-digit Civil ID ready.</li><li>Select Verify & auto-fill.</li></ol>The portal will confirm your Commercial Registration, Civil ID, and prior practice licence. If an application already exists, it will show its current stage.',
+      '<strong>للتحقق من هويتك:</strong><ol><li>جهّز رقم السجل التجاري المكوّن من 7 أرقام.</li><li>جهّز الرقم المدني المكوّن من 8 أرقام.</li><li>اختر التحقق والتعبئة التلقائية.</li></ol>ستتحقق البوابة من السجل التجاري والرقم المدني ورخصة الممارسة السابقة، وستعرض مرحلة أي طلب قائم.',
+    ) + assistantActionButtons([['identity', assistantText('Open Identity Verification', 'فتح التحقق من الهوية')]]));
+  } else if (/دفع|رسوم|payment|pay|fee|wallet|apple|samsung/.test(q)) {
+    addAssistantMessage('bot', assistantText(
+      'Open Payments, select a payment method, review the OMR amount, and confirm payment in the secure payment window.',
+      'افتح المدفوعات، واختر طريقة الدفع، وراجع المبلغ بالريال العُماني، ثم أكد الدفع في نافذة الدفع الآمنة.',
+    ) + assistantActionButtons([['payment', assistantText('Open Payments', 'فتح المدفوعات')]]));
+  } else if (/ترخيص|تصريح|رمز|license|permit|\\bqr\\b/.test(q)) {
+    addAssistantMessage('bot', assistantText(
+      'After final approval, your screening license and QR code appear under My Licenses.',
+      'بعد الموافقة النهائية سيظهر ترخيص العرض ورمز الاستجابة السريعة ضمن تراخيصي.',
+    ) + assistantActionButtons([['license', assistantText('Open My Licenses', 'فتح تراخيصي')]]));
+  } else if (/مراجعة|أخصائي|رئيس|review|specialist|head/.test(q)) {
+    addAssistantMessage('bot', assistantText(
+      'After payment, the Specialist evaluates the application. It then moves to the Head of Section for approval, return with comments, or rejection.',
+      'بعد الدفع يقيّم الأخصائي الطلب، ثم ينتقل إلى رئيس القسم للموافقة أو الإعادة مع الملاحظات أو الرفض.',
+    ));
+  } else if (/حالة|تتبع|طلبي|history|status|track|existing|application/.test(q)) {
+    addAssistantMessage('bot', assistantText(
+      'Application History shows the reference number, current status, submission date, and next stage.',
+      'يعرض سجل الطلبات الرقم المرجعي والحالة الحالية وتاريخ التقديم والمرحلة التالية.',
+    ) + assistantActionButtons([['status', assistantText('Open Application History', 'فتح سجل الطلبات')]]));
+  } else if (/تقديم|جديد|apply|new|film|screening/.test(q)) {
+    addAssistantMessage('bot', assistantText(
+      'Begin with Identity Verification. When all checks pass and no existing application is found, the New Application form opens automatically.',
+      'ابدأ بالتحقق من الهوية. عند نجاح جميع الفحوصات وعدم وجود طلب قائم، يفتح نموذج الطلب الجديد تلقائياً.',
+    ) + assistantActionButtons([['apply', assistantText('Start Application', 'بدء الطلب')]]));
+  } else {
+    addAssistantMessage('bot', assistantText(
+      'I can help with identity verification, new applications, payments, application tracking, reviews, and issued licenses.',
+      'يمكنني مساعدتك في التحقق من الهوية والطلبات الجديدة والمدفوعات ومتابعة الطلبات والمراجعات والتراخيص الصادرة.',
+    ) + assistantActionButtons());
+  }
+}
+
+function assistantAction(action) {
+  const promptActions = {
+    'ask-identity': [assistantText('Verify my identity', 'التحقق من هويتي'), 'identity verification'],
+    'ask-apply': [assistantText('Apply for a film license', 'التقدم بطلب ترخيص فيلم'), 'apply for a new film screening application'],
+    'ask-payment': [assistantText('Make a payment', 'إجراء الدفع'), 'payment'],
+    'ask-status': [assistantText('Check my application', 'متابعة طلبي'), 'application status'],
+    'ask-license': [assistantText('View my license', 'عرض ترخيصي'), 'license QR'],
+  };
+  if (promptActions[action]) {
+    const [label, question] = promptActions[action];
+    addAssistantMessage('user', label);
+    setTimeout(() => answerAssistantQuestion(question), 220);
+    return;
+  }
+  const paneMap = { identity: 'identity', apply: 'new', payment: 'payment', status: 'history', license: 'license' };
+  if (paneMap[action]) {
+    if (!currentUser) {
+      addAssistantMessage('bot', assistantText('Please sign in first to open this service.', 'يرجى تسجيل الدخول أولاً لفتح هذه الخدمة.'));
+      return;
+    }
+    if (currentUser.role !== 'applicant') {
+      addAssistantMessage('bot', assistantText('This service is available from an Applicant account.', 'هذه الخدمة متاحة من حساب مقدم الطلب.'));
+      return;
+    }
+    if (!document.getElementById('tab-applicant')?.classList.contains('active')) switchTab('applicant');
+    showApplicantPane(paneMap[action]);
+  } else if (action === 'queue-specialist') {
+    switchTab('specialist');
+  } else if (action === 'queue-head') {
+    switchTab('head');
+  } else if (action === 'admin-fields') {
+    switchTab('admin'); switchAdminSubtab('addfield');
+  } else if (action === 'admin-process') {
+    switchTab('admin'); switchAdminSubtab('designer');
+  } else if (action === 'dashboard') {
+    switchTab('dashboard');
+  } else if (action === 'review-help') {
+    answerAssistantQuestion('review');
+  }
+  if (document.body.classList.contains('mobile-frame') || window.innerWidth <= 560) toggleDigitalAssistant(false);
 }
 
 // ============================= AUTH =============================
@@ -1800,6 +2276,7 @@ function showLoginGate() {
   document.getElementById('loginGate').classList.remove('hidden');
   document.getElementById('userBadge').classList.add('hidden');
   document.getElementById('portalRoleName').textContent = getLanguage() === 'ar' ? 'بوابة آمنة' : 'Secure portal';
+  resetDigitalAssistant();
   resetIdentityVerification({ close: true });
 }
 
@@ -1818,6 +2295,7 @@ function showAppShell() {
   document.getElementById('appShell').classList.remove('hidden');
   document.getElementById('userBadge').classList.remove('hidden');
   document.getElementById('userBadgeName').textContent = `${currentUser.displayName} (${currentUser.role})`;
+  resetDigitalAssistant();
   resetIdentityVerification({ close: true });
   renderTabs();
   updatePortalRoleName();
@@ -1864,8 +2342,14 @@ async function doLogout() {
   showLoginGate();
 }
 
-/** Clear CR / Civil ID lookup fields and optionally collapse the panel. */
-function resetIdentityVerification({ close = true } = {}) {
+/** Clear CR / Civil ID lookup fields and optionally reset journey access. */
+function resetIdentityVerification({ close = true, resetAccess = true } = {}) {
+  verifiedIdentityData = null;
+  if (resetAccess) {
+    identityVerificationPassed = false;
+    existingIdentityApplication = null;
+  }
+  updateNewApplicationAccess();
   const panel = document.getElementById('identityVerifyPanel');
   if (panel && close) panel.open = false;
   const cr = document.getElementById('lookupCr');
@@ -1878,6 +2362,11 @@ function resetIdentityVerification({ close = true } = {}) {
     if (err) { err.textContent = ''; err.classList.remove('is-visible'); }
   }
   if (result) result.innerHTML = '';
+  const summary = document.getElementById('verifiedIdentitySummary');
+  if (summary) {
+    summary.innerHTML = '';
+    summary.classList.add('hidden');
+  }
 }
 
 // ============================= TABS =============================
@@ -1952,8 +2441,62 @@ function toggleApplicantApplicationMenu() {
   const parent = document.getElementById('app-nav-application');
   setApplicantApplicationMenu(parent?.getAttribute('aria-expanded') !== 'true');
 }
+function updateNewApplicationAccess() {
+  const protectedPanes = ['history', 'new', 'payment', 'license'];
+  protectedPanes.forEach((pane) => {
+    const button = document.getElementById(`app-pane-btn-${pane}`);
+    if (!button) return;
+    const locked = !identityVerificationPassed || (pane === 'new' && !!existingIdentityApplication);
+    button.classList.toggle('is-locked', locked);
+    button.setAttribute('aria-disabled', locked ? 'true' : 'false');
+    button.title = !locked
+      ? ''
+      : existingIdentityApplication && pane === 'new'
+        ? (getLanguage() === 'ar' ? 'يوجد طلب قائم بالفعل' : 'An application already exists')
+        : (getLanguage() === 'ar' ? 'أكمل التحقق من الهوية أولاً' : 'Complete Identity Verification first');
+  });
+}
+
+function routeExistingApplication(application) {
+  if (!application) return;
+  const status = String(application.status || 'submitted');
+  const reference = `#${application.id}`;
+
+  if (status === 'submitted') {
+    alert(`Application ${reference} already exists for this CR Number and Civil ID. Please complete the pending payment.`);
+    showApplicantPane('payment');
+    return;
+  }
+
+  if (status === 'completed') {
+    alert(`Application ${reference} is completed. You can view the issued permit under My Licenses.`);
+    showApplicantPane('license');
+    return;
+  }
+
+  const pendingAt = {
+    field_visit_scheduled: 'the Specialist',
+    revision_requested: 'the Specialist for an update',
+    under_review: 'the Head of Section',
+    approved: 'final permit issuance',
+    rejected: 'a completed decision',
+  }[status] || 'the review team';
+  alert(`Application ${reference} already exists and is currently with ${pendingAt}. Please check Application History for details.`);
+  showApplicantPane('history');
+}
+
 function showApplicantPane(id) {
-  const target = APPLICANT_PANES.includes(id) ? id : 'history';
+  let target = APPLICANT_PANES.includes(id) ? id : 'history';
+  if (target !== 'identity' && !identityVerificationPassed) {
+    target = 'identity';
+    const result = document.getElementById('lookupResult');
+    if (result && !result.innerHTML.trim()) {
+      result.innerHTML = `<div class="card" style="background:#263342;border-color:#4f6c91;color:#f4f7fb;font-weight:600;opacity:1;">${getLanguage() === 'ar' ? 'تحقق من السجل التجاري والرقم المدني والرخصة السابقة للمتابعة.' : 'Verify the Commercial Registration, Civil ID, and prior practice licence to continue.'}</div>`;
+    }
+  } else if (target === 'new' && existingIdentityApplication) {
+    routeExistingApplication(existingIdentityApplication);
+    return;
+  }
   const isApplicationStep = ['identity', 'new', 'payment'].includes(target);
   for (const paneId of APPLICANT_PANES) {
     document.getElementById(`app-pane-${paneId}`)?.classList.toggle('active', paneId === target);
@@ -1991,6 +2534,7 @@ function switchTab(id) {
   if (id === 'applicant') {
     loadFormSchema(); loadTasks('applicant'); loadApplications();
     applyApplicantSidebarState(localStorage.getItem('omanApplicantSidebarCollapsed') === 'true');
+    updateNewApplicationAccess();
     showApplicantPane('history');
   }
   if (id === 'specialist') loadTasks('specialist');
@@ -2011,9 +2555,9 @@ const ADMIN_SUBTABS = [
   { id: 'perms', label: 'Role Permissions' },
   { id: 'elig', label: 'Eligibility Rule' },
   { id: 'fee', label: 'Fee Configuration' },
-  { id: 'sla', label: 'SLA Threshold' },
+  { id: 'sla', label: 'Review Time Limit' },
   { id: 'schedule', label: 'Scheduling' },
-  { id: 'cicd', label: 'CI/CD' },
+  { id: 'cicd', label: 'Configuration Approval' },
   { id: 'designer', label: 'Process Designer' },
 ];
 
@@ -2022,9 +2566,9 @@ const ADMIN_SUBTAB_LABELS_AR = {
   perms: 'صلاحيات الأدوار',
   elig: 'قاعدة الأهلية',
   fee: 'إعداد الرسوم',
-  sla: 'حد SLA',
+  sla: 'مهلة المراجعة',
   schedule: 'الجدولة',
-  cicd: 'CI/CD',
+  cicd: 'اعتماد الإعدادات',
   designer: 'مصمم سير العمل',
 };
 
@@ -2088,12 +2632,12 @@ const I18N = {
     pageTagline: 'Ministry of Information — licensing services',
     brandKicker: 'Sultanate of Oman',
     footerTitle: 'Cinema Film Screening License',
-    footerBlurb: 'Official licensing services portal — inspired by Omani government digital experience standards.',
-    footerCopy: '© Sultanate of Oman — Demo portal for MOI tender DTM-T-007-26',
-    footerVision: 'Aligned with Oman Vision 2040 digital services',
+    footerBlurb: 'Official film screening licensing services.',
+    footerCopy: '© Ministry of Information, Sultanate of Oman',
+    footerVision: 'Supporting Oman Vision 2040',
     submitAppHeading: 'Submit Application',
     submitAppBtn: 'Submit Application',
-    identityVerifyHeading: 'Identity verification (simulated)',
+    identityVerifyHeading: 'Identity Verification',
     identityOpenBtn: 'Open ▾',
     identityCloseBtn: 'Close ▴',
     errCrDigits: 'CR number should be 7 digits.',
@@ -2109,31 +2653,31 @@ const I18N = {
     errDate: 'Please select a valid date.',
     errFixForm: 'Please fix the highlighted fields before submitting.',
     errFixLookup: 'Please fix CR Number and Civil ID before verifying.',
-    payQueueHeading: 'My Task Queue — Pay Fee',
+    payQueueHeading: 'Pay Application Fee',
     refreshBtn: 'Refresh',
     applicationsHeading: 'Applications',
-    specialistQueueHeading: 'Task Queue — Field Visit & Evaluation',
-    headQueueHeading: 'Task Queue — Review',
-    addFieldHeading: 'Add a Form Field — live',
-    liveMetricsHeading: 'Live Transaction Metrics',
+    specialistQueueHeading: 'Field Visits and Evaluation',
+    headQueueHeading: 'Application Review',
+    addFieldHeading: 'Manage Application Fields',
+    liveMetricsHeading: 'Service Overview',
     themeToggle: 'Dark / Light',
-    adminPersonaNote: 'Ministry Admin — configure forms, fees, rules, and process without redeploying code.',
-    activityLogHeading: 'Activity Log',
-    reloadCurrentBtn: 'Reload Current',
-    addFieldNote: 'Adds a form field that appears on the Applicant form immediately.',
-    fieldKeyLabel: 'Field key (snake_case)',
-    fieldLabelEnLabel: 'Label / note shown on the form (English)',
-    fieldLabelArLabel: 'Label shown on the form (Arabic) — optional, confirms it renders correctly when toggled',
+    adminPersonaNote: 'Manage application forms, fees, requirements, schedules, and approval steps.',
+    activityLogHeading: 'Recent Activity',
+    reloadCurrentBtn: 'Refresh',
+    addFieldNote: 'Add a new field to the application form.',
+    fieldKeyLabel: 'Field name for records',
+    fieldLabelEnLabel: 'English label',
+    fieldLabelArLabel: 'Arabic label (optional)',
     typeLabel: 'Type',
     typeTextShort: 'Text (short)',
     typeTextLong: 'Text (long)',
     typeNumber: 'Number',
     typeYesNo: 'Yes / No',
     typeDate: 'Date',
-    addFieldBtn: 'Add Field Live',
+    addFieldBtn: 'Add Field',
     existingFieldsHeading: 'Existing Fields',
-    permsHeading: 'Role → Field Permissions — live',
-    permsNote: 'Adjust who can write, only read, or not see each form field — no code, no restart. Hide a field from Applicant and it disappears from their submit form on the next refresh; set Specialist to Read to show the value on their task card without edit rights.',
+    permsHeading: 'Field Access by Role',
+    permsNote: 'Choose whether each role can edit, view, or cannot see a field.',
     permAccessWrite: 'Write',
     permAccessRead: 'Read',
     permAccessHidden: 'Hidden',
@@ -2142,53 +2686,54 @@ const I18N = {
     permRoleHead: 'Head of Section',
     permRoleAdmin: 'Admin',
     permFieldCol: 'Field',
-    appSnapshotHeading: 'Application fields (per your role)',
-    eligRuleHeading: 'Eligibility Rule — live',
-    eligRuleNote: 'Toggles which conditions the DMN table requires for eligibility, then re-deploys it — Camunda regenerates the decision table, no code, no restart. Test both scenarios instantly below without submitting a real application.',
+    appSnapshotHeading: 'Application Details',
+    eligRuleHeading: 'Eligibility Requirements',
+    eligRuleNote: 'Choose the requirements that applicants must meet. Changes apply to new applications.',
     reqCrLabel: 'Require valid Commercial Registration',
     reqPriorLabel: 'Require valid prior Cinema Screening Practice License',
-    applyEligBtn: 'Apply Eligibility Rule',
-    retestHeading: 'Re-test Both Scenarios',
-    scenarioMet: 'Scenario: Meets Conditions',
-    scenarioNotMet: 'Scenario: Missing Prior License',
-    runTestBtn: 'Run Test',
-    feeConfigHeading: 'Fee Configuration — live',
-    feeConfigNote: "Reads and writes the actual deployed DMN decision table (cinema_eligibility_and_fee) via Camunda's REST API — changing it here changes what the next submitted application is charged, with no restart.",
+    applyEligBtn: 'Save Requirements',
+    retestHeading: 'Check Examples',
+    scenarioMet: 'All requirements met',
+    scenarioNotMet: 'Prior licence missing',
+    runTestBtn: 'Check',
+    feeConfigHeading: 'Service Fees',
+    feeConfigNote: 'Set the standard fee and the discount for Riyada card holders. Changes apply to new applications.',
     baseFeeLabel: 'Base Fee (OMR)',
     smeDiscountLabel: 'Riyada (SME) Discount %',
     smeFinalFeeLabel: 'SME / Riyada Final Fee',
     standardFeeLabel: 'Standard Final Fee',
-    feePreviewNote: 'Preview above recalculates instantly as you type. Nothing is live until you apply it.',
-    applyEngineBtn: 'Apply to Process Engine',
-    slaHeading: 'SLA Threshold — live',
-    slaNote: "Rewrites the boundary-timer duration on the deployed BPMN's Head of Section Review step and redeploys. Set it very low (e.g. 1 minute) to watch a real escalation fire during a demo instead of waiting an hour.",
-    slaMinutesLabel: 'Head of Section review SLA (minutes)',
-    scheduleHeading: 'Field Visit Scheduling — live',
-    scheduleNote: 'Worker-side parameter (not a DMN/BPMN edit) — takes effect on the very next application that reaches payment.',
-    leadDaysLabel: 'Lead time before field visit (days)',
+    feePreviewNote: 'The amounts update as you type. Select Save Changes to confirm.',
+    applyEngineBtn: 'Save Changes',
+    slaHeading: 'Review Time Limit',
+    slaNote: 'Set the maximum time allowed for the Head of Section to complete a review.',
+    slaMinutesLabel: 'Review time limit (minutes)',
+    scheduleHeading: 'Field Visit Scheduling',
+    scheduleNote: 'Set how many days after payment the field visit should take place.',
+    leadDaysLabel: 'Days before field visit',
     applyBtn: 'Apply',
-    cicdHeading: 'CI/CD Pipeline — Promote to UAT',
-    simulatedTag: 'Simulated',
-    cicdNote: "Disclosed per the demo script: this sandbox has a single environment, so the DEV→UAT promotion itself is simulated. The snapshot below is not fake — it's read live from the actual deployed DMN/BPMN and worker config, so it reflects whatever Phase 1/2 edits you just made.",
-    snapshotBtn: '1. Snapshot Current DEV Config',
-    approvalGateLabel: 'Approval Gate: I approve promoting this configuration to UAT',
+    cicdHeading: 'Configuration Approval',
+    simulatedTag: 'Test',
+    cicdNote: 'Review the current service settings and record an approval before applying them.',
+    snapshotBtn: '1. Review Current Settings',
+    approvalGateLabel: 'I approve these service settings',
     approverNameLabel: 'Approver name',
-    promoteBtn: '2. Promote to UAT',
-    versionLogHeading: 'Version Log',
-    deploymentIdCol: 'Deployment ID',
-    promotedAtCol: 'Promoted At',
+    promoteBtn: '2. Approve Settings',
+    versionLogHeading: 'Approval History',
+    deploymentIdCol: 'Reference',
+    promotedAtCol: 'Approved At',
     approvedByCol: 'Approved By',
-    configSnapshotCol: 'Config Snapshot',
-    designerHeading: 'Process Designer',
-    designerSimpleNote: 'Click a shape in the palette to drop it on the canvas, drag it anywhere, then drag from its right-edge dot to another shape to connect them — same as building a flowchart in PowerPoint. Click a shape to fill in its details. Hover an arrow to reroute, drag the tip/start dots to reconnect to another shape, or delete it. No gateways, no conditions, no XML. "Save & Deploy" compiles exactly what you\'ve drawn into real BPMN and redeploys it to Camunda.',
+    configSnapshotCol: 'Settings',
+    designerHeading: 'Approval Process',
+    designerSimpleNote: 'Add and arrange steps, then connect them in the required order. Save keeps your changes as a draft. Publish makes the process available for new applications.',
     shapeStartBtn: '+ Start',
     shapeEndBtn: '+ End',
-    shapeTaskBtn: '+ Human Task',
-    shapeAutoBtn: '+ Automatic Step',
+    shapeTaskBtn: '+ Staff Action',
+    shapeAutoBtn: '+ System Action',
     shapeApprovalBtn: '+ Approval Step',
-    shapeDecisionBtn: '+ Rule Check',
-    saveDeployBtn: 'Save & Deploy',
-    reloadSavedBtn: 'Reload Saved',
+    shapeDecisionBtn: '+ Requirement Check',
+    saveCanvasBtn: 'Save',
+    deployCanvasBtn: 'Publish',
+    reloadSavedBtn: 'Reload Draft',
     clickShapeNote: 'Click a shape to edit it here.',
     applicationNumLabel: 'Application',
     loadingAppFields: 'Loading application fields…',
@@ -2204,8 +2749,8 @@ const I18N = {
     crNumberLabel: 'CR Number',
     civilIdLabel: 'Civil ID',
     verifyLookupBtn: 'Verify & auto-fill',
-    identityLookupNote: 'Commercial Registration and Civil Status lookups are simulated for this demonstration environment.',
-    applicantPersonaNote: 'Citizen applicant — submit a license request and complete payment when prompted.',
+    identityLookupNote: 'Enter the Commercial Registration number and Civil ID to retrieve applicant details.',
+    applicantPersonaNote: 'Submit a film screening licence application and pay the required fee.',
     applicantServicesNav: 'Applicant Services',
     appNavApplication: 'Application',
     appNavNew: 'New Application',
@@ -2213,16 +2758,16 @@ const I18N = {
     appNavPayment: 'Payments',
     appNavLicense: 'My Licenses',
     appNavHistory: 'Application History',
-    licensePortalHeading: 'E-Services — License Retrieval',
-    licensePortalNote: 'Issued Cinema Film Screening Licenses appear here with a QR code for retrieval via the e-services portal.',
+    licensePortalHeading: 'Issued Licences',
+    licensePortalNote: 'Your issued film screening licences and QR codes appear here.',
     licensePortalEmpty: 'No issued licenses yet. After the process completes, your license and QR appear here.',
     licenseQrModalTitle: 'Cinema Film Screening License',
-    licenseQrModalNote: 'Scan or save this QR for e-services retrieval.',
+    licenseQrModalNote: 'Scan or save this QR code to view the licence.',
     closeModalBtn: 'Close',
     viewQrBtn: 'View QR',
     openDigitalLicenseBtn: 'Open Digital License',
     notifiedBadge: 'Applicant notified',
-    payMethodHeading: 'Choose payment method (mock)',
+    payMethodHeading: 'Choose a Payment Method',
     payMethodEPayment: 'E-Payment Gateway',
     payMethodEWallet: 'E-Wallet',
     payMethodApplePay: 'Apple Pay',
@@ -2301,14 +2846,14 @@ const I18N = {
     applicationsHeading: 'الطلبات',
     specialistQueueHeading: 'قائمة المهام — الزيارة الميدانية والتقييم',
     headQueueHeading: 'قائمة المهام — المراجعة',
-    addFieldHeading: 'إضافة حقل نموذج — مباشر',
+    addFieldHeading: 'إدارة حقول الطلب',
     liveMetricsHeading: 'مؤشرات المعاملات الحية',
     themeToggle: 'داكن / فاتح',
-    adminPersonaNote: 'مسؤول الوزارة — تهيئة النماذج والرسوم والقواعد وسير العمل دون إعادة نشر الكود.',
+    adminPersonaNote: 'إدارة نماذج الطلبات والرسوم والمتطلبات والمواعيد وخطوات الموافقة.',
     activityLogHeading: 'سجل النشاط',
     reloadCurrentBtn: 'إعادة تحميل الحالة الحالية',
     addFieldNote: 'يضيف حقلاً يظهر فورًا في نموذج مقدم الطلب.',
-    fieldKeyLabel: 'مفتاح الحقل (snake_case)',
+    fieldKeyLabel: 'اسم الحقل في السجلات',
     fieldLabelEnLabel: 'التسمية / الملاحظة المعروضة في النموذج (بالإنجليزية)',
     fieldLabelArLabel: 'التسمية المعروضة في النموذج (بالعربية) — اختياري، للتأكد من ظهورها بشكل صحيح عند التبديل',
     typeLabel: 'النوع',
@@ -2317,10 +2862,10 @@ const I18N = {
     typeNumber: 'رقم',
     typeYesNo: 'نعم / لا',
     typeDate: 'تاريخ',
-    addFieldBtn: 'إضافة الحقل مباشرة',
+    addFieldBtn: 'إضافة حقل',
     existingFieldsHeading: 'الحقول الحالية',
-    permsHeading: 'صلاحيات الدور ← الحقل — مباشر',
-    permsNote: 'اضبط من يمكنه الكتابة أو القراءة فقط أو إخفاء كل حقل — دون كود أو إعادة تشغيل. إخفاء حقل عن مقدم الطلب يزيله من نموذج الإرسال عند التحديث التالي؛ اجعل الأخصائي قراءة فقط لعرض القيمة في بطاقة المهمة دون تعديل.',
+    permsHeading: 'صلاحيات الحقول حسب الدور',
+    permsNote: 'حدد ما إذا كان كل دور يستطيع تعديل الحقل أو عرضه أو لا يمكنه رؤيته.',
     permAccessWrite: 'كتابة',
     permAccessRead: 'قراءة',
     permAccessHidden: 'مخفي',
@@ -2330,8 +2875,8 @@ const I18N = {
     permRoleAdmin: 'المسؤول',
     permFieldCol: 'الحقل',
     appSnapshotHeading: 'حقول الطلب (حسب دورك)',
-    eligRuleHeading: 'قاعدة الأهلية — مباشر',
-    eligRuleNote: 'يبدّل الشروط التي يتطلبها جدول DMN لتحقق الأهلية، ثم يعيد نشره — تعيد Camunda توليد جدول القرار، دون كتابة كود أو إعادة تشغيل. اختبر السيناريوهين فورًا أدناه دون تقديم طلب حقيقي.',
+    eligRuleHeading: 'متطلبات الأهلية',
+    eligRuleNote: 'حدد المتطلبات التي يجب على مقدم الطلب استيفاؤها. تسري التغييرات على الطلبات الجديدة.',
     reqCrLabel: 'يتطلب سجلًا تجاريًا ساري المفعول',
     reqPriorLabel: 'يتطلب رخصة ممارسة سابقة سارية لعرض الأفلام السينمائية',
     applyEligBtn: 'تطبيق قاعدة الأهلية',
@@ -2339,42 +2884,43 @@ const I18N = {
     scenarioMet: 'السيناريو: الشروط مستوفاة',
     scenarioNotMet: 'السيناريو: الرخصة السابقة مفقودة',
     runTestBtn: 'تشغيل الاختبار',
-    feeConfigHeading: 'إعداد الرسوم — مباشر',
-    feeConfigNote: 'يقرأ ويكتب جدول قرار DMN المنشور فعليًا (cinema_eligibility_and_fee) عبر واجهة Camunda البرمجية — تغييره هنا يغيّر الرسوم المفروضة على الطلب التالي مباشرة، دون إعادة تشغيل.',
+    feeConfigHeading: 'رسوم الخدمة',
+    feeConfigNote: 'حدد الرسم الأساسي والخصم الممنوح لحاملي بطاقة ريادة. تسري التغييرات على الطلبات الجديدة.',
     baseFeeLabel: 'الرسم الأساسي (ريال عماني)',
     smeDiscountLabel: 'نسبة خصم ريادة (المؤسسات الصغيرة والمتوسطة) %',
     smeFinalFeeLabel: 'الرسم النهائي لحاملي بطاقة ريادة',
     standardFeeLabel: 'الرسم النهائي القياسي',
     feePreviewNote: 'المعاينة أعلاه تُحدَّث فورًا أثناء الكتابة. لا شيء يصبح ساري المفعول إلا بعد التطبيق.',
-    applyEngineBtn: 'تطبيق على محرك المعالجة',
-    slaHeading: 'حد اتفاقية مستوى الخدمة (SLA) — مباشر',
-    slaNote: 'يعيد كتابة مدة المؤقت الحدّي في خطوة "مراجعة رئيس القسم" ضمن BPMN المنشور ويعيد نشره. اضبطه على قيمة منخفضة جدًا (مثل دقيقة واحدة) لمشاهدة تصعيد حقيقي أثناء العرض بدلًا من انتظار ساعة كاملة.',
-    slaMinutesLabel: 'مدة SLA لمراجعة رئيس القسم (بالدقائق)',
-    scheduleHeading: 'جدولة الزيارة الميدانية — مباشر',
-    scheduleNote: 'معامل على جانب العامل الآلي (وليس تعديلًا في DMN/BPMN) — يسري مفعوله على الطلب التالي الذي يصل إلى مرحلة الدفع.',
+    applyEngineBtn: 'حفظ التغييرات',
+    slaHeading: 'المهلة الزمنية للمراجعة',
+    slaNote: 'حدد أقصى مدة متاحة لرئيس القسم لإكمال المراجعة.',
+    slaMinutesLabel: 'مدة المراجعة بالدقائق',
+    scheduleHeading: 'جدولة الزيارة الميدانية',
+    scheduleNote: 'حدد عدد الأيام بين الدفع وموعد الزيارة الميدانية.',
     leadDaysLabel: 'المهلة الزمنية قبل الزيارة الميدانية (بالأيام)',
     applyBtn: 'تطبيق',
-    cicdHeading: 'خط أنابيب CI/CD — الترقية إلى بيئة UAT',
-    simulatedTag: 'محاكاة',
-    cicdNote: 'تمّ الإفصاح وفق نص العرض التجريبي: هذه البيئة التجريبية تحتوي بيئة واحدة فقط، لذا فإن الترقية من DEV إلى UAT ذاتها محاكاة. لكن اللقطة أدناه ليست وهمية — إنها تُقرأ مباشرة من إعدادات DMN/BPMN والعامل الآلي المنشورة فعليًا، فتعكس أي تعديلات أجريتها في المرحلتين 1 و2.',
-    snapshotBtn: '١. أخذ لقطة للإعدادات الحالية (DEV)',
-    approvalGateLabel: 'بوابة الموافقة: أوافق على ترقية هذا الإعداد إلى UAT',
+    cicdHeading: 'اعتماد الإعدادات',
+    simulatedTag: 'اختبار',
+    cicdNote: 'راجع إعدادات الخدمة الحالية وسجل الموافقة عليها قبل تطبيقها.',
+    snapshotBtn: '١. مراجعة الإعدادات الحالية',
+    approvalGateLabel: 'أوافق على إعدادات الخدمة هذه',
     approverNameLabel: 'اسم المعتمِد',
-    promoteBtn: '٢. الترقية إلى UAT',
+    promoteBtn: '٢. اعتماد الإعدادات',
     versionLogHeading: 'سجل الإصدارات',
     deploymentIdCol: 'معرّف النشر',
     promotedAtCol: 'تاريخ الترقية',
     approvedByCol: 'اعتمدها',
     configSnapshotCol: 'لقطة الإعدادات',
     designerHeading: 'مصمم سير العمل',
-    designerSimpleNote: 'انقر على شكل من اللوحة لإسقاطه على المساحة، اسحبه إلى أي مكان، ثم اسحب من النقطة على حافته اليمنى إلى شكل آخر لربطهما — تمامًا كإنشاء مخطط انسيابي في PowerPoint. انقر على أي شكل لتعبئة تفاصيله. مرّر فوق السهم لإعادة توجيهه أو حذفه. لا بوابات، لا شروط، لا XML. "حفظ ونشر" يحوّل تمامًا ما رسمته إلى BPMN حقيقي ويعيد نشره على Camunda.',
+    designerSimpleNote: 'أضف الخطوات ورتبها ثم اربطها بالتسلسل المطلوب. يحفظ زر "حفظ" التغييرات كمسودة، ويجعل زر "نشر" العملية متاحة للطلبات الجديدة.',
     shapeStartBtn: '+ بداية',
     shapeEndBtn: '+ نهاية',
     shapeTaskBtn: '+ مهمة بشرية',
     shapeAutoBtn: '+ خطوة آلية',
     shapeApprovalBtn: '+ خطوة موافقة',
     shapeDecisionBtn: '+ فحص قاعدة',
-    saveDeployBtn: 'حفظ ونشر',
+    saveCanvasBtn: 'حفظ',
+    deployCanvasBtn: 'نشر',
     reloadSavedBtn: 'إعادة تحميل المحفوظ',
     clickShapeNote: 'انقر على أي شكل لتحريره هنا.',
     applicationNumLabel: 'الطلب',
@@ -2567,6 +3113,7 @@ function applyLanguage(lang) {
     const key = el.getAttribute('data-i18n');
     if (I18N[lang][key]) el.textContent = I18N[lang][key];
   });
+  updateDigitalAssistantLanguage();
   updateMobileViewLabel();
   updateMobileViewLabel();
   const activeTab = localStorage.getItem('omanActiveTab') || 'applicant';
@@ -2660,6 +3207,9 @@ function applyTextSize(size) {
 // ============================= APPLICANT: dynamic form =============================
 
 let formSchema = [];
+let verifiedIdentityData = null;
+let identityVerificationPassed = false;
+let existingIdentityApplication = null;
 
 function todayISO() {
   const now = new Date();
@@ -2705,6 +3255,14 @@ function onLookupFieldInput(id) {
   const el = document.getElementById(id);
   const rule = LOOKUP_RULES[id];
   if (!el || !rule) return;
+  if (identityVerificationPassed) {
+    identityVerificationPassed = false;
+    verifiedIdentityData = null;
+    existingIdentityApplication = null;
+    updateNewApplicationAccess();
+    const result = document.getElementById('lookupResult');
+    if (result) result.innerHTML = '';
+  }
   if (rule.digitsOnly) el.value = el.value.replace(/\D/g, '').slice(0, rule.maxLen);
   validateLookupField(id);
 }
@@ -2852,7 +3410,9 @@ function fieldNoteText(f) {
   const key = fieldUiKey(f.field);
   const ov = FIELD_NOTE_OVERRIDES[key];
   if (ov) return getLanguage() === 'ar' ? ov.ar : ov.en;
-  return f.note || '';
+  const note = String(f.note || '').trim();
+  const normalized = (value) => String(value || '').toLowerCase().replace(/[^a-z0-9]/g, '');
+  return normalized(note) === normalized(f.field) ? '' : note;
 }
 
 function renderCountrySearchControl(id, field, ro) {
@@ -2974,8 +3534,37 @@ async function loadFormSchema() {
     formEl.innerHTML = rest.map(renderField).join('')
       + (toggles.length ? `<div class="af-toggle-bar">${toggles.map(renderField).join('')}</div>` : '');
   }
-  log(`Rendered ${applicantFields.length} fields dynamically from FormBuilder schema (role-filtered)`);
+  applyVerifiedIdentityToForm();
+  log(`Application form loaded with ${applicantFields.length} fields.`);
   renderExistingFieldsPreview();
+}
+
+function applyVerifiedIdentityToForm() {
+  if (!verifiedIdentityData) return;
+  const { cr, civil, prior } = verifiedIdentityData;
+  const nameField = document.getElementById('f_applicant_name');
+  const crField = document.getElementById('f_valid_commercial_registration');
+  const priorField = document.getElementById('f_valid_prior_practice_license');
+  if (nameField) {
+    nameField.value = civil.applicantName || '';
+    const nameMeta = formSchema.find((x) => x.field === 'applicant_name');
+    if (nameMeta) validateApplicantField(nameMeta);
+  }
+  if (crField) crField.checked = !!cr.valid;
+  if (priorField) priorField.checked = !!prior.hasValidLicense;
+
+  const summary = document.getElementById('verifiedIdentitySummary');
+  if (summary) {
+    summary.classList.remove('hidden');
+    summary.innerHTML = `
+      <strong>${getLanguage() === 'ar' ? 'بيانات الهوية المتحقق منها' : 'Verified identity details'}</strong>
+      <div class="verified-identity-grid">
+        <div class="verified-identity-item"><span>${getLanguage() === 'ar' ? 'رقم السجل التجاري' : 'CR Number'}</span><strong>${escapeHtmlLite(cr.crNumber || '')}</strong></div>
+        <div class="verified-identity-item"><span>${getLanguage() === 'ar' ? 'الرقم المدني' : 'Civil ID'}</span><strong>${escapeHtmlLite(civil.civilId || '')}</strong></div>
+        <div class="verified-identity-item"><span>${getLanguage() === 'ar' ? 'اسم المنشأة' : 'Business Name'}</span><strong title="${escapeHtmlLite(cr.businessName || '')}">${escapeHtmlLite(cr.businessName || '—')}</strong></div>
+        <div class="verified-identity-item"><span>${getLanguage() === 'ar' ? 'اسم المخرج' : 'Director Name'}</span><strong title="${escapeHtmlLite(civil.applicantName || '')}">${escapeHtmlLite(civil.applicantName || '—')}</strong></div>
+      </div>`;
+  }
 }
 
 // Keyed off the actual FormBuilder schema `type` (string/text/boolean/float),
@@ -3000,21 +3589,35 @@ function renderExistingFieldsPreview() {
   }
   const rows = formSchema.map((f) => {
     const action = PROTECTED_FIELDS.has(f.field)
-      ? `<span class="fg-protected">core</span>`
-      : `<button type="button" class="fg-delete" onclick="deleteFieldLive('${f.field}')">Delete</button>`;
-    const label = f.note ? escapeHtmlLite(f.note) : '<em>No label set</em>';
+      ? `<span class="fg-protected" title="Required system field">🔒 ${getLanguage() === 'ar' ? 'محمي' : 'Protected'}</span>`
+      : `<button type="button" class="fg-delete" onclick="deleteFieldLive('${f.field}')" title="${getLanguage() === 'ar' ? 'حذف الحقل' : 'Delete field'}" aria-label="${getLanguage() === 'ar' ? 'حذف الحقل' : 'Delete field'}">🗑</button>`;
+    const typeLabel = SCHEMA_TYPE_LABELS[f.type] || f.type;
+    const icon = f.type === 'boolean' ? '✓' : f.type === 'date' ? '◷' : ['float', 'integer'].includes(f.type) ? '#' : f.type === 'text' ? '¶' : 'Aa';
+    const label = escapeHtmlLite(fieldLabelText(f));
+    const noteText = fieldNoteText(f);
+    const note = noteText && noteText !== fieldLabelText(f)
+      ? `<div class="fg-card-note">${escapeHtmlLite(noteText)}</div>`
+      : '';
     return `<div class="fg-card">
+      <div class="fg-card-icon" aria-hidden="true">${icon}</div>
       <div class="fg-card-main">
+        <div class="fg-card-label">${label}</div>
         <div class="fg-card-top">
           <code>${escapeHtmlLite(f.field)}</code>
-          <span class="tag">${SCHEMA_TYPE_LABELS[f.type] || f.type}</span>
+          <span class="tag">${escapeHtmlLite(typeLabel)}</span>
         </div>
-        <div class="fg-card-label">${label}</div>
+        ${note}
       </div>
       <div class="fg-card-actions">${action}</div>
     </div>`;
   }).join('');
-  el.innerHTML = `<div class="fg-list">${rows}</div>`;
+  const protectedCount = formSchema.filter((f) => PROTECTED_FIELDS.has(f.field)).length;
+  el.innerHTML = `
+    <div class="fg-summary">
+      <span><strong>${formSchema.length}</strong> ${getLanguage() === 'ar' ? 'حقلاً مكوّناً' : 'configured fields'}</span>
+      <span>🔒 ${protectedCount} ${getLanguage() === 'ar' ? 'حقول نظام محمية' : 'protected system fields'}</span>
+    </div>
+    <div class="fg-list">${rows}</div>`;
 }
 
 function escapeHtmlLite(s) {
@@ -3033,7 +3636,7 @@ async function deleteFieldLive(field) {
     log(`ERROR deleting field "${field}": ${data.error || res.status}`);
     return;
   }
-  log(`Field "${field}" deleted from FormBuilder`);
+  log(`Field "${field}" deleted.`);
   loadFormSchema();
   loadFieldPermissions();
 }
@@ -3087,7 +3690,7 @@ async function loadFieldPermissions() {
     return `<tr><td><code>${label}</code></td>${cells}</tr>`;
   }).join('');
   el.innerHTML = `<table class="perm-matrix"><thead>${head}</thead><tbody>${body}</tbody></table>`;
-  log(`Loaded role→field permission matrix (${fields.length} fields × ${roles.length} roles)`);
+  log(`Field access settings loaded for ${fields.length} fields.`);
 }
 
 async function setFieldPermission(field, role, selectEl) {
@@ -3104,7 +3707,7 @@ async function setFieldPermission(field, role, selectEl) {
     loadFieldPermissions();
     return;
   }
-  log(`Permission live: ${field} → ${role} = ${access}`);
+  log(`Field access updated: ${field} — ${role} — ${access}.`);
   // Applicant form (and any open role-filtered views) pick this up on next schema load.
   if (document.getElementById('tab-applicant').classList.contains('active')) loadFormSchema();
 }
@@ -3123,39 +3726,67 @@ async function runSimulatedLookup() {
   const [cr, civil, prior] = await Promise.all([
     fetch('/api/integrations/cr-lookup', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ crNumber }) }).then(r => r.json()),
     fetch('/api/integrations/civil-status-lookup', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ civilId }) }).then(r => r.json()),
-    fetch('/api/integrations/practice-license-lookup', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ civilId }) }).then(r => r.json()),
+    fetch('/api/integrations/practice-license-lookup', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ civilId, crNumber }) }).then(r => r.json()),
   ]);
 
-  if (!document.getElementById('f_applicant_name')) await loadFormSchema();
-  const nameField = document.getElementById('f_applicant_name');
-  const crField = document.getElementById('f_valid_commercial_registration');
-  const priorField = document.getElementById('f_valid_prior_practice_license');
-  if (nameField) {
-    nameField.value = civil.applicantName || '';
-    const nameMeta = formSchema.find((x) => x.field === 'applicant_name');
-    if (nameMeta) validateApplicantField(nameMeta);
+  const requirementsPassed = !!cr.valid && !!civil.valid && !!prior.hasValidLicense;
+  existingIdentityApplication = null;
+  if (requirementsPassed) {
+    const existingRes = await fetch('/api/applications/find-existing', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ crNumber, civilId }),
+    });
+    const existingData = await existingRes.json().catch(() => ({}));
+    if (!existingRes.ok) {
+      identityVerificationPassed = false;
+      updateNewApplicationAccess();
+      document.getElementById('lookupResult').innerHTML = `<div class="card" style="background:var(--danger-bg);border-color:var(--danger);">We could not check existing applications. Please try again.</div>`;
+      return;
+    }
+    existingIdentityApplication = existingData.application || null;
   }
-  if (crField) crField.checked = !!cr.valid;
-  if (priorField) priorField.checked = !!prior.hasValidLicense;
-
-  const recordExists = !!cr.valid && !!civil.valid;
-  document.getElementById('lookupResult').innerHTML = `
-    <div class="card" style="background:${recordExists ? 'var(--success-bg)' : 'var(--danger-bg)'};border-color:${recordExists ? 'var(--success)' : 'var(--danger)'};">
-      <strong style="color:${recordExists ? 'var(--success)' : 'var(--danger)'};">
-        ${recordExists
-          ? (getLanguage() === 'ar' ? '✓ تم التحقق — جارٍ فتح الطلب الجديد…' : '✓ Record verified — opening New Application…')
-          : (getLanguage() === 'ar' ? 'تعذر التحقق — يرجى مراجعة البيانات أدناه.' : 'Record not found — please review the details below.')}
-      </strong>
-      <div class="field-note">Simulated — ${cr.source}: ${cr.message}</div>
-      <div class="field-note">Simulated — ${civil.source}: ${civil.message}</div>
-      <div class="field-note">Simulated — ${prior.source}: ${prior.message}</div>
-    </div>`;
-  log(`[SIMULATED] CR lookup: valid=${cr.valid} | Civil Status: valid=${civil.valid}${civil.applicantName ? ' (' + civil.applicantName + ')' : ' (no name)'} | Practice License on file: ${prior.hasValidLicense}.`);
-  if (recordExists) {
-    setTimeout(() => showApplicantPane('new'), 650);
+  verifiedIdentityData = requirementsPassed ? { cr, civil, prior } : null;
+  identityVerificationPassed = requirementsPassed;
+  updateNewApplicationAccess();
+  document.getElementById('lookupResult').innerHTML = requirementsPassed
+    ? `<div class="card identity-success-card" style="background:var(--success-bg);border-color:var(--success);">
+        <div class="identity-success-check">✓</div>
+        <strong style="color:var(--success);font-size:16px;">${existingIdentityApplication
+          ? (getLanguage() === 'ar' ? 'يوجد طلب قائم' : 'Existing application found')
+          : (getLanguage() === 'ar' ? 'تم التحقق بنجاح' : 'Verification successful')}</strong>
+        <div class="field-note">${existingIdentityApplication
+          ? (getLanguage() === 'ar' ? `الطلب رقم #${existingIdentityApplication.id} موجود بالفعل. جارٍ فتح المرحلة الحالية…` : `Application #${existingIdentityApplication.id} already exists. Opening its current stage…`)
+          : (getLanguage() === 'ar' ? 'تم استيفاء جميع المتطلبات. جارٍ فتح الطلب الجديد…' : 'All requirements are valid. Opening the New Application…')}</div>
+        <div class="identity-checks">
+          <span class="identity-check-item">✓ ${getLanguage() === 'ar' ? 'السجل التجاري ساري' : 'Commercial Registration valid'}</span>
+          <span class="identity-check-item">✓ ${getLanguage() === 'ar' ? 'الرخصة السابقة سارية' : 'Prior practice licence valid'}</span>
+          <span class="identity-check-item">✓ ${getLanguage() === 'ar' ? 'الهوية مطابقة' : 'Civil ID matched'}</span>
+        </div>
+      </div>`
+    : `<div class="card" style="background:var(--danger-bg);border-color:var(--danger);">
+        <strong style="color:var(--danger);">${getLanguage() === 'ar' ? 'لا يمكن المتابعة حتى استيفاء جميع المتطلبات.' : 'All requirements must be valid before you can continue.'}</strong>
+        <div class="identity-failure-list">
+          <div class="identity-failure-item"><span>${getLanguage() === 'ar' ? 'السجل التجاري' : 'Commercial Registration'}</span><strong>${cr.valid ? '✓ Valid' : '✕ Not valid'}</strong></div>
+          <div class="identity-failure-item"><span>${getLanguage() === 'ar' ? 'الرقم المدني' : 'Civil ID'}</span><strong>${civil.valid ? '✓ Matched' : '✕ Not found'}</strong></div>
+          <div class="identity-failure-item"><span>${getLanguage() === 'ar' ? 'رخصة الممارسة السابقة' : 'Prior practice licence'}</span><strong>${prior.hasValidLicense ? '✓ Valid' : '✕ Not valid'}</strong></div>
+        </div>
+      </div>`;
+  log(`Identity check completed. CR valid: ${cr.valid ? 'Yes' : 'No'}; Civil ID found: ${civil.valid ? 'Yes' : 'No'}; Prior licence: ${prior.hasValidLicense ? 'Yes' : 'No'}.`);
+  if (requirementsPassed) {
+    setTimeout(async () => {
+      if (existingIdentityApplication) {
+        routeExistingApplication(existingIdentityApplication);
+      } else {
+        showApplicantPane('new');
+        await loadFormSchema();
+      }
+    }, 1700);
   } else {
     showApplicantPane('identity');
-    const firstMissing = !cr.valid ? document.getElementById('lookupCr') : document.getElementById('lookupCivilId');
+    const firstMissing = !cr.valid
+      ? document.getElementById('lookupCr')
+      : document.getElementById('lookupCivilId');
     firstMissing?.focus();
   }
 }
@@ -3174,15 +3805,25 @@ async function submitApplication() {
     if (!el) continue;
     body[f.field] = f.interface === 'boolean' ? el.checked : el.value;
   }
+  body.cr_number = verifiedIdentityData?.cr?.crNumber || '';
+  body.civil_id = verifiedIdentityData?.civil?.civilId || '';
   const res = await fetch('/api/applications', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
   const data = await res.json();
+  if (res.status === 409 && data.application) {
+    existingIdentityApplication = data.application;
+    updateNewApplicationAccess();
+    routeExistingApplication(data.application);
+    return;
+  }
   if (!res.ok) { log('ERROR submitting: ' + JSON.stringify(data)); alert(data.error || 'Submit failed'); return; }
-  log(`Application #${data.id} submitted, Camunda process started (eligible: ${data.eligible}, fee: ${data.final_fee ?? '—'} OMR${data.status === 'completed' ? ', status: completed — license issued' : ''})`);
+  log(`Application #${data.id} submitted. Fee: ${data.final_fee ?? '—'} OMR${data.status === 'completed' ? '; licence issued' : ''}.`);
   if (data.license_qr) {
     log(`License issued for #${data.id}: ${data.license_qr} (applicant notified)`);
   }
   // Clear identity lookup numbers + collapse panel; reset the application form.
-  resetIdentityVerification({ close: true });
+  resetIdentityVerification({ close: true, resetAccess: false });
+  existingIdentityApplication = data;
+  updateNewApplicationAccess();
   await loadFormSchema();
   loadApplications();
   loadTasks('applicant');
@@ -3215,7 +3856,7 @@ async function loadApplications() {
   appsCurrentPage = 1;
   renderApplicationsPage();
   renderLicensePortal();
-  log(`Loaded ${allApplications.length} applications from FormBuilder`);
+  log(`${allApplications.length} applications loaded.`);
 }
 
 function appsFilteredList() {
@@ -3306,6 +3947,12 @@ function paymentMethodLabel(key) {
     samsung_pay: tMsg('payMethodSamsungPay', 'Samsung Pay'),
   };
   return map[key] || key;
+}
+
+function payableAmountFor(app) {
+  const calculatedFee = Number(app?.final_fee);
+  if (Number.isFinite(calculatedFee) && calculatedFee > 0) return calculatedFee;
+  return app?.has_riyada_card ? 5 : 10;
 }
 
 function appsRowHtml(r) {
@@ -3412,7 +4059,7 @@ function roleQueueHtml(group, tasks) {
     </tr>`).join('');
   return `<div class="role-queue-panel" id="${group}_queue">
     <div class="role-queue-title"><strong>${title}</strong><span class="queue-count">${tasks.length}</span><span style="flex:1"></span><button class="small secondary" onclick="loadTasks('${group === 'head_of_section' ? 'head_of_section' : group}')">${tMsg('refreshBtn', 'Refresh')}</button></div>
-    <div class="table-scroll" style="border:0;border-radius:0;"><table><thead><tr><th>${ar ? 'المرجع' : 'Reference'}</th><th>${ar ? 'المهمة' : 'Task'}</th><th>${ar ? 'المرحلة' : 'Stage'}</th><th>SLA</th><th></th></tr></thead><tbody>${rows}</tbody></table></div>
+    <div class="table-scroll" style="border:0;border-radius:0;"><table><thead><tr><th>${ar ? 'المرجع' : 'Reference'}</th><th>${ar ? 'المهمة' : 'Task'}</th><th>${ar ? 'المرحلة' : 'Stage'}</th><th>${ar ? 'مدة الخدمة' : 'Service Time'}</th><th></th></tr></thead><tbody>${rows}</tbody></table></div>
   </div>`;
 }
 
@@ -3426,6 +4073,58 @@ function openRoleTaskDetail(group, taskId) {
 function showRoleTaskQueue(group) {
   document.getElementById(`${group}_queue`)?.classList.remove('hidden');
   document.querySelectorAll(`#${group === 'specialist' ? 'specialistTasks' : 'headTasks'} .role-task-detail`).forEach((el) => el.classList.remove('active'));
+}
+
+function showApplicantPaymentTask(taskId) {
+  document.querySelectorAll('#applicantTasks .payment-task-tab').forEach((button) => {
+    button.classList.toggle('active', button.dataset.taskId === String(taskId));
+  });
+  document.querySelectorAll('#applicantTasks .payment-task-panel').forEach((panel) => {
+    panel.classList.toggle('active', panel.dataset.taskId === String(taskId));
+  });
+}
+
+function applicantPaymentPanelHtml(task, app, active) {
+  const amount = payableAmountFor(app).toFixed(3);
+  return `
+    <div class="payment-task-panel${active ? ' active' : ''}" data-task-id="${task.id}">
+      <div class="portal-payment-layout">
+        <div class="card" style="padding:16px;">
+          <h3 style="margin-top:0;">${tMsg('payMethodHeading', 'Choose a Payment Method')}</h3>
+          <div class="field-note">${canvasLocalizedName(task.name)} · ${tMsg('applicationNumLabel', 'Application')} #${task.businessKey}</div>
+          <div class="pay-methods" role="radiogroup" aria-label="${tMsg('payMethodHeading', 'Choose a Payment Method')}">
+            <label class="pay-method">
+              <span class="pay-method-logo" aria-hidden="true">▣</span>
+              <span class="pay-method-name">${tMsg('payMethodEPayment', 'E-Payment Gateway')}<small>${getLanguage() === 'ar' ? 'بطاقة بنكية' : 'Debit or credit card'}</small></span>
+              <input type="radio" name="pay_${task.id}" value="e_payment" onchange="completePayment('${task.id}', '${task.businessKey}')" />
+            </label>
+            <label class="pay-method">
+              <span class="pay-method-logo wallet" aria-hidden="true">▤</span>
+              <span class="pay-method-name">${tMsg('payMethodEWallet', 'E-Wallet')}<small>${getLanguage() === 'ar' ? 'رصيد المحفظة' : 'Wallet balance'}</small></span>
+              <input type="radio" name="pay_${task.id}" value="e_wallet" onchange="completePayment('${task.id}', '${task.businessKey}')" />
+            </label>
+            <label class="pay-method">
+              <span class="pay-method-logo apple" aria-hidden="true">Apple</span>
+              <span class="pay-method-name">${tMsg('payMethodApplePay', 'Apple Pay')}<small>${getLanguage() === 'ar' ? 'دفع سريع وآمن' : 'Fast and secure'}</small></span>
+              <input type="radio" name="pay_${task.id}" value="apple_pay" onchange="completePayment('${task.id}', '${task.businessKey}')" />
+            </label>
+            <label class="pay-method">
+              <span class="pay-method-logo samsung" aria-hidden="true">S Pay</span>
+              <span class="pay-method-name">${tMsg('payMethodSamsungPay', 'Samsung Pay')}<small>${getLanguage() === 'ar' ? 'دفع عبر الجهاز' : 'Pay with your device'}</small></span>
+              <input type="radio" name="pay_${task.id}" value="samsung_pay" onchange="completePayment('${task.id}', '${task.businessKey}')" />
+            </label>
+          </div>
+          <div class="license-notify" style="margin-top:12px;">🔒 ${getLanguage() === 'ar' ? 'سيتم فتح صفحة الدفع الآمنة.' : 'Select a payment method to open the secure payment page.'}</div>
+        </div>
+        <aside class="portal-payment-summary">
+          <div style="color:#b9cff8;font-size:10px;font-weight:600;letter-spacing:1.2px;text-transform:uppercase;">${getLanguage() === 'ar' ? 'ملخص الطلب' : 'Order summary'}</div>
+          <h3 style="color:#fff;">${escapeHtml(app.film_title || `Application #${task.businessKey}`)}</h3>
+          <div class="field-note">${getLanguage() === 'ar' ? 'إجازة عرض فيلم سينمائي' : 'Cinema Film Screening Licence'}</div>
+          <div class="amount">${amount} <small style="font-size:13px;">OMR</small></div>
+          <div class="field-note">${getLanguage() === 'ar' ? 'المبلغ المستحق' : 'Amount due'}</div>
+        </aside>
+      </div>
+    </div>`;
 }
 
 async function loadTasks(group) {
@@ -3443,31 +4142,22 @@ async function loadTasks(group) {
   }
 
   if (group === 'applicant') {
-    container.innerHTML = tasks.map((t) => {
-      const app = allApplications.find((item) => String(item.id) === String(t.businessKey)) || {};
-      return `
-      <div class="portal-payment-layout">
-        <div class="card" style="padding:16px;">
-          <h3 style="margin-top:0;">${tMsg('payMethodHeading', 'Choose payment method')}</h3>
-          <div class="field-note">${canvasLocalizedName(t.name)} · ${tMsg('applicationNumLabel', 'Application')} #${t.businessKey}</div>
-          <div class="pay-methods" role="radiogroup" aria-label="${tMsg('payMethodHeading', 'Choose payment method')}">
-            <label class="pay-method"><input type="radio" name="pay_${t.id}" value="e_payment" checked /> ${tMsg('payMethodEPayment', 'E-Payment Gateway')}</label>
-            <label class="pay-method"><input type="radio" name="pay_${t.id}" value="e_wallet" /> ${tMsg('payMethodEWallet', 'E-Wallet')}</label>
-            <label class="pay-method"><input type="radio" name="pay_${t.id}" value="apple_pay" /> ${tMsg('payMethodApplePay', 'Apple Pay')}</label>
-            <label class="pay-method"><input type="radio" name="pay_${t.id}" value="samsung_pay" /> ${tMsg('payMethodSamsungPay', 'Samsung Pay')}</label>
-          </div>
-          <div class="license-notify" style="margin-top:12px;">🔒 ${getLanguage() === 'ar' ? 'سيتم تحويلك إلى بوابة دفع تجريبية آمنة.' : 'You will be redirected to a secure mock payment gateway.'}</div>
-          <button onclick="completePayment('${t.id}', '${t.businessKey}')">${tMsg('completePaymentBtn', 'Pay & Continue')}</button>
-        </div>
-        <aside class="portal-payment-summary">
-          <div style="color:#ff7a80;font-size:10px;font-weight:700;letter-spacing:1.2px;text-transform:uppercase;">${getLanguage() === 'ar' ? 'ملخص الطلب' : 'Order summary'}</div>
-          <h3 style="color:#fff;">${escapeHtml(app.film_title || `Application #${t.businessKey}`)}</h3>
-          <div class="field-note">${getLanguage() === 'ar' ? 'إجازة عرض فيلم سينمائي' : 'Cinema Film Screening License'}</div>
-          <div class="amount">${app.final_fee ?? '5.000'} <small style="font-size:13px;">OMR</small></div>
-          <div class="field-note">${getLanguage() === 'ar' ? 'المبلغ المستحق' : 'Amount due'}</div>
-        </aside>
-      </div>`;
-    }).join('');
+    const taskData = tasks.map((task) => ({
+      task,
+      app: allApplications.find((item) => String(item.id) === String(task.businessKey)) || {},
+    })).sort((a, b) => {
+      const aTime = Date.parse(a.app.date_created || '') || 0;
+      const bTime = Date.parse(b.app.date_created || '') || 0;
+      if (aTime !== bTime) return bTime - aTime;
+      return Number(b.task.businessKey) - Number(a.task.businessKey);
+    });
+    const tabs = taskData.map(({ task, app }, index) => `
+      <button type="button" class="payment-task-tab${index === 0 ? ' active' : ''}" data-task-id="${task.id}" onclick="showApplicantPaymentTask('${task.id}')">
+        <strong>${escapeHtml(app.film_title || `${getLanguage() === 'ar' ? 'طلب' : 'Application'} #${task.businessKey}`)}</strong>
+        <span>#${task.businessKey} · ${payableAmountFor(app).toFixed(3)} OMR</span>
+      </button>`).join('');
+    const panels = taskData.map(({ task, app }, index) => applicantPaymentPanelHtml(task, app, index === 0)).join('');
+    container.innerHTML = `<div class="payment-task-tabs" role="tablist">${tabs}</div>${panels}`;
   } else if (group === 'specialist') {
     container.innerHTML = roleQueueHtml(group, tasks) + `<div class="role-task-details">` + tasks.map(t => `
       <div class="role-task-detail" data-task-id="${t.id}">
@@ -3551,7 +4241,7 @@ async function loadTasks(group) {
       </div>`).join('') + `</div>`;
     for (const t of tasks) loadApplicationSnapshot(t.businessKey, 'approval');
   }
-  log(`Loaded ${tasks.length} tasks for group "${group}" from Camunda`);
+  log(`${tasks.length} pending items loaded.`);
 }
 
 const SNAPSHOT_SKIP = new Set([
@@ -3667,21 +4357,121 @@ async function completePayment(taskId, applicationId) {
     return;
   }
   const payment_method = selected.value;
+  const app = allApplications.find((item) => String(item.id) === String(applicationId)) || {};
+  const amount = payableAmountFor(app).toFixed(3);
+  const modal = document.getElementById('paymentGatewayModal');
+  modal.dataset.taskId = taskId;
+  modal.dataset.applicationId = applicationId;
+  modal.dataset.paymentMethod = payment_method;
+  modal.dataset.amount = amount;
+
+  const methodUi = {
+    e_payment: {
+      logo: 'EP',
+      fields: `
+        <div class="mock-gateway-fields">
+          <label>Card number<input required inputmode="numeric" maxlength="19" value="4111 1111 1111 1111" /></label>
+          <label>Expiry<input required value="12/30" /></label>
+          <label>CVV<input required type="password" inputmode="numeric" maxlength="3" value="123" /></label>
+        </div>`,
+    },
+    e_wallet: {
+      logo: 'EW',
+      fields: `
+        <div class="card" style="display:flex;justify-content:space-between;margin-bottom:12px;background:var(--success-bg);border-color:var(--success);">
+          <span>Available wallet balance</span><strong>25.750 OMR</strong>
+        </div>
+        <div class="mock-gateway-fields">
+          <label>Mobile wallet number<input required inputmode="tel" value="+968 9123 4567" /></label>
+          <label>Payable amount<select required><option value="${amount}">${amount} OMR</option></select></label>
+          <label>Wallet PIN<input required type="password" inputmode="numeric" maxlength="4" value="1234" /></label>
+        </div>`,
+    },
+    apple_pay: {
+      logo: '●',
+      fields: `
+        <div class="card" style="text-align:center;">
+          <strong>Apple Pay Account</strong>
+          <p class="field-note">•••• 4242 · Available balance: 40.000 OMR</p>
+          <label>Payable amount<select required><option value="${amount}">${amount} OMR</option></select></label>
+        </div>`,
+    },
+    samsung_pay: {
+      logo: 'S',
+      fields: `
+        <div class="card" style="text-align:center;">
+          <strong>Samsung Pay Account</strong>
+          <p class="field-note">•••• 8808 · Available balance: 35.500 OMR</p>
+          <label>Payable amount<select required><option value="${amount}">${amount} OMR</option></select></label>
+        </div>`,
+    },
+  }[payment_method];
+
+  document.getElementById('mockGatewayLogo').textContent = methodUi.logo;
+  document.getElementById('mockGatewayTitle').textContent = paymentMethodLabel(payment_method);
+  document.getElementById('mockGatewaySubtitle').textContent =
+    getLanguage() === 'ar' ? `طلب رقم ${applicationId} · دفع آمن` : `Application #${applicationId} · Secure payment`;
+  document.getElementById('mockGatewayDemo').textContent =
+    getLanguage() === 'ar' ? 'دفع تدريبي — لن يتم خصم أي أموال.' : 'TRAINING PAYMENT — No money will be charged.';
+  document.getElementById('mockGatewayAmountLabel').textContent =
+    getLanguage() === 'ar' ? 'المبلغ المستحق' : 'Amount payable';
+  document.getElementById('mockGatewayAmount').textContent = amount;
+  document.getElementById('mockGatewayFields').innerHTML = methodUi.fields;
+  const cancelButton = document.getElementById('mockGatewayCancel');
+  cancelButton.style.display = '';
+  cancelButton.textContent = getLanguage() === 'ar' ? 'إلغاء' : 'Cancel';
+  const payButton = document.getElementById('mockGatewayPay');
+  payButton.disabled = false;
+  payButton.textContent = `${getLanguage() === 'ar' ? 'ادفع' : 'Pay'} ${amount} OMR`;
+  modal.classList.add('open');
+}
+
+function closeMockPaymentGateway() {
+  document.getElementById('paymentGatewayModal')?.classList.remove('open');
+}
+
+async function confirmMockPayment() {
+  const modal = document.getElementById('paymentGatewayModal');
+  const firstInvalid = modal.querySelector('input[required]:invalid');
+  if (firstInvalid) {
+    firstInvalid.reportValidity();
+    return;
+  }
+  const taskId = modal.dataset.taskId;
+  const applicationId = modal.dataset.applicationId;
+  const payment_method = modal.dataset.paymentMethod;
+  const payButton = document.getElementById('mockGatewayPay');
+  payButton.disabled = true;
+  payButton.textContent = getLanguage() === 'ar' ? 'جارٍ معالجة الدفع…' : 'Processing payment…';
   const res = await fetch(`/api/tasks/${taskId}/complete`, {
     method: 'POST', headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
       applicationId,
-      applicationUpdate: { status: 'field_visit_scheduled', payment_method },
+      applicationUpdate: { status: 'field_visit_scheduled', payment_method, final_fee: Number(modal.dataset.amount) },
     })
   });
   if (!res.ok) {
     const data = await res.json().catch(() => ({}));
     log('ERROR payment: ' + JSON.stringify(data));
     alert(data.error || 'Payment failed');
+    payButton.disabled = false;
+    payButton.textContent = `${getLanguage() === 'ar' ? 'ادفع' : 'Pay'} ${modal.dataset.amount} OMR`;
     return;
   }
-  log(`Mock ${paymentMethodLabel(payment_method)} payment completed for application #${applicationId}`);
-  loadTasks('applicant'); loadApplications();
+  document.getElementById('mockGatewayFields').innerHTML = `
+    <div style="padding:18px;text-align:center;">
+      <div style="display:grid;place-items:center;width:62px;height:62px;margin:0 auto 12px;border-radius:50%;background:var(--success);color:#fff;font-size:32px;">✓</div>
+      <h2 style="margin:0 0 6px;color:var(--success);">${getLanguage() === 'ar' ? 'تم الدفع بنجاح' : 'Payment successful'}</h2>
+      <p class="field-note">${paymentMethodLabel(payment_method)} · ${modal.dataset.amount} OMR</p>
+    </div>`;
+  document.getElementById('mockGatewayCancel').style.display = 'none';
+  payButton.textContent = getLanguage() === 'ar' ? 'تم الدفع ✓' : 'Paid successfully ✓';
+  log(`${paymentMethodLabel(payment_method)} payment completed for application #${applicationId}.`);
+  setTimeout(() => {
+    closeMockPaymentGateway();
+    loadTasks('applicant');
+    loadApplications();
+  }, 1800);
 }
 
 async function completeSpecialistTask(taskId, applicationId) {
@@ -3784,13 +4574,13 @@ async function addFieldLive() {
 
   if (!typed) { showFieldKeyError('Field key is required.'); return; }
   if (!field || !/^[a-z][a-z0-9_]*$/.test(field)) {
-    showFieldKeyError('Field key must be snake_case (lowercase letters, numbers, underscores — no spaces), e.g. screening_date.');
+    showFieldKeyError('Use a short record name with letters, numbers, or underscores, for example screening_date.');
     return;
   }
   // Soft-correct Title Case / spaces so demo typing like "Date" still works.
   if (field !== typed) {
     keyInput.value = field;
-    log(`Field key normalized to "${field}" (snake_case)`);
+    log(`Field name adjusted to "${field}".`);
   }
   clearFieldKeyError();
 
@@ -3817,7 +4607,7 @@ async function addFieldLive() {
       overrides[field] = labelAr;
       localStorage.setItem('omanArFieldLabels', JSON.stringify(overrides));
     }
-    log(`Field "${field}" added live to license_applications (${kind}) — reflected on the Applicant form now in both languages`);
+    log(`Field "${field}" added to the application form.`);
     document.getElementById('admFieldKey').value = '';
     document.getElementById('admFieldLabel').value = '';
     document.getElementById('admFieldLabelAr').value = '';
@@ -3834,20 +4624,20 @@ async function loadEligibilityRule() {
   if (!res.ok) { log('ERROR loading eligibility rule: ' + r.error); return; }
   document.getElementById('admReqCr').checked = r.requireCommercialRegistration;
   document.getElementById('admReqPrior').checked = r.requirePriorPracticeLicense;
-  log(`Current live eligibility rule: CR required = ${r.requireCommercialRegistration}, Prior License required = ${r.requirePriorPracticeLicense}`);
+  log(`Eligibility requirements loaded. CR required: ${r.requireCommercialRegistration ? 'Yes' : 'No'}; prior licence required: ${r.requirePriorPracticeLicense ? 'Yes' : 'No'}.`);
 }
 
 async function applyEligibilityRule() {
   const requireCommercialRegistration = document.getElementById('admReqCr').checked;
   const requirePriorPracticeLicense = document.getElementById('admReqPrior').checked;
-  if (!confirm(`Apply this eligibility rule live?\n\nRequire valid Commercial Registration: ${requireCommercialRegistration ? 'Yes' : 'No'}\nRequire valid prior Practice License: ${requirePriorPracticeLicense ? 'Yes' : 'No'}\n\nThis redeploys the decision table to Camunda immediately.`)) return;
+  if (!confirm(`Save these eligibility requirements?\n\nValid Commercial Registration required: ${requireCommercialRegistration ? 'Yes' : 'No'}\nValid prior Practice Licence required: ${requirePriorPracticeLicense ? 'Yes' : 'No'}\n\nThe change will apply to new applications.`)) return;
   const res = await fetch('/api/admin/eligibility-rule', {
     method: 'POST', headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ requireCommercialRegistration, requirePriorPracticeLicense })
   });
   const data = await res.json();
   if (!res.ok) { log('ERROR applying eligibility rule: ' + data.error); return; }
-  log(`Eligibility rule applied live: CR required = ${data.requireCommercialRegistration}, Prior License required = ${data.requirePriorPracticeLicense}. Redeployed to Camunda.`);
+  log(`Eligibility requirements saved. CR required: ${data.requireCommercialRegistration ? 'Yes' : 'No'}; prior licence required: ${data.requirePriorPracticeLicense ? 'Yes' : 'No'}.`);
 }
 
 async function testEligibility(validCommercialRegistration, validPriorPracticeLicense) {
@@ -3861,7 +4651,7 @@ async function testEligibility(validCommercialRegistration, validPriorPracticeLi
   const eligibleWord = getLanguage() === 'ar' ? 'مؤهل' : 'Eligible';
   const notEligibleWord = getLanguage() === 'ar' ? 'غير مؤهل' : 'Not Eligible';
   document.getElementById(targetId).textContent = data.eligible ? `${eligibleWord} (${omr(data.finalFee)})` : notEligibleWord;
-  log(`Test evaluation (CR=${validCommercialRegistration}, PriorLicense=${validPriorPracticeLicense}): eligible=${data.eligible}`);
+  log(`Eligibility check completed: ${data.eligible ? 'Eligible' : 'Not eligible'}.`);
 }
 
 async function loadSla() {
@@ -3869,26 +4659,26 @@ async function loadSla() {
   const s = await res.json();
   if (!res.ok) { log('ERROR loading SLA: ' + s.error); return; }
   document.getElementById('admSlaMinutes').value = s.slaMinutes;
-  log(`Current live SLA threshold: ${s.slaMinutes} minute(s)`);
+  log(`Review time limit: ${s.slaMinutes} minute(s).`);
 }
 
 async function applySla() {
   const slaMinutes = Number(document.getElementById('admSlaMinutes').value);
-  if (!confirm(`Apply this SLA threshold live?\n\nHead of Section review must complete within ${slaMinutes} minute(s), or it escalates automatically.\n\nThis redeploys the process to Camunda immediately — including for anyone currently mid-review.`)) return;
+  if (!confirm(`Save a review time limit of ${slaMinutes} minute(s)?\n\nOverdue reviews will be escalated automatically.`)) return;
   const res = await fetch('/api/admin/sla', {
     method: 'POST', headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ slaMinutes })
   });
   const data = await res.json();
   if (!res.ok) { log('ERROR applying SLA: ' + data.error); return; }
-  log(`SLA threshold applied live: ${data.slaMinutes} minute(s). Redeployed to Camunda — next Head of Section review uses this timer.`);
+  log(`Review time limit saved: ${data.slaMinutes} minute(s).`);
 }
 
 async function loadSchedule() {
   const res = await fetch('/api/admin/schedule');
   const s = await res.json();
   document.getElementById('admLeadDays').value = s.fieldVisitLeadTimeDays;
-  log(`Current live field visit lead time: ${s.fieldVisitLeadTimeDays} day(s)`);
+  log(`Field visit scheduling: ${s.fieldVisitLeadTimeDays} day(s) after payment.`);
 }
 
 async function applySchedule() {
@@ -3900,7 +4690,7 @@ async function applySchedule() {
   });
   const data = await res.json();
   if (!res.ok) { log('ERROR applying schedule: ' + data.error); return; }
-  log(`Field visit lead time applied live: ${data.fieldVisitLeadTimeDays} day(s). Next auto-scheduled visit will recalculate using this value.`);
+  log(`Field visit schedule saved: ${data.fieldVisitLeadTimeDays} day(s) after payment.`);
 }
 
 async function snapshotPipeline() {
@@ -3910,20 +4700,20 @@ async function snapshotPipeline() {
   const pre = document.getElementById('pipelineSnapshot');
   pre.style.display = 'block';
   pre.textContent = JSON.stringify(snap, null, 2);
-  log('DEV config snapshot taken — review before approving promotion to UAT.');
+  log('Current service settings are ready for review.');
 }
 
 async function promotePipeline() {
   const approved = document.getElementById('pipelineApproved').checked;
   const approvedBy = document.getElementById('pipelineApprover').value.trim();
-  if (!confirm(`Promote the current DEV configuration to UAT as "${approvedBy || 'Unspecified Approver'}"?\n\n(Simulated — this sandbox has one environment — but it will add a real entry to the version log below.)`)) return;
+  if (!confirm(`Approve the current service settings as "${approvedBy || 'Unspecified Approver'}"?\n\nThis approval will be added to the history below.`)) return;
   const res = await fetch('/api/admin/pipeline/promote', {
     method: 'POST', headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ approved, approvedBy })
   });
   const data = await res.json();
   if (!res.ok) { log('ERROR promoting: ' + data.error); return; }
-  log(`[SIMULATED] Promoted to UAT — deployment ${data.deploymentId}, approved by ${data.approvedBy}.`);
+  log(`Service settings approved by ${data.approvedBy}. Reference: ${data.deploymentId}.`);
   document.getElementById('pipelineApproved').checked = false;
   loadPipelineLog();
 }
@@ -4153,7 +4943,7 @@ async function loadCanvasProcess() {
     if (document.body.classList.contains('mobile-frame')) canvasZoomFit();
     else canvasApplyZoom();
   });
-  log(`Loaded process canvas "${canvas.processName}" (${canvasShapes.length} shapes, ${canvasConnections.length} arrows)`);
+  log(`Approval process loaded with ${canvasShapes.length} steps and ${canvasConnections.length} connections.`);
 }
 
 function canvasAddShape(type) {
@@ -4174,8 +4964,8 @@ function canvasRemoveShape(id) {
   if (!s) return;
   const affectedArrows = canvasConnections.filter((c) => c.from === id || c.to === id).length;
   const warning = affectedArrows
-    ? `Delete "${s.name}"? This will also remove ${affectedArrows} arrow${affectedArrows > 1 ? 's' : ''} connected to it. This isn't live until you click "Save & Deploy."`
-    : `Delete "${s.name}"? This isn't live until you click "Save & Deploy."`;
+    ? `Delete "${s.name}"? This will also remove ${affectedArrows} connected line${affectedArrows > 1 ? 's' : ''}. The published process will not change until you select Publish.`
+    : `Delete "${s.name}"? The published process will not change until you select Publish.`;
   if (!confirm(warning)) return;
   canvasShapes = canvasShapes.filter((x) => x.id !== id);
   canvasConnections = canvasConnections.filter((c) => c.from !== id && c.to !== id);
@@ -4320,7 +5110,7 @@ function canvasContainerMouseUp(ev) {
           conn.from = nextFrom;
           conn.to = nextTo;
           delete conn.bend;
-          log(`Arrow reconnected: ${nextFrom} → ${nextTo}`);
+          log('Process connection updated.');
         }
       }
     }
@@ -4350,7 +5140,7 @@ function canvasEditConnectionLabel(id) {
 }
 
 function canvasDeleteConnection(id) {
-  if (!confirm('Delete this arrow? This isn\'t live until you click "Save & Deploy."')) return;
+  if (!confirm('Delete this connection? The published process will not change until you select Publish.')) return;
   canvasConnections = canvasConnections.filter((c) => c.id !== id);
   renderCanvasAll();
 }
@@ -4666,7 +5456,7 @@ function renderCanvasPropertyPanel() {
     const opts = canvasAutomaticActions.map((a) => `<option value="${a.value}" ${s.action === a.value ? 'selected' : ''}>${a.label}</option>`).join('');
     fields = `<label>What happens automatically?</label><select onchange="canvasUpdateShape('${s.id}','action',this.value)"><option value="">Choose...</option>${opts}</select>`;
   } else if (s.type === 'decision') {
-    fields = `<label>Rule to check (DMN key)</label><input value="${s.decisionKey || ''}" placeholder="cinema_eligibility_and_fee" oninput="canvasUpdateShape('${s.id}','decisionKey',this.value)" /><div class="field-note">Needs exactly 2 outgoing arrows, labeled "Eligible" and "Not Eligible".</div>`;
+    fields = `<label>Requirement</label><input value="Application eligibility" disabled /><div class="field-note">Connect this step to two outcomes: Eligible and Not Eligible.</div>`;
   } else if (s.type === 'approval') {
     fields = `
       <label>Who approves this?</label><input value="${s.candidateGroup || ''}" placeholder="e.g. head_of_section" oninput="canvasUpdateShape('${s.id}','candidateGroup',this.value)" />
@@ -4700,8 +5490,7 @@ function canvasUpdateTimer(id, field, value) {
 }
 
 async function saveCanvasProcess() {
-  if (!confirm(`Deploy this process live?\n\n${canvasShapes.length} shape(s), ${canvasConnections.length} arrow(s). This redeploys "${CANVAS_PROCESS_KEY}" to Camunda immediately — new applications will use this version; already-running ones keep their original.`)) return;
-  const res = await fetch(`/api/admin/process-canvas/${CANVAS_PROCESS_KEY}`, {
+  const res = await fetch(`/api/admin/process-canvas/${CANVAS_PROCESS_KEY}/save`, {
     method: 'POST', headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ processName: 'Cinema Film Screening License', shapes: canvasShapes, connections: canvasConnections })
   });
@@ -4714,8 +5503,27 @@ async function saveCanvasProcess() {
     return;
   }
   status.style.color = '#166534';
-  status.textContent = `Saved and deployed as version ${data.version}.`;
-  log(`Process canvas saved & redeployed live — Camunda version ${data.version}. New applications use this immediately; already-running ones keep their original version.`);
+  status.textContent = getLanguage() === 'ar' ? 'تم حفظ المسودة. لم يتم نشرها بعد.' : 'Draft saved. It has not been published.';
+  log('Approval process draft saved.');
+}
+
+async function deployCanvasProcess() {
+  if (!confirm(`Publish this approval process?\n\nIt contains ${canvasShapes.length} step(s) and ${canvasConnections.length} connection(s). New applications will use it; applications already in progress will continue with their current process.`)) return;
+  const res = await fetch(`/api/admin/process-canvas/${CANVAS_PROCESS_KEY}/deploy`, {
+    method: 'POST', headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ processName: 'Cinema Film Screening License', shapes: canvasShapes, connections: canvasConnections })
+  });
+  const data = await res.json();
+  const status = document.getElementById('canvasStatus');
+  if (!data.ok) {
+    status.style.color = '#b91c1c';
+    status.textContent = 'Could not publish: ' + (data.validationErrors || [data.error]).join(' ');
+    log('ERROR publishing approval process: ' + (data.validationErrors || [data.error]).join(' '));
+    return;
+  }
+  status.style.color = '#166534';
+  status.textContent = `${getLanguage() === 'ar' ? 'تم نشر الإصدار' : 'Published version'} ${data.version}.`;
+  log(`Approval process published as version ${data.version}.`);
 }
 
 // Mirrors the exact rule server.js enforces on POST /api/admin/pricing —
@@ -4752,7 +5560,7 @@ async function loadPricing() {
   document.getElementById('admBaseFee').value = p.baseFee;
   document.getElementById('admSmeDiscount').value = p.smeDiscountPct;
   recalcPricingPreview();
-  log(`Current live pricing: base fee ${p.baseFee} OMR, Riyada discount ${p.smeDiscountPct}% (SME fee ${p.smeFinalFee} OMR)`);
+  log(`Service fees loaded: standard fee ${p.baseFee} OMR; Riyada discount ${p.smeDiscountPct}%.`);
 }
 
 async function applyPricing() {
@@ -4768,14 +5576,14 @@ async function applyPricing() {
   }
   const smePreview = document.getElementById('admSmePreview').textContent;
   const stdPreview = document.getElementById('admStandardPreview').textContent;
-  if (!confirm(`Apply this fee change live?\n\nStandard fee: ${stdPreview}\nSME/Riyada fee: ${smePreview}\n\nThis redeploys the decision table to Camunda immediately — the very next submitted application will be charged this amount.`)) return;
+  if (!confirm(`Save these service fees?\n\nStandard fee: ${stdPreview}\nRiyada fee: ${smePreview}\n\nThe change will apply to new applications.`)) return;
   const res = await fetch('/api/admin/pricing', {
     method: 'POST', headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ baseFee, smeDiscountPct })
   });
   const data = await res.json();
   if (!res.ok) { log('ERROR applying pricing: ' + data.error); return; }
-  log(`Pricing applied live: base fee now ${data.baseFee} OMR, Riyada discount ${data.smeDiscountPct}% → SME fee ${data.smeFinalFee} OMR, standard fee ${data.standardFinalFee} OMR. Redeployed to Camunda — next submission uses this immediately.`);
+  log(`Service fees saved: standard ${data.standardFinalFee} OMR; Riyada ${data.smeFinalFee} OMR.`);
 }
 
 // ============================= DASHBOARD =============================
@@ -4783,7 +5591,7 @@ async function applyPricing() {
 const WIDGET_METRICS = [
   { key: 'requestsReceived', label: 'Requests Received', fmt: 'number' },
   { key: 'eligiblePct', label: '% Meeting Conditions', fmt: 'percent' },
-  { key: 'slaCompletionPct', label: 'SLA Completion Rate', fmt: 'percent' },
+  { key: 'slaCompletionPct', label: 'Reviews Completed on Time', fmt: 'percent' },
   { key: 'approved', label: 'Approved', fmt: 'number' },
   { key: 'rejected', label: 'Rejected', fmt: 'number' },
   { key: 'revisionLoopCount', label: 'Went Through Revision Loop', fmt: 'number' },
@@ -4792,7 +5600,7 @@ const WIDGET_METRICS = [
   { key: 'pendingApplicant', label: 'Pending — Applicant (Pay Fee)', fmt: 'number' },
   { key: 'pendingSpecialist', label: 'Pending — Specialist Queue', fmt: 'number' },
   { key: 'pendingHeadOfSection', label: 'Pending — Head of Section Queue', fmt: 'number' },
-  { key: 'slaBreaches', label: 'SLA Breaches (escalated)', fmt: 'number' },
+  { key: 'slaBreaches', label: 'Overdue Reviews', fmt: 'number' },
   { key: 'pendingEvaluation', label: 'Pending Eligibility Evaluation', fmt: 'number' },
 ];
 
@@ -4830,7 +5638,7 @@ async function loadDashboard() {
   lastCoreTilesHtml = [
     kpiTile(`Requests Received (${m.requestsReceivedPeriod})`, formatMetric('number', m.requestsReceived)),
     kpiTile(`% Meeting Conditions (${m.eligiblePctPeriod})`, formatMetric('percent', m.eligiblePct), eligibleBadge),
-    kpiTile(`SLA Completion Rate (${m.slaCompletionPctPeriod})`, formatMetric('percent', m.slaCompletionPct), slaBadge),
+    kpiTile(`Reviews Completed on Time (${m.slaCompletionPctPeriod})`, formatMetric('percent', m.slaCompletionPct), slaBadge),
     kpiTile('Approved', formatMetric('number', m.approved)),
     kpiTile('Rejected', formatMetric('number', m.rejected)),
     kpiTile('Went Through Revision Loop', formatMetric('number', m.revisionLoopCount)),
@@ -4838,7 +5646,7 @@ async function loadDashboard() {
   ].join('');
 
   renderWidgets();
-  log(`Dashboard refreshed: ${m.requestsReceived} requests, ${formatMetric('percent', m.eligiblePct)} meeting conditions, ${formatMetric('percent', m.slaCompletionPct)} SLA completion`);
+  log(`Service overview refreshed: ${m.requestsReceived} applications; ${formatMetric('percent', m.eligiblePct)} met the requirements.`);
 }
 
 function loadWidgetOptions() {

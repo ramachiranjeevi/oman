@@ -65,6 +65,16 @@ export async function listApplications() {
   return data;
 }
 
+export async function findApplicationByIdentity(crNumber, civilId) {
+  const cr = encodeURIComponent(String(crNumber || '').trim());
+  const civil = encodeURIComponent(String(civilId || '').trim());
+  const { data } = await directusFetch(
+    `/items/license_applications?filter%5Bcr_number%5D%5B_eq%5D=${cr}`
+    + `&filter%5Bcivil_id%5D%5B_eq%5D=${civil}&sort=-date_created&limit=1`,
+  );
+  return data[0] || null;
+}
+
 export async function getApplicationByLicenseQr(code) {
   const filter = encodeURIComponent(String(code || ''));
   const { data } = await directusFetch(

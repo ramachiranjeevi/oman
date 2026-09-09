@@ -37,28 +37,20 @@ const MOCK_BUSINESSES = [
   'Sur Coastal Media Est.',
 ];
 
-/** Civil IDs with no ROP record in this simulation (format may still be valid). */
-const CIVIL_NO_RECORD = new Set([
-  '12345678', // common demo “not found”
-  '00000000',
-  '11111111',
-  '99999999',
-]);
-
-/** CR numbers with no active registration in this simulation. */
-const CR_NO_RECORD = new Set([
-  '1234568', // common demo “not found”
-  '0000000',
-  '1111111',
-  '9999999',
-]);
-
 function isSevenDigits(v) {
   return /^\d{7}$/.test(String(v || '').trim());
 }
 
 function isEightDigits(v) {
   return /^\d{8}$/.test(String(v || '').trim());
+}
+
+function isBlockedDemoNumber(digits) {
+  return digits.startsWith('1');
+}
+
+function shouldFailCommercialRegistration(digits) {
+  return isBlockedDemoNumber(digits) && Number(digits[digits.length - 1]) % 2 === 0;
 }
 
 function pickIndex(digits, size) {
@@ -71,15 +63,12 @@ function pickIndex(digits, size) {
 export function lookupCommercialRegistration(crNumber) {
   const digits = String(crNumber || '').trim();
   const formatOk = isSevenDigits(digits);
-  const listedMissing = CR_NO_RECORD.has(digits);
-  // Also treat CRs ending in 000 as inactive (extra demo miss cases).
-  const endsInactive = formatOk && digits.endsWith('000');
-  const valid = formatOk && !listedMissing && !endsInactive;
+  const valid = formatOk && !shouldFailCommercialRegistration(digits);
   const biz = valid ? MOCK_BUSINESSES[pickIndex(digits, MOCK_BUSINESSES.length)] : null;
 
   let message;
   if (!formatOk) {
-    message = 'No active Commercial Registration found for this number (must be 7 digits for this simulation).';
+    message = 'Commercial Registration number must contain 7 digits.';
   } else if (!valid) {
     message = 'No active Commercial Registration found for this number.';
   } else {
@@ -99,13 +88,12 @@ export function lookupCommercialRegistration(crNumber) {
 export function lookupCivilStatus(civilId) {
   const digits = String(civilId || '').trim();
   const formatOk = isEightDigits(digits);
-  // No record: listed IDs, or last digit 0 (demo “citizen not found”).
-  const noRecord = !formatOk || CIVIL_NO_RECORD.has(digits) || digits.endsWith('0');
+  const noRecord = !formatOk;
   const citizen = !noRecord ? MOCK_CITIZENS[pickIndex(digits, MOCK_CITIZENS.length)] : null;
 
   let message;
   if (!formatOk) {
-    message = 'No civil record found (must be 8 digits for this simulation).';
+    message = 'Civil ID must contain 8 digits.';
   } else if (!citizen) {
     message = 'No civil record found for this Civil ID.';
   } else {
@@ -124,12 +112,14 @@ export function lookupCivilStatus(civilId) {
   };
 }
 
-export function lookupPracticeLicense(civilId) {
+export function lookupPracticeLicense(civilId, crNumber = '') {
   const digits = String(civilId || '').trim();
+  const crDigits = String(crNumber || '').trim();
   const formatOk = isEightDigits(digits);
-  // License on file when civil record exists and last digit is even (and not 0).
-  const last = formatOk ? Number(digits[digits.length - 1]) : -1;
-  const found = formatOk && !CIVIL_NO_RECORD.has(digits) && last > 0 && last % 2 === 0;
+  const restrictedScenario = isBlockedDemoNumber(digits) || isBlockedDemoNumber(crDigits);
+  // For numbers beginning with 1, exactly one business requirement fails:
+  // an even-ending CR fails registration; otherwise the prior licence fails.
+  const found = formatOk && (!restrictedScenario || shouldFailCommercialRegistration(crDigits));
   return {
     simulated: true,
     source: 'Internal Lookup — Cinema Screening Practice License Register (SIMULATED)',
