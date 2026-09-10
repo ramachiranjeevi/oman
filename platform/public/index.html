@@ -6,9 +6,11 @@
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <link rel="preconnect" href="https://fonts.googleapis.com" />
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet" />
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Arabic:wght@400;500;600;700&family=Source+Sans+3:ital,wght@0,400;0,500;0,600;0,700;1,400&display=swap" rel="stylesheet" />
 <style>
   :root {
+    --font-sans: "Source Sans 3", "Noto Sans Arabic", "Segoe UI", Tahoma, sans-serif;
+    --font-mono: "Cascadia Mono", "Consolas", "IBM Plex Mono", monospace;
     --bg: #f5f7fb;
     --text: #202938;
     --text-muted: #5f6b7a;
@@ -50,7 +52,7 @@
   html[data-text-size="comfortable"] { font-size: 18.5px; }
   html[data-text-size="large"] { font-size: 21px; }
   body {
-    font-family: 'IBM Plex Sans', 'IBM Plex Sans Arabic', sans-serif;
+    font-family: var(--font-sans);
     max-width: 1120px;
     margin: 1rem auto;
     padding: 0 1.1rem 0;
@@ -58,13 +60,17 @@
     background:
       linear-gradient(180deg, #ebe4dc 0%, var(--bg) 180px),
       var(--bg);
-    line-height: 1.6;
+    line-height: 1.65;
+    letter-spacing: .01em;
     font-weight: 400;
     font-size: 1rem;
+    font-optical-sizing: auto;
+    text-rendering: optimizeLegibility;
     -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
     transition: font-size .15s ease;
   }
-  [dir="rtl"] body { line-height: 1.7; }
+  [dir="rtl"] body { line-height: 1.8; letter-spacing: 0; }
   h1 {
     font-size: 1.5rem;
     margin: 0;
@@ -130,7 +136,7 @@
   .pagination-size { display: flex; align-items: center; gap: .4rem; font-size: .875rem; color: var(--text); }
   .pagination-size select { width: auto; margin-top: 0; padding: .3rem .45rem; min-height: auto; }
   .tag { display: inline-block; padding: .15rem .5rem; border-radius: 4px; background: var(--tag-bg); color: var(--text); font-size: .8125rem; font-weight: 500; white-space: nowrap; }
-  #log { white-space: pre-wrap; background: var(--log-bg); padding: .65rem .75rem; font-size: .875rem; border-radius: var(--radius); max-height: 140px; overflow: auto; color: var(--text); border: 1px solid var(--border); font-family: 'Consolas', 'IBM Plex Mono', monospace; line-height: 1.5; }
+  #log { white-space: pre-wrap; background: var(--log-bg); padding: .65rem .75rem; font-size: .875rem; border-radius: var(--radius); max-height: 140px; overflow: auto; color: var(--text); border: 1px solid var(--border); font-family: var(--font-mono); line-height: 1.5; }
   .field-note { font-size: .875rem; color: var(--text); margin-top: .25rem; line-height: 1.55; font-weight: 400; opacity: .88; }
   .field-control { display: flex; flex-direction: column; min-width: 0; width: 100%; }
   .field-error {
@@ -205,7 +211,7 @@
     min-height: 58px; padding: .75rem .65rem .75rem .85rem;
     display: flex; align-items: center; gap: .4rem;
     color: var(--primary); background: var(--kpi-bg);
-    border-bottom: 1px solid var(--border); font-size: .75rem; font-weight: 600;
+    border-bottom: 1px solid var(--border); font-size: .75rem; font-weight: 500;
     letter-spacing: .045em; text-transform: uppercase;
   }
   .applicant-side-title > span { overflow: hidden; white-space: nowrap; }
@@ -251,7 +257,7 @@
   }
   .applicant-parent-link[aria-expanded="true"] .applicant-nav-chevron { transform: rotate(90deg); }
   [dir="rtl"] .applicant-parent-link[aria-expanded="true"] .applicant-nav-chevron { transform: rotate(-90deg); }
-  .applicant-parent-link.has-active-child { color: var(--primary); font-weight: 600; }
+  .applicant-parent-link.has-active-child { color: var(--primary); font-weight: 500; }
   .applicant-submenu { display: none; background: color-mix(in srgb, var(--kpi-bg) 55%, var(--card-bg)); }
   .applicant-submenu.open { display: block; }
   .applicant-side-nav .applicant-submenu button {
@@ -261,7 +267,7 @@
   .applicant-side-nav .applicant-submenu button::before {
     content: ""; width: 8px; height: 1px; flex: none; background: var(--border);
   }
-  .applicant-side-nav .applicant-submenu button.active { font-weight: 600; }
+  .applicant-side-nav .applicant-submenu button.active { font-weight: 500; }
   .applicant-workspace {
     min-width: 0; margin-inline-start: 0;
   }
@@ -362,7 +368,7 @@
     box-shadow: none;
   }
   #dynamicForm.applicant-form-grid .af-cell { display: flex; flex-direction: column; min-width: 0; }
-  #dynamicForm.applicant-form-grid .af-cell label { margin-top: 0; font-size: .8rem; font-weight: 600; }
+  #dynamicForm.applicant-form-grid .af-cell label { margin-top: 0; font-size: .85rem; font-weight: 400; }
   #dynamicForm.applicant-form-grid .af-cell input,
   #dynamicForm.applicant-form-grid .af-cell select,
   #dynamicForm.applicant-form-grid .af-cell textarea {
@@ -412,7 +418,7 @@
   .verified-identity-item span { display: block; margin: 0; color: var(--muted); font-size: .66rem; line-height: 1.2; }
   .verified-identity-item strong {
     display: block; overflow: hidden; margin-top: .08rem; font-size: .78rem;
-    font-weight: 600; text-overflow: ellipsis; white-space: nowrap;
+    font-weight: 500; text-overflow: ellipsis; white-space: nowrap;
   }
   @media (max-width: 1200px) {
     #dynamicForm.applicant-form-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
@@ -451,7 +457,7 @@
   .fg-card:hover { border-color: color-mix(in srgb, var(--primary) 45%, var(--border)); box-shadow: var(--shadow); transform: translateY(-1px); }
   .fg-card-icon {
     flex: 0 0 36px; display: grid; place-items: center; width: 36px; height: 36px;
-    border-radius: 10px; color: var(--primary); background: var(--primary-light); font-size: 16px; font-weight: 800;
+    border-radius: 10px; color: var(--primary); background: var(--primary-light); font-size: 16px; font-weight: 500;
   }
   .fg-card-main { min-width: 0; display: flex; flex: 1; flex-direction: column; gap: .3rem; padding-inline-end: 54px; }
   .fg-card-top { display: flex; flex-wrap: wrap; align-items: center; gap: .35rem .5rem; min-width: 0; }
@@ -459,7 +465,7 @@
     color: var(--muted); background: transparent; font-size: .72rem; font-weight: 500; word-break: break-all; max-width: 100%;
   }
   .fg-card-label {
-    color: var(--text); font-size: .94rem; font-weight: 600; line-height: 1.35; word-break: break-word;
+    color: var(--text); font-size: .94rem; font-weight: 500; line-height: 1.35; word-break: break-word;
   }
   .fg-card-note { color: var(--muted); font-size: .75rem; line-height: 1.35; }
   .fg-card-actions {
@@ -522,7 +528,7 @@
   .approval-section:last-child { margin-bottom: 0; }
   .approval-section-title {
     margin: 0 0 .55rem; padding-bottom: .35rem; border-bottom: 1px solid #dfd2c2;
-    color: var(--primary); font-size: .875rem; font-weight: 700; letter-spacing: .03em;
+    color: var(--primary); font-size: .875rem; font-weight: 500; letter-spacing: .02em;
     text-transform: uppercase;
   }
   .approval-fields { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: .5rem 1.25rem; }
@@ -531,10 +537,10 @@
     gap: .65rem; align-items: baseline; padding: .45rem 0; border-bottom: 1px dashed #e7ded2;
   }
   .approval-fields .afs-key { min-width: 0; font-size: .8125rem; color: #6d6255; opacity: 1; }
-  .approval-fields .afs-val { font-weight: 600; word-break: break-word; }
+  .approval-fields .afs-val { font-weight: 500; word-break: break-word; }
   .approval-value-yes, .approval-value-no {
     display: inline-flex; align-items: center; width: fit-content; padding: .16rem .5rem;
-    border-radius: 999px; font-size: .8125rem; font-weight: 700;
+    border-radius: 999px; font-size: .8125rem; font-weight: 500;
   }
   .approval-value-yes { background: var(--success-bg); color: var(--success); }
   .approval-value-no { background: var(--danger-bg); color: var(--danger); }
@@ -770,11 +776,11 @@
     background: var(--card-bg); color: var(--text); box-shadow: 0 24px 70px rgba(0,0,0,.35);
   }
   .mock-gateway-head { display: flex; align-items: center; gap: 12px; padding: 18px 22px; color: #fff; background: #244893; }
-  .mock-gateway-logo { display: grid; place-items: center; width: 42px; height: 42px; border-radius: 12px; background: var(--primary); font-weight: 900; }
+  .mock-gateway-logo { display: grid; place-items: center; width: 42px; height: 42px; border-radius: 12px; background: var(--primary); font-weight: 500; }
   .mock-gateway-head strong { display: block; font-size: 17px; }
   .mock-gateway-head small { color: #dbe5fa; }
   .mock-gateway-body { padding: 22px; }
-  .mock-gateway-demo { margin-bottom: 16px; padding: 8px 11px; border-radius: 8px; color: #7a4b00; background: #fff4d6; font-size: 12px; font-weight: 700; }
+  .mock-gateway-demo { margin-bottom: 16px; padding: 8px 11px; border-radius: 8px; color: #7a4b00; background: #fff4d6; font-size: 13px; font-weight: 500; }
   .mock-gateway-amount { margin-bottom: 18px; padding: 16px; border: 1px solid var(--border); border-radius: 12px; text-align: center; background: var(--page-bg); }
   .mock-gateway-amount small { display: block; margin-bottom: 3px; color: var(--muted); }
   .mock-gateway-amount strong { font-size: 30px; }
@@ -782,6 +788,23 @@
   .mock-gateway-fields label:first-child { grid-column: 1 / -1; }
   .mock-gateway-actions { display: flex; gap: 10px; margin-top: 20px; }
   .mock-gateway-actions button { flex: 1; }
+  .mock-gateway-actions button:disabled {
+    opacity: .55; cursor: not-allowed; transform: none; box-shadow: none;
+  }
+  .mock-pay-balance {
+    display: flex; justify-content: space-between; align-items: center; gap: .75rem;
+    margin-bottom: 12px; padding: .75rem .9rem; border-radius: 10px;
+    border: 1px solid var(--success); background: var(--success-bg);
+  }
+  .mock-pay-balance.is-insufficient {
+    border-color: var(--danger); background: var(--danger-bg); color: var(--danger);
+  }
+  .mock-pay-balance strong { white-space: nowrap; }
+  .mock-pay-insufficiency {
+    margin: 0 0 12px; padding: .7rem .85rem; border-radius: 8px;
+    border: 1px solid var(--danger); background: var(--danger-bg);
+    color: var(--danger); font-size: .875rem; font-weight: 500; line-height: 1.4;
+  }
   @media (max-width: 520px) {
     .mock-gateway-fields { grid-template-columns: 1fr; }
     .mock-gateway-fields label:first-child { grid-column: auto; }
@@ -978,13 +1001,14 @@
   .brand-row { display: flex; align-items: center; gap: .85rem; margin-bottom: .35rem; }
   .brand-logo {
     width: 56px; height: 56px; flex-shrink: 0; border-radius: 50%;
-    background: radial-gradient(circle at 35% 30%, #2a2a2a 0%, #111 70%);
-    border: 2px solid var(--accent);
+    background: transparent;
+    border: 0;
     display: flex; align-items: center; justify-content: center;
-    overflow: hidden; box-shadow: 0 2px 8px rgba(0,0,0,.12);
+    overflow: hidden;
+    box-shadow: 0 4px 14px rgba(29, 60, 125, .22);
   }
   .brand-logo img {
-    width: 100%; height: 100%; object-fit: cover; display: block;
+    width: 100%; height: 100%; object-fit: contain; display: block;
   }
   .brand-text .brand-kicker {
     margin: 0 0 .1rem; font-size: .75rem; letter-spacing: .04em;
@@ -1058,43 +1082,42 @@
     --danger: #ff7379; --danger-bg: #411f23;
     --shadow: 0 1px 3px rgba(0,0,0,.35);
   }
-  html { font-size: 14px; }
+  html { font-size: 16px; }
   body {
     max-width: none; margin: 0; padding: 0; min-height: 100vh;
-    font-family: "Segoe UI", "IBM Plex Sans", "IBM Plex Sans Arabic", sans-serif;
-    color: var(--text); background: var(--bg); line-height: 1.55;
+    font-family: var(--font-sans);
+    color: var(--text); background: var(--bg); line-height: 1.65;
+    letter-spacing: .01em;
   }
   body.applicant-sidebar-visible,
   body.applicant-sidebar-visible:has(.applicant-shell.sidebar-collapsed) {
     margin-inline-start: 0; width: auto;
   }
-  .portal-government-bar { background: #284a96; color: #fff; font-size: 11px; }
+  .portal-government-bar { background: #284a96; color: #fff; font-size: 12.5px; }
   .portal-government-inner,
   .portal-role-inner,
   .portal-mast-inner {
     max-width: 1440px; margin: 0 auto; padding-inline: 22px;
   }
-  .portal-government-inner { min-height: 29px; display: flex; align-items: center; gap: 10px; }
+  .portal-government-inner { min-height: 32px; display: flex; align-items: center; gap: 10px; }
   .portal-government-dot { width: 4px; height: 4px; border-radius: 50%; background: var(--primary); }
-  .portal-government-spacer { flex: 1; }
-  .portal-government-bar a { color: #e8efff; text-decoration: none; margin-inline-start: 14px; }
   .portal-rolebar { background: #fff; color: #5f6b7a; border-bottom: 1px solid var(--border); }
-  .portal-role-inner { min-height: 43px; display: flex; align-items: center; gap: 12px; }
-  .portal-role-label { color: #6a7686; font-size: 10px; font-weight: 700; letter-spacing: 1.35px; text-transform: uppercase; }
+  .portal-role-inner { min-height: 46px; display: flex; align-items: center; gap: 12px; }
+  .portal-role-label { color: #6a7686; font-size: 12px; font-weight: 500; letter-spacing: .06em; text-transform: uppercase; }
   .portal-role-pill {
     display: inline-flex; align-items: center; gap: 7px; padding: 6px 15px;
-    border-radius: 999px; background: var(--primary); color: #fff; font-size: 12px; font-weight: 600;
+    border-radius: 999px; background: var(--primary); color: #fff; font-size: 13px; font-weight: 500;
   }
   .portal-role-pill::before { content: ""; width: 6px; height: 6px; border-radius: 50%; background: currentColor; }
-  .portal-role-hint { margin-inline-start: auto; color: #6a7686; font-size: 11px; }
+  .portal-role-hint { margin-inline-start: auto; color: #6a7686; font-size: 12.5px; }
   .portal-mast { background: #fff; border-bottom: 1px solid var(--border); box-shadow: var(--shadow); }
-  .portal-mast-inner { min-height: 65px; display: flex; align-items: center; gap: 18px; }
+  .portal-mast-inner { min-height: 68px; display: flex; align-items: center; gap: 18px; }
   .portal-mast .brand-row { order: -1; margin: 0 auto 0 0; gap: 12px; }
   [dir="rtl"] .portal-mast .brand-row { margin: 0 0 0 auto; }
   .portal-mast .brand-logo { width: 44px; height: 44px; border: 0; background: none; }
   .portal-mast .brand-kicker { display: none; }
-  .portal-mast h1 { font-size: 13.5px; font-weight: 700; letter-spacing: 0; }
-  .portal-mast .page-tagline { margin: 0; color: var(--text-muted); font-size: 10.5px; }
+  .portal-mast h1 { font-size: 1.05rem; font-weight: 500; letter-spacing: -.01em; line-height: 1.35; }
+  .portal-mast .page-tagline { margin: 0; color: var(--text-muted); font-size: 12.5px; font-weight: 400; }
   .portal-mast .toolbar { margin: 0; flex-wrap: nowrap; gap: 6px; }
   .portal-mast .toolbar > button,
   .portal-mast .toolbar .text-size-group {
@@ -1108,7 +1131,7 @@
   #mobileViewBtn, #themeToggleBtn { order: 1; }
   .portal-mast .toolbar #mobileViewBtn.active-lang {
     min-width: 76px; background: var(--card-bg); color: var(--primary);
-    border-color: var(--primary); font-weight: 600;
+    border-color: var(--primary); font-weight: 500;
   }
   #appShell, #loginGate { max-width: 1440px; margin: 0 auto; padding: 12px 20px 22px; }
   #loginGate { max-width: 440px; padding-top: 38px; }
@@ -1137,7 +1160,7 @@
   .applicant-shell.sidebar-collapsed .applicant-side-nav > button,
   .applicant-shell.sidebar-collapsed .applicant-side-nav .applicant-submenu button {
     width: auto; min-width: max-content; padding: 10px 15px; border: 0; border-inline-end: 1px solid var(--border);
-    color: var(--text-muted); font-size: 12px; font-weight: 600; background: #fff; gap: 8px;
+    color: var(--text-muted); font-size: 13px; font-weight: 400; background: #fff; gap: 8px;
   }
   .applicant-side-nav .applicant-submenu button { padding-inline-start: 15px; }
   .applicant-side-nav .applicant-submenu button::before { display: none; }
@@ -1163,16 +1186,16 @@
     background: #fff; border: 1px solid var(--border); border-radius: 14px; box-shadow: var(--shadow);
   }
   .applicant-pane-card { padding: 14px 16px 18px; }
-  h2 { margin: 0 0 10px; padding: 0 0 9px; border-bottom: 1px solid #eff2f6; font-size: 18px; font-weight: 600; }
-  h3 { font-size: 14px; font-weight: 600; }
-  label { color: var(--text-muted); font-size: 12px; font-weight: 600; }
+  h2 { margin: 0 0 10px; padding: 0 0 9px; border-bottom: 1px solid #eff2f6; font-size: 18px; font-weight: 500; }
+  h3 { font-size: 14px; font-weight: 500; }
+  label { color: var(--text-muted); font-size: 13px; font-weight: 400; }
   input, select, textarea {
     border: 1.5px solid var(--border); border-radius: 9px; padding: 9px 12px;
     min-height: 38px; font-size: 13.5px;
   }
   input:focus, select:focus, textarea:focus { border-color: var(--primary); box-shadow: 0 0 0 3px var(--primary-light); }
   button {
-    border-radius: 9px; padding: 9px 14px; font-size: 12.5px; font-weight: 600;
+    border-radius: 9px; padding: 9px 14px; font-size: 13px; font-weight: 500;
     background: var(--primary); box-shadow: 0 5px 14px -4px rgba(40,80,160,.4);
   }
   button.secondary { background: #fff; border: 1px solid var(--border); color: var(--text); box-shadow: none; }
@@ -1180,7 +1203,7 @@
   table { border: 0; border-radius: 0; margin-top: 0; }
   thead th {
     background: #fafbfc; padding: 8px 14px; border: 0; border-bottom: 1px solid var(--border);
-    color: #8d96a2; font-size: 10px; font-weight: 700; letter-spacing: .7px; text-transform: uppercase;
+    color: #8d96a2; font-size: 12px; font-weight: 500; letter-spacing: .04em; text-transform: uppercase;
   }
   tbody td { padding: 9px 14px; border: 0; border-bottom: 1px solid #eff2f6; font-size: 13px; }
   tbody tr:nth-child(even) { background: transparent; }
@@ -1199,13 +1222,13 @@
   .portal-stepper.is-hidden { display: none; }
   .portal-step {
     min-width: 132px; flex: 1; display: flex; align-items: center; gap: 9px;
-    color: #8d96a2; font-size: 11.5px; font-weight: 600;
+    color: #8d96a2; font-size: 12.5px; font-weight: 400;
   }
   .portal-step::after { content: ""; flex: 1; min-width: 14px; height: 2px; margin: 0 12px; background: #eff2f6; }
   .portal-step:last-child::after { display: none; }
   .portal-step-number {
     width: 26px; height: 26px; flex: none; display: grid; place-items: center;
-    border-radius: 50%; background: #eff2f6; font-size: 11px; font-weight: 700;
+    border-radius: 50%; background: #eff2f6; font-size: 12px; font-weight: 500;
   }
   .portal-step small { display: block; color: #8d96a2; font-size: 10px; font-weight: 400; }
   .portal-step.active { color: var(--text); }
@@ -1222,8 +1245,8 @@
   .application-stat.action::before { background: var(--primary); }
   .application-stat.progress::before { background: #2b5f8c; }
   .application-stat.complete::before { background: var(--success); }
-  .application-stat .stat-label { color: #8d96a2; font-size: 9.5px; font-weight: 600; letter-spacing: .7px; text-transform: uppercase; }
-  .application-stat .stat-value { margin-top: 1px; font-size: 22px; font-weight: 700; line-height: 1.15; }
+  .application-stat .stat-label { color: #8d96a2; font-size: 12px; font-weight: 400; letter-spacing: .04em; text-transform: uppercase; }
+  .application-stat .stat-value { margin-top: 1px; font-size: 22px; font-weight: 600; line-height: 1.15; }
   .application-stat .stat-note { color: var(--text-muted); font-size: 10px; }
   #app-pane-identity details.demo-note {
     padding: 20px 24px; border: 0; border-radius: 16px; color: #fff;
@@ -1246,7 +1269,7 @@
   }
   .identity-check-item {
     padding: 7px 10px; border-radius: 999px; color: var(--success);
-    background: color-mix(in srgb, var(--success) 10%, var(--card-bg)); font-size: 12px; font-weight: 600;
+    background: color-mix(in srgb, var(--success) 10%, var(--card-bg)); font-size: 13px; font-weight: 400;
   }
   .identity-failure-list {
     display: grid; gap: 6px; margin-top: 10px; padding: 10px 12px;
@@ -1254,9 +1277,9 @@
   }
   .identity-failure-item {
     display: flex; justify-content: space-between; gap: 12px;
-    color: #402427; font-size: 12px; font-weight: 600;
+    color: #402427; font-size: 13px; font-weight: 400;
   }
-  .identity-failure-item strong { color: #a31924; font-weight: 800; }
+  .identity-failure-item strong { color: #a31924; font-weight: 600; }
   @keyframes identitySuccessIn {
     from { opacity: 0; transform: translateY(8px) scale(.98); }
     to { opacity: 1; transform: translateY(0) scale(1); }
@@ -1268,7 +1291,7 @@
   }
   .portal-payment-layout { display: grid; grid-template-columns: 1fr 300px; gap: 16px; }
   .portal-payment-summary { padding: 18px; border: 1px solid #2d3540; border-radius: 14px; color: #fff; background: #10151c; }
-  .portal-payment-summary .amount { margin: 12px 0 4px; font-size: 27px; font-weight: 800; }
+  .portal-payment-summary .amount { margin: 12px 0 4px; font-size: 27px; font-weight: 600; }
   .portal-payment-summary .field-note { color: #b9c4d4; }
   .portal-payment-layout .pay-methods { grid-template-columns: 1fr 1fr; gap: 10px; }
   .portal-payment-layout .pay-method {
@@ -1283,12 +1306,12 @@
   [dir="rtl"] .portal-payment-layout .pay-method input[type="radio"] { margin: 0 auto 0 0; }
   .pay-method-logo {
     flex: 0 0 42px; display: grid; place-items: center; width: 42px; height: 42px;
-    border-radius: 11px; color: #fff; background: #26384c; font-size: 17px; font-weight: 800;
+    border-radius: 11px; color: #fff; background: #26384c; font-size: 16px; font-weight: 500;
   }
   .pay-method-logo.wallet { background: #087d68; }
   .pay-method-logo.apple { background: #111; font-size: 13px; letter-spacing: -.4px; }
   .pay-method-logo.samsung { background: #1565c0; font-size: 13px; }
-  .pay-method-name { flex: 1; color: var(--text); font-size: 13px; font-weight: 600; text-align: start; }
+  .pay-method-name { flex: 1; color: var(--text); font-size: 13.5px; font-weight: 400; text-align: start; }
   .pay-method-name small { display: block; margin-top: 2px; color: var(--muted); font-size: 10px; font-weight: 500; }
   .payment-task-tabs {
     display: flex; gap: 8px; margin-bottom: 12px; padding: 6px;
@@ -1322,7 +1345,7 @@
   .portal-permit-number small { display: block; color: #8d96a2; font: 700 9.5px "Segoe UI",sans-serif; letter-spacing: 1px; text-transform: uppercase; }
   .portal-permit-grid { display: grid; grid-template-columns: repeat(3,1fr); gap: 12px; margin-top: 14px; }
   .portal-permit-field small { display: block; color: #8d96a2; font-size: 9.5px; font-weight: 500; text-transform: uppercase; }
-  .portal-permit-field strong { font-size: 13.5px; font-weight: 600; }
+  .portal-permit-field strong { font-size: 14px; font-weight: 500; }
   .portal-permit-qr { display: flex; align-items: center; gap: 18px; margin-top: 16px; padding-top: 14px; border-top: 1px solid #eff2f6; }
   .portal-permit-qr img { width: 132px; height: 132px; padding: 8px; border: 1px solid var(--border); border-radius: 10px; cursor: pointer; }
   .portal-permit-actions { display: flex; gap: 7px; flex-wrap: wrap; margin-top: 10px; }
@@ -1399,7 +1422,6 @@
   body.mobile-frame .portal-role-inner,
   body.mobile-frame .portal-mast-inner { padding-inline: 10px; }
   body.mobile-frame .portal-government-inner { flex-wrap: wrap; padding-block: 5px; line-height: 1.3; }
-  body.mobile-frame .portal-government-bar a { display: none; }
   body.mobile-frame .portal-role-inner { min-height: 42px; }
   body.mobile-frame .portal-role-hint { display: none; }
   body.mobile-frame .portal-mast-inner {
@@ -1458,7 +1480,7 @@
     margin: 8px auto !important;
   }
   @media (max-width: 760px) {
-    .portal-role-hint, .portal-government-bar a, .text-size-group, #mobileViewBtn, #themeToggleBtn { display: none !important; }
+    .portal-role-hint, .text-size-group, #mobileViewBtn, #themeToggleBtn { display: none !important; }
     .portal-government-inner, .portal-role-inner, .portal-mast-inner { padding-inline: 12px; }
     .portal-mast-inner { flex-wrap: wrap; padding-block: 8px; }
     .portal-mast .toolbar { margin-inline-start: auto; }
@@ -1474,7 +1496,7 @@
     border: 2px solid rgba(255,255,255,.82); border-radius: 50%;
     display: grid; place-items: center; color: #fff;
     background: linear-gradient(135deg, #315fd5, #2347a5);
-    box-shadow: 0 10px 30px rgba(35,71,165,.32); font-weight: 700;
+    box-shadow: 0 10px 30px rgba(35,71,165,.32); font-weight: 500;
   }
   .digital-assistant-launcher:hover { transform: translateY(-2px); }
   .digital-assistant-launcher svg { width: 29px; height: 29px; fill: currentColor; stroke: none; }
@@ -1562,9 +1584,6 @@
     <div class="portal-government-inner">
       <span class="portal-government-dot"></span>
       <span data-i18n="officialGovernmentService">An official service of the Government of the Sultanate of Oman</span>
-      <span class="portal-government-spacer"></span>
-      <a href="#" data-i18n="helpLink">Help</a>
-      <a href="#" data-i18n="contactLink">Contact</a>
     </div>
   </div>
   <div class="portal-rolebar">
@@ -1594,7 +1613,7 @@
 
   <div class="brand-row">
     <div class="brand-logo" aria-hidden="true">
-      <img src="/assets/oman-license-logo.png" alt="" width="56" height="56" />
+      <img src="/assets/oman-license-logo.svg" alt="" width="56" height="56" />
     </div>
     <div class="brand-text">
       <p class="brand-kicker" data-i18n="brandKicker">Sultanate of Oman</p>
@@ -1608,7 +1627,7 @@
   <!-- ================= LOGIN GATE ================= -->
   <div class="login-gate" id="loginGate">
     <div class="brand-row"><div class="brand-logo" aria-hidden="true">
-      <img src="/assets/oman-license-logo.png" alt="" width="72" height="72" />
+      <img src="/assets/oman-license-logo.svg" alt="" width="72" height="72" />
     </div></div>
     <div class="card">
       <h2 data-i18n="loginHeading" style="margin-top:0;">Sign in</h2>
@@ -2630,38 +2649,77 @@ async function doLogin(event) {
   const username = document.getElementById('loginUsername').value.trim();
   const password = document.getElementById('loginPassword').value;
   const errorEl = document.getElementById('loginError');
+  const submitBtn = event.target.querySelector('button[type="submit"]');
   errorEl.textContent = '';
   if (!username || !password) {
     errorEl.textContent = I18N[getLanguage()].loginErrorMsg;
     return;
   }
-  const res = await _nativeFetch('/api/auth/login', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    credentials: 'same-origin',
-    body: JSON.stringify({ username, password }),
-  });
-  if (!res.ok) {
-    let detail = '';
-    try { detail = (await res.json()).error || ''; } catch { /* ignore */ }
-    errorEl.textContent = detail && res.status !== 401
-      ? detail
-      : I18N[getLanguage()].loginErrorMsg;
-    return;
+  if (submitBtn) {
+    submitBtn.disabled = true;
+    submitBtn.dataset.prevLabel = submitBtn.textContent;
+    submitBtn.textContent = tMsg('loginBusyMsg', 'Signing in…');
   }
-  const user = await res.json();
-  // Confirm the session cookie actually stuck (common failure behind HTTPS LB
-  // when TRUST_PROXY / SESSION_COOKIE_SECURE are wrong).
-  const me = await _nativeFetch('/api/auth/me', { credentials: 'same-origin' });
-  if (!me.ok) {
-    errorEl.textContent = getLanguage() === 'ar'
-      ? 'تم التحقق لكن تعذر حفظ الجلسة. تحقق من إعدادات HTTPS للكوكي.'
-      : 'Credentials OK but session cookie was not kept. On the VM set TRUST_PROXY=true and SESSION_COOKIE_SECURE=true, then restart Platform.';
-    return;
+  try {
+    let res = null;
+    for (let attempt = 1; attempt <= 6; attempt++) {
+      res = await _nativeFetch('/api/auth/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'same-origin',
+        body: JSON.stringify({ username, password }),
+      });
+      if (res.ok) break;
+      // Transient LB / upstream blips must not look like bad credentials.
+      if (res.status === 502 || res.status === 503 || res.status === 504 || res.status === 0) {
+        errorEl.textContent = tMsg('loginUnavailableMsg', 'Sign-in service is temporarily unavailable. Retrying…');
+        await new Promise((r) => setTimeout(r, 280 * attempt));
+        continue;
+      }
+      break;
+    }
+    if (!res || !res.ok) {
+      let detail = '';
+      try { detail = (await res.json()).error || ''; } catch { /* ignore non-JSON gateway bodies */ }
+      if (res && (res.status === 502 || res.status === 503 || res.status === 504)) {
+        errorEl.textContent = tMsg('loginUnavailableFinalMsg', 'Sign-in service is temporarily unavailable. Please try again in a moment.');
+      } else if (detail && res && res.status !== 401) {
+        errorEl.textContent = detail;
+      } else {
+        errorEl.textContent = I18N[getLanguage()].loginErrorMsg;
+      }
+      return;
+    }
+    const user = await res.json();
+    // Confirm the session cookie actually stuck (common failure behind HTTPS LB
+    // when TRUST_PROXY / SESSION_COOKIE_SECURE are wrong). Retry /me briefly —
+    // a 503 here used to look like a failed login.
+    let me = null;
+    for (let attempt = 1; attempt <= 5; attempt++) {
+      me = await _nativeFetch('/api/auth/me', { credentials: 'same-origin' });
+      if (me.ok) break;
+      if (me.status === 502 || me.status === 503 || me.status === 504) {
+        await new Promise((r) => setTimeout(r, 250 * attempt));
+        continue;
+      }
+      break;
+    }
+    if (!me?.ok) {
+      errorEl.textContent = getLanguage() === 'ar'
+        ? 'تم التحقق لكن تعذر حفظ الجلسة. تحقق من إعدادات HTTPS للكوكي.'
+        : 'Credentials OK but session cookie was not kept. On the VM set TRUST_PROXY=true and SESSION_COOKIE_SECURE=true, then restart Platform.';
+      return;
+    }
+    currentUser = user;
+    document.getElementById('loginPassword').value = '';
+    errorEl.textContent = '';
+    showAppShell();
+  } finally {
+    if (submitBtn) {
+      submitBtn.disabled = false;
+      if (submitBtn.dataset.prevLabel) submitBtn.textContent = submitBtn.dataset.prevLabel;
+    }
   }
-  currentUser = user;
-  document.getElementById('loginPassword').value = '';
-  showAppShell();
 }
 
 async function doLogout() {
@@ -2821,7 +2879,7 @@ function showApplicantPane(id) {
     target = 'identity';
     const result = document.getElementById('lookupResult');
     if (result && !result.innerHTML.trim()) {
-      result.innerHTML = `<div class="card" style="background:#263342;border-color:#4f6c91;color:#f4f7fb;font-weight:600;opacity:1;">${getLanguage() === 'ar' ? 'تحقق من السجل التجاري والرقم المدني والرخصة السابقة للمتابعة.' : 'Verify the Commercial Registration, Civil ID, and prior practice licence to continue.'}</div>`;
+      result.innerHTML = `<div class="card" style="background:#263342;border-color:#4f6c91;color:#f4f7fb;font-weight:400;opacity:1;">${getLanguage() === 'ar' ? 'تحقق من السجل التجاري والرقم المدني والرخصة السابقة للمتابعة.' : 'Verify the Commercial Registration, Civil ID, and prior practice licence to continue.'}</div>`;
     }
   } else if (target === 'new' && existingIdentityApplication) {
     routeExistingApplication(existingIdentityApplication);
@@ -2960,8 +3018,6 @@ const I18N = {
     webToggle: 'Web View',
     webViewToggle: 'Web View',
     officialGovernmentService: 'An official service of the Government of the Sultanate of Oman',
-    helpLink: 'Help',
-    contactLink: 'Contact',
     viewingAs: 'Viewing as',
     roleAccessHint: 'Your workspace is based on your signed-in role',
     journeyEligibility: 'Eligibility', journeyVerification: 'Verification',
@@ -2977,6 +3033,9 @@ const I18N = {
     loginBtn: 'Sign In',
     loginHint: 'Demo accounts: applicant/applicant123, specialist/specialist123, head/head123, admin/admin123',
     loginErrorMsg: 'Invalid username or password',
+    loginBusyMsg: 'Signing in…',
+    loginUnavailableMsg: 'Sign-in service is temporarily unavailable. Retrying…',
+    loginUnavailableFinalMsg: 'Sign-in service is temporarily unavailable. Please try again in a moment.',
     pageTitle: 'Cinema Film Screening License',
     pageTagline: 'Ministry of Information — licensing services',
     brandKicker: 'Sultanate of Oman',
@@ -3123,6 +3182,10 @@ const I18N = {
     payMethodSamsungPay: 'Samsung Pay',
     completePaymentBtn: 'Pay & Continue',
     selectPayMethodMsg: 'Select a payment method first.',
+    payInsufficientBalanceMsg: 'Insufficient balance. Available {balance} OMR, but {amount} OMR is due. Choose another payment method or top up the wallet.',
+    payAvailableBalanceLabel: 'Available balance',
+    payInsufficientShort: 'Insufficient balance',
+    payCardLimitLabel: 'Available card limit',
     officialReviewForm: 'Official Review & Decision Form',
     applicationReference: 'Application reference',
     reviewDeclaration: 'I confirm that I have reviewed the application details and supporting eligibility information, and that this decision is made in my official capacity.',
@@ -3158,14 +3221,15 @@ const I18N = {
     applicationDocStatus: 'Status',
     applicationDocRef: 'Reference',
     viewApplicationBtn: 'View',
+    lookupInProgressMsg: 'Verifying CR Number and Civil ID…',
+    lookupUnavailableMsg: 'Verification service is temporarily unavailable. Please try again.',
+    lookupFailedMsg: 'Verification request failed ({n}).',
   },
   ar: {
     mobileToggle: 'عرض الجوال',
     webToggle: 'عرض الويب',
     webViewToggle: 'عرض الويب',
     officialGovernmentService: 'خدمة رسمية من حكومة سلطنة عُمان',
-    helpLink: 'المساعدة',
-    contactLink: 'اتصل بنا',
     viewingAs: 'عرض بصفة',
     roleAccessHint: 'تتحدد مساحة العمل وفقًا لدور المستخدم المسجل',
     journeyEligibility: 'الأهلية', journeyVerification: 'التحقق',
@@ -3181,6 +3245,9 @@ const I18N = {
     loginBtn: 'دخول',
     loginHint: 'حسابات تجريبية: applicant/applicant123، specialist/specialist123، head/head123، admin/admin123',
     loginErrorMsg: 'اسم المستخدم أو كلمة المرور غير صحيحة',
+    loginBusyMsg: 'جاري تسجيل الدخول…',
+    loginUnavailableMsg: 'خدمة تسجيل الدخول غير متاحة مؤقتاً. جاري إعادة المحاولة…',
+    loginUnavailableFinalMsg: 'خدمة تسجيل الدخول غير متاحة مؤقتاً. يرجى المحاولة بعد لحظات.',
     pageTitle: 'إجازة عرض فيلم سينمائي',
     pageTagline: 'وزارة الإعلام — خدمات التراخيص',
     brandKicker: 'سلطنة عُمان',
@@ -3327,6 +3394,10 @@ const I18N = {
     payMethodApplePay: 'Apple Pay',
     payMethodSamsungPay: 'Samsung Pay',
     selectPayMethodMsg: 'يرجى اختيار طريقة الدفع أولًا.',
+    payInsufficientBalanceMsg: 'الرصيد غير كافٍ. المتاح {balance} ر.ع. بينما المستحق {amount} ر.ع. اختر طريقة دفع أخرى أو اشحن المحفظة.',
+    payAvailableBalanceLabel: 'الرصيد المتاح',
+    payInsufficientShort: 'رصيد غير كافٍ',
+    payCardLimitLabel: 'حد البطاقة المتاح',
     officialReviewForm: 'نموذج المراجعة والقرار الرسمي',
     applicationReference: 'مرجع الطلب',
     reviewDeclaration: 'أؤكد أنني راجعت تفاصيل الطلب ومعلومات الأهلية الداعمة، وأن هذا القرار صادر بصفتي الرسمية.',
@@ -3362,6 +3433,9 @@ const I18N = {
     applicationDocStatus: 'الحالة',
     applicationDocRef: 'المرجع',
     viewApplicationBtn: 'عرض',
+    lookupInProgressMsg: 'جارٍ التحقق من رقم السجل التجاري والرقم المدني…',
+    lookupUnavailableMsg: 'خدمة التحقق غير متاحة مؤقتًا. يرجى المحاولة مرة أخرى.',
+    lookupFailedMsg: 'فشل طلب التحقق ({n}).',
   },
 };
 
@@ -4013,15 +4087,40 @@ function escapeHtmlLite(s) {
 
 async function deleteFieldLive(field) {
   if (!confirm(`Delete field "${field}"? It disappears from the Applicant form immediately, along with any data already stored in it. This can't be undone.`)) return;
-  const res = await fetch(`/api/admin/fields/${encodeURIComponent(field)}`, { method: 'DELETE' });
-  if (!res.ok) {
-    const data = await res.json().catch(() => ({}));
-    log(`ERROR deleting field "${field}": ${data.error || res.status}`);
-    return;
+  // Prefer POST delete: public load balancer intermittently resets HTTP DELETE (503).
+  const url = `/api/admin/fields/${encodeURIComponent(field)}/delete`;
+  let lastMsg = '';
+  try {
+    for (let attempt = 1; attempt <= 5; attempt++) {
+      const res = await fetch(url, {
+        method: 'POST',
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
+        body: '{}',
+      });
+      if (res.status === 204 || res.ok) {
+        log(`Field "${field}" deleted.`);
+        await loadFormSchema();
+        await loadFieldPermissions();
+        return;
+      }
+      const text = await res.text().catch(() => '');
+      let data = {};
+      try { data = text ? JSON.parse(text) : {}; } catch { data = { error: text.slice(0, 160) }; }
+      lastMsg = data.error || `Could not delete field "${field}" (${res.status}).`;
+      if (res.status === 502 || res.status === 503 || res.status === 504) {
+        await new Promise((r) => setTimeout(r, 350 * attempt));
+        continue;
+      }
+      break;
+    }
+    log(`ERROR deleting field "${field}": ${lastMsg}`);
+    alert(lastMsg || 'Could not delete the field. Please try again.');
+  } catch (err) {
+    const msg = err?.message || `Could not delete field "${field}".`;
+    log(`ERROR deleting field "${field}": ${msg}`);
+    alert(msg);
   }
-  log(`Field "${field}" deleted.`);
-  loadFormSchema();
-  loadFieldPermissions();
 }
 
 // Phase 1.2 — live role → field permission matrix (Admin Console).
@@ -4098,41 +4197,94 @@ async function setFieldPermission(field, role, selectEl) {
 // Phase 3 demo: simulated CR + Civil Status + internal practice-license
 // lookups, auto-populating the submission form. Every result is clearly
 // labeled SIMULATED, matching the RFP's disclosure requirement.
+async function fetchJsonRetry(url, body, attempts = 4) {
+  let lastError = null;
+  for (let i = 0; i < attempts; i++) {
+    try {
+      const res = await fetch(url, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify(body),
+      });
+      const text = await res.text();
+      let data = {};
+      try { data = text ? JSON.parse(text) : {}; } catch { data = {}; }
+      if (res.status === 502 || res.status === 503 || res.status === 504) {
+        lastError = new Error(data.error || tMsg('lookupUnavailableMsg', 'Verification service is temporarily unavailable. Please try again.'));
+        await new Promise((r) => setTimeout(r, 350 * (i + 1)));
+        continue;
+      }
+      if (!res.ok) {
+        throw new Error(data.error || tMsg('lookupFailedMsg', `Verification request failed (${res.status}).`, { n: res.status }));
+      }
+      return data;
+    } catch (err) {
+      lastError = err;
+      await new Promise((r) => setTimeout(r, 350 * (i + 1)));
+    }
+  }
+  throw lastError || new Error(tMsg('lookupUnavailableMsg', 'Verification service is temporarily unavailable. Please try again.'));
+}
+
 async function runSimulatedLookup() {
+  const resultEl = document.getElementById('lookupResult');
+  const verifyBtn = document.querySelector('#app-pane-identity button[onclick="runSimulatedLookup()"]')
+    || document.querySelector('button[onclick="runSimulatedLookup()"]');
   if (!validateLookupForm()) {
-    document.getElementById('lookupResult').innerHTML = '';
+    if (resultEl) resultEl.innerHTML = '';
     log(tMsg('errFixLookup', 'Please fix CR Number and Civil ID before verifying.'));
     return;
   }
   const crNumber = document.getElementById('lookupCr').value.trim();
   const civilId = document.getElementById('lookupCivilId').value.trim();
-  const [cr, civil, prior] = await Promise.all([
-    fetch('/api/integrations/cr-lookup', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ crNumber }) }).then(r => r.json()),
-    fetch('/api/integrations/civil-status-lookup', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ civilId }) }).then(r => r.json()),
-    fetch('/api/integrations/practice-license-lookup', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ civilId, crNumber }) }).then(r => r.json()),
-  ]);
+  if (verifyBtn) verifyBtn.disabled = true;
+  if (resultEl) {
+    resultEl.innerHTML = `<div class="card"><span class="field-note">${tMsg('lookupInProgressMsg', 'Verifying CR Number and Civil ID…')}</span></div>`;
+  }
+  let cr, civil, prior;
+  try {
+    // Sequential + retry: the public load balancer intermittently resets
+    // parallel POSTs (503 upstream connect error), which used to abort the
+    // whole verify action with an uncaught JSON parse failure.
+    cr = await fetchJsonRetry('/api/integrations/cr-lookup', { crNumber });
+    civil = await fetchJsonRetry('/api/integrations/civil-status-lookup', { civilId });
+    prior = await fetchJsonRetry('/api/integrations/practice-license-lookup', { civilId, crNumber });
+  } catch (err) {
+    identityVerificationPassed = false;
+    verifiedIdentityData = null;
+    updateNewApplicationAccess();
+    const msg = err?.message || tMsg('lookupUnavailableMsg', 'Verification service is temporarily unavailable. Please try again.');
+    if (resultEl) {
+      resultEl.innerHTML = `<div class="card" style="background:var(--danger-bg);border-color:var(--danger);"><strong style="color:var(--danger);">${escapeHtml(msg)}</strong></div>`;
+    }
+    log(`Identity check failed: ${msg}`);
+    if (verifyBtn) verifyBtn.disabled = false;
+    return;
+  } finally {
+    if (verifyBtn) verifyBtn.disabled = false;
+  }
 
   const requirementsPassed = !!cr.valid && !!civil.valid && !!prior.hasValidLicense;
   existingIdentityApplication = null;
   if (requirementsPassed) {
-    const existingRes = await fetch('/api/applications/find-existing', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ crNumber, civilId }),
-    });
-    const existingData = await existingRes.json().catch(() => ({}));
-    if (!existingRes.ok) {
+    try {
+      const existingData = await fetchJsonRetry('/api/applications/find-existing', { crNumber, civilId });
+      existingIdentityApplication = existingData.application || null;
+    } catch {
       identityVerificationPassed = false;
       updateNewApplicationAccess();
-      document.getElementById('lookupResult').innerHTML = `<div class="card" style="background:var(--danger-bg);border-color:var(--danger);">We could not check existing applications. Please try again.</div>`;
+      if (resultEl) {
+        resultEl.innerHTML = `<div class="card" style="background:var(--danger-bg);border-color:var(--danger);">We could not check existing applications. Please try again.</div>`;
+      }
       return;
     }
-    existingIdentityApplication = existingData.application || null;
   }
   verifiedIdentityData = requirementsPassed ? { cr, civil, prior } : null;
   identityVerificationPassed = requirementsPassed;
   updateNewApplicationAccess();
-  document.getElementById('lookupResult').innerHTML = requirementsPassed
+  if (resultEl) {
+    resultEl.innerHTML = requirementsPassed
     ? `<div class="card identity-success-card" style="background:var(--success-bg);border-color:var(--success);">
         <div class="identity-success-check">✓</div>
         <strong style="color:var(--success);font-size:16px;">${existingIdentityApplication
@@ -4155,6 +4307,7 @@ async function runSimulatedLookup() {
           <div class="identity-failure-item"><span>${getLanguage() === 'ar' ? 'رخصة الممارسة السابقة' : 'Prior practice licence'}</span><strong>${prior.hasValidLicense ? '✓ Valid' : '✕ Not valid'}</strong></div>
         </div>
       </div>`;
+  }
   log(`Identity check completed. CR valid: ${cr.valid ? 'Yes' : 'No'}; Civil ID found: ${civil.valid ? 'Yes' : 'No'}; Prior licence: ${prior.hasValidLicense ? 'Yes' : 'No'}.`);
   if (requirementsPassed) {
     setTimeout(async () => {
@@ -4266,7 +4419,7 @@ function renderLicensePortal() {
       <div class="portal-permit-bar"></div>
       <div class="portal-permit-inner">
         <header class="portal-permit-head">
-          <div class="portal-permit-seal"><img src="/assets/oman-license-logo.png" alt="" /></div>
+          <div class="portal-permit-seal"><img src="/assets/oman-license-logo.svg" alt="" /></div>
           <div class="portal-permit-title">
             <strong>${tMsg('licenseQrModalTitle', 'Cinema Film Screening License')}</strong>
             <span>إجازة عرض فيلم سينمائي</span>
@@ -4449,7 +4602,7 @@ function downloadApplicationDocument() {
   h3{margin:0 0 .35rem;color:#8b1538} .field-note{opacity:.8;font-size:.9rem}
   .approval-doc-head,.app-doc-meta,.app-field-snapshot{margin-bottom:1rem}
   .afs-row{display:flex;gap:1rem;padding:.35rem 0;border-bottom:1px dashed #ddd}
-  .afs-key{min-width:11rem;color:#666} .afs-val{font-weight:600}
+  .afs-key{min-width:11rem;color:#666} .afs-val{font-weight:500}
   .approval-section-title{margin:1rem 0 .4rem;color:#8b1538;font-size:.85rem;text-transform:uppercase}
   .approval-value-yes{color:#0f7b5f} .approval-value-no{color:#d42027}
 </style></head><body>${htmlBody}<pre style="display:none">${escapeHtml(text)}</pre></body></html>`;
@@ -4473,6 +4626,46 @@ function paymentMethodLabel(key) {
     samsung_pay: tMsg('payMethodSamsungPay', 'Samsung Pay'),
   };
   return map[key] || key;
+}
+
+/** Demo funding envelopes shown in the mock payment gateways (OMR). */
+const MOCK_PAYMENT_BALANCES = {
+  e_payment: 500,
+  e_wallet: 25.75,
+  apple_pay: 40,
+  samsung_pay: 35.5,
+};
+
+function formatOmrAmount(value) {
+  const n = Number(value);
+  return Number.isFinite(n) ? n.toFixed(3) : '0.000';
+}
+
+function mockPaymentBalanceFor(method) {
+  const n = Number(MOCK_PAYMENT_BALANCES[method]);
+  return Number.isFinite(n) ? n : null;
+}
+
+function paymentBalancePanelHtml(method, amount) {
+  const balance = mockPaymentBalanceFor(method);
+  if (balance == null) return { html: '', insufficient: false, balance: null };
+  const payable = Number(amount);
+  const insufficient = Number.isFinite(payable) && payable > balance + 1e-9;
+  const label = method === 'e_payment'
+    ? tMsg('payCardLimitLabel', 'Available card limit')
+    : tMsg('payAvailableBalanceLabel', 'Available balance');
+  const warn = insufficient
+    ? `<p class="mock-pay-insufficiency">${tMsg('payInsufficientBalanceMsg', 'Insufficient balance. Available {balance} OMR, but {amount} OMR is due. Choose another payment method or top up the wallet.')
+        .replace('{balance}', formatOmrAmount(balance))
+        .replace('{amount}', formatOmrAmount(payable))}</p>`
+    : '';
+  const html = `
+    <div class="mock-pay-balance${insufficient ? ' is-insufficient' : ''}">
+      <span>${label}</span>
+      <strong>${formatOmrAmount(balance)} OMR</strong>
+    </div>
+    ${warn}`;
+  return { html, insufficient, balance };
 }
 
 function payableAmountFor(app) {
@@ -4737,7 +4930,7 @@ function applicantPaymentPanelHtml(task, app, active) {
           <div class="license-notify" style="margin-top:12px;">🔒 ${getLanguage() === 'ar' ? 'سيتم فتح صفحة الدفع الآمنة.' : 'Select a payment method to open the secure payment page.'}</div>
         </div>
         <aside class="portal-payment-summary">
-          <div style="color:#b9cff8;font-size:10px;font-weight:600;letter-spacing:1.2px;text-transform:uppercase;">${getLanguage() === 'ar' ? 'ملخص الطلب' : 'Order summary'}</div>
+          <div style="color:#b9cff8;font-size:12px;font-weight:500;letter-spacing:.06em;text-transform:uppercase;">${getLanguage() === 'ar' ? 'ملخص الطلب' : 'Order summary'}</div>
           <h3 style="color:#fff;">${escapeHtml(app.film_title || `Application #${task.businessKey}`)}</h3>
           <div class="field-note">${getLanguage() === 'ar' ? 'إجازة عرض فيلم سينمائي' : 'Cinema Film Screening Licence'}</div>
           <div class="amount">${amount} <small style="font-size:13px;">OMR</small></div>
@@ -4993,17 +5186,22 @@ async function completePayment(taskId, applicationId) {
   }
   const payment_method = selected.value;
   const app = allApplications.find((item) => String(item.id) === String(applicationId)) || {};
-  const amount = payableAmountFor(app).toFixed(3);
+  const amount = formatOmrAmount(payableAmountFor(app));
   const modal = document.getElementById('paymentGatewayModal');
   modal.dataset.taskId = taskId;
   modal.dataset.applicationId = applicationId;
   modal.dataset.paymentMethod = payment_method;
   modal.dataset.amount = amount;
 
+  const funding = paymentBalancePanelHtml(payment_method, amount);
+  modal.dataset.insufficient = funding.insufficient ? '1' : '0';
+  modal.dataset.balance = funding.balance != null ? String(funding.balance) : '';
+
   const methodUi = {
     e_payment: {
       logo: 'EP',
       fields: `
+        ${funding.html}
         <div class="mock-gateway-fields">
           <label>Card number<input required inputmode="numeric" maxlength="19" value="4111 1111 1111 1111" /></label>
           <label>Expiry<input required value="12/30" /></label>
@@ -5013,9 +5211,7 @@ async function completePayment(taskId, applicationId) {
     e_wallet: {
       logo: 'EW',
       fields: `
-        <div class="card" style="display:flex;justify-content:space-between;margin-bottom:12px;background:var(--success-bg);border-color:var(--success);">
-          <span>Available wallet balance</span><strong>25.750 OMR</strong>
-        </div>
+        ${funding.html}
         <div class="mock-gateway-fields">
           <label>Mobile wallet number<input required inputmode="tel" value="+968 9123 4567" /></label>
           <label>Payable amount<select required><option value="${amount}">${amount} OMR</option></select></label>
@@ -5025,18 +5221,20 @@ async function completePayment(taskId, applicationId) {
     apple_pay: {
       logo: '●',
       fields: `
+        ${funding.html}
         <div class="card" style="text-align:center;">
           <strong>Apple Pay Account</strong>
-          <p class="field-note">•••• 4242 · Available balance: 40.000 OMR</p>
+          <p class="field-note">•••• 4242</p>
           <label>Payable amount<select required><option value="${amount}">${amount} OMR</option></select></label>
         </div>`,
     },
     samsung_pay: {
       logo: 'S',
       fields: `
+        ${funding.html}
         <div class="card" style="text-align:center;">
           <strong>Samsung Pay Account</strong>
-          <p class="field-note">•••• 8808 · Available balance: 35.500 OMR</p>
+          <p class="field-note">•••• 8808</p>
           <label>Payable amount<select required><option value="${amount}">${amount} OMR</option></select></label>
         </div>`,
     },
@@ -5056,8 +5254,13 @@ async function completePayment(taskId, applicationId) {
   cancelButton.style.display = '';
   cancelButton.textContent = getLanguage() === 'ar' ? 'إلغاء' : 'Cancel';
   const payButton = document.getElementById('mockGatewayPay');
-  payButton.disabled = false;
-  payButton.textContent = `${getLanguage() === 'ar' ? 'ادفع' : 'Pay'} ${amount} OMR`;
+  if (funding.insufficient) {
+    payButton.disabled = true;
+    payButton.textContent = tMsg('payInsufficientShort', 'Insufficient balance');
+  } else {
+    payButton.disabled = false;
+    payButton.textContent = `${getLanguage() === 'ar' ? 'ادفع' : 'Pay'} ${amount} OMR`;
+  }
   modal.classList.add('open');
 }
 
@@ -5067,6 +5270,14 @@ function closeMockPaymentGateway() {
 
 async function confirmMockPayment() {
   const modal = document.getElementById('paymentGatewayModal');
+  if (modal.dataset.insufficient === '1') {
+    const balance = formatOmrAmount(modal.dataset.balance);
+    const amount = formatOmrAmount(modal.dataset.amount);
+    alert(tMsg('payInsufficientBalanceMsg', 'Insufficient balance. Available {balance} OMR, but {amount} OMR is due. Choose another payment method or top up the wallet.')
+      .replace('{balance}', balance)
+      .replace('{amount}', amount));
+    return;
+  }
   const firstInvalid = modal.querySelector('input[required]:invalid');
   if (firstInvalid) {
     firstInvalid.reportValidity();

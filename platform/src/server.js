@@ -116,7 +116,11 @@ function requireRole(...roles) {
 }
 
 app.use('/api', (req, res, next) => {
-  if (req.path.startsWith('/auth/') || req.path.startsWith('/public/licenses/') || req.path === '/public/app-origin' || req.path === '/health') return next();
+  if (
+    req.path.startsWith('/auth/') ||
+    req.path.startsWith('/public/') ||
+    req.path === '/health'
+  ) return next();
   return requireAuth(req, res, next);
 });
 
@@ -412,16 +416,32 @@ const PROTECTED_FIELDS = new Set([
 ]);
 
 app.delete('/api/admin/fields/:field', async (req, res) => {
+  await deleteAdminField(req, res);
+});
+
+// POST fallback — some edge proxies intermittently reset HTTP DELETE
+// (503 upstream connect error), so the admin UI prefers this route.
+app.post('/api/admin/fields/:field/delete', async (req, res) => {
+  await deleteAdminField(req, res);
+});
+
+async function deleteAdminField(req, res) {
   if (PROTECTED_FIELDS.has(req.params.field)) {
     return res.status(400).json({ error: `"${req.params.field}" is a core field the process relies on and can't be deleted.` });
   }
   try {
     await directus.deleteField(req.params.field);
+    const matrix = platformConfig.getConfig().fieldPermissions || {};
+    if (matrix[req.params.field]) {
+      const next = { ...matrix };
+      delete next[req.params.field];
+      platformConfig.updateConfig({ fieldPermissions: next });
+    }
     res.status(204).end();
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
-});
+}
 
 // Phase 1.2 demo: live role → field permissions for the portal form.
 // Stored in platform config (same live-edit pattern as schedule lead time);
@@ -648,77 +668,192 @@ function currentQuarterStart() {
   return new Date(now.getFullYear(), quarterMonth, 1).toISOString();
 }
 
+/** Optional gate for machine-to-machine consumers of the public summary API. */
+function requireServiceSummaryAccess(req, res, next) {
+  const expected = process.env.SERVICE_SUMMARY_API_KEY;
+  if (!expected) return next();
+  const provided = req.get('x-api-key') || req.query.apiKey;
+  if (provided && provided === expected) return next();
+  return res.status(401).json({ error: 'Valid X-Api-Key required' });
+}
+
+async function buildDashboardMetrics() {
+  // The RFP's three headline KPIs are explicitly time-windowed: Requests
+  // Received is monthly, % Meeting Conditions is quarterly, % Completed
+  // Within Timeframe is monthly. Everything else on the dashboard stays
+  // all-time (not specified as windowed in the demo script).
+  const monthStart = currentMonthStart();
+  const quarterStart = currentQuarterStart();
+
+  const [requestsReceived, statusGroups, eligibleGroups, revisionLoopGroups, classificationGroups, avgFinalFee, finishedReviews, pendingApplicant, pendingSpecialist, pendingHeadOfSection] =
+    await Promise.all([
+      directus.countAll(monthStart),
+      directus.groupByCount('status'),
+      directus.groupByCount('eligible', quarterStart),
+      directus.groupByCount('revision_loop_used'),
+      directus.groupByCount('classification'),
+      directus.avgOf('final_fee'),
+      camunda.getFinishedTasks('Task_HeadOfSectionReview', monthStart),
+      camunda.countTasksForGroup('applicant'),
+      camunda.countTasksForGroup('specialist'),
+      camunda.countTasksForGroup('head_of_section'),
+    ]);
+
+  // Postgres booleans come back through Directus's aggregate API as 1/0/null,
+  // not JS true/false — coerce explicitly rather than comparing by identity.
+  const boolBucket = (val) => (val === null ? null : Number(val) === 1);
+  const asCount = (val) => {
+    const n = Number(val);
+    return Number.isFinite(n) ? n : 0;
+  };
+  const statusCounts = Object.fromEntries(statusGroups.map((g) => [g.status ?? 'unknown', asCount(g.count.id)]));
+  const eligibleTrue = asCount(eligibleGroups.find((g) => boolBucket(g.eligible) === true)?.count.id);
+  const eligibleFalse = asCount(eligibleGroups.find((g) => boolBucket(g.eligible) === false)?.count.id);
+  const pendingEvaluation = asCount(eligibleGroups.find((g) => boolBucket(g.eligible) === null)?.count.id);
+  const evaluatedTotal = eligibleTrue + eligibleFalse;
+  const eligiblePct = evaluatedTotal ? Math.round((eligibleTrue / evaluatedTotal) * 1000) / 10 : null;
+  // Historical flag, not current status — see the ensureField note on
+  // revision_loop_used above for why status alone undercounts this.
+  const revisionLoopCount = asCount(revisionLoopGroups.find((g) => boolBucket(g.revision_loop_used) === true)?.count.id);
+  const classificationBreakdown = Object.fromEntries(
+    classificationGroups.map((g) => [g.classification ?? 'Unspecified', asCount(g.count.id)])
+  );
+
+  const completed = finishedReviews.filter((t) => t.deleteReason === 'completed');
+  const breached = finishedReviews.filter((t) => t.deleteReason === 'deleted'); // cancelled by the SLA boundary timer
+  const totalResolvedReviews = completed.length + breached.length;
+  const withinSla = completed.filter((t) => typeof t.duration === 'number' && t.duration <= 3600000).length;
+  const slaCompletionPct = totalResolvedReviews ? Math.round((withinSla / totalResolvedReviews) * 1000) / 10 : null;
+
+  return {
+    generatedAt: new Date().toISOString(),
+    requestsReceivedPeriod: 'This Month',
+    eligiblePctPeriod: 'This Quarter',
+    slaCompletionPctPeriod: 'This Month',
+      requestsReceived: asCount(requestsReceived),
+    eligiblePct,
+    eligibleTrue,
+    eligibleFalse,
+    pendingEvaluation,
+    eligibleTarget: 90,
+    slaCompletionPct,
+    slaWithinTarget: withinSla,
+    slaTotalReviews: totalResolvedReviews,
+    slaBreaches: breached.length,
+    slaTarget: 90,
+    avgFinalFee: avgFinalFee !== null ? Math.round(avgFinalFee * 100) / 100 : null,
+    approved: statusCounts.approved ?? 0,
+    rejected: statusCounts.rejected ?? 0,
+    revisionLoopCount,
+    pendingApplicant,
+    pendingSpecialist,
+    pendingHeadOfSection,
+    statusCounts,
+    classificationBreakdown,
+  };
+}
+
+/** Card catalog matching the Custom Service Summary dashboard (core + widgets). */
+const SERVICE_SUMMARY_CARDS = [
+  { key: 'requestsReceived', label: 'Requests Received', format: 'number', periodKey: 'requestsReceivedPeriod', core: true },
+  { key: 'eligiblePct', label: '% Meeting Conditions', format: 'percent', periodKey: 'eligiblePctPeriod', targetKey: 'eligibleTarget', core: true },
+  { key: 'slaCompletionPct', label: 'Reviews Completed on Time', format: 'percent', periodKey: 'slaCompletionPctPeriod', targetKey: 'slaTarget', core: true },
+  { key: 'approved', label: 'Approved', format: 'number', core: true },
+  { key: 'rejected', label: 'Rejected', format: 'number', core: true },
+  { key: 'revisionLoopCount', label: 'Went Through Revision Loop', format: 'number', core: true },
+  { key: 'avgFinalFee', label: 'Average Final Fee', format: 'currency', core: true },
+  { key: 'classificationBreakdown', label: 'Requests by Film Classification', format: 'breakdown', core: false },
+  { key: 'pendingApplicant', label: 'Pending — Applicant (Pay Fee)', format: 'number', core: false },
+  { key: 'pendingSpecialist', label: 'Pending — Specialist Queue', format: 'number', core: false },
+  { key: 'pendingHeadOfSection', label: 'Pending — Head of Section Queue', format: 'number', core: false },
+  { key: 'slaBreaches', label: 'Overdue Reviews', format: 'number', core: false },
+  { key: 'pendingEvaluation', label: 'Pending Eligibility Evaluation', format: 'number', core: false },
+];
+
+function formatServiceSummaryDisplay(format, value) {
+  if (format === 'breakdown') {
+    const entries = Object.entries(value || {});
+    if (!entries.length) return null;
+    return Object.fromEntries(entries);
+  }
+  if (value === null || value === undefined) return null;
+  if (format === 'percent') return `${value}%`;
+  if (format === 'currency') return `${Number(value).toFixed(2)} OMR`;
+  return String(value);
+}
+
+function buildServiceSummaryPayload(metrics) {
+  const cards = SERVICE_SUMMARY_CARDS.map((def) => {
+    const value = metrics[def.key];
+    const period = def.periodKey ? metrics[def.periodKey] : null;
+    const target = def.targetKey != null ? metrics[def.targetKey] : null;
+    const card = {
+      key: def.key,
+      label: def.label,
+      format: def.format,
+      core: Boolean(def.core),
+      period,
+      value: value ?? null,
+      displayValue: formatServiceSummaryDisplay(def.format, value),
+    };
+    if (target != null) {
+      card.target = target;
+      card.meetsTarget = typeof value === 'number' ? value >= target : null;
+    }
+    if (def.format === 'currency') card.unit = 'OMR';
+    return card;
+  });
+
+  return {
+    service: 'Cinema Film Screening License',
+    issuer: 'Ministry of Information — Sultanate of Oman',
+    generatedAt: metrics.generatedAt,
+    currency: 'OMR',
+    cards,
+    metrics: {
+      requestsReceived: metrics.requestsReceived,
+      requestsReceivedPeriod: metrics.requestsReceivedPeriod,
+      eligiblePct: metrics.eligiblePct,
+      eligiblePctPeriod: metrics.eligiblePctPeriod,
+      eligibleTrue: metrics.eligibleTrue,
+      eligibleFalse: metrics.eligibleFalse,
+      pendingEvaluation: metrics.pendingEvaluation,
+      eligibleTarget: metrics.eligibleTarget,
+      slaCompletionPct: metrics.slaCompletionPct,
+      slaCompletionPctPeriod: metrics.slaCompletionPctPeriod,
+      slaWithinTarget: metrics.slaWithinTarget,
+      slaTotalReviews: metrics.slaTotalReviews,
+      slaBreaches: metrics.slaBreaches,
+      slaTarget: metrics.slaTarget,
+      approved: metrics.approved,
+      rejected: metrics.rejected,
+      revisionLoopCount: metrics.revisionLoopCount,
+      avgFinalFee: metrics.avgFinalFee,
+      pendingApplicant: metrics.pendingApplicant,
+      pendingSpecialist: metrics.pendingSpecialist,
+      pendingHeadOfSection: metrics.pendingHeadOfSection,
+      statusCounts: metrics.statusCounts,
+      classificationBreakdown: metrics.classificationBreakdown,
+    },
+  };
+}
+
 app.get('/api/dashboard/metrics', requireRole('admin'), async (_req, res) => {
   try {
-    // The RFP's three headline KPIs are explicitly time-windowed: Requests
-    // Received is monthly, % Meeting Conditions is quarterly, % Completed
-    // Within Timeframe is monthly. Everything else on the dashboard stays
-    // all-time (not specified as windowed in the demo script).
-    const monthStart = currentMonthStart();
-    const quarterStart = currentQuarterStart();
+    res.json(await buildDashboardMetrics());
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
 
-    const [requestsReceived, statusGroups, eligibleGroups, revisionLoopGroups, classificationGroups, avgFinalFee, finishedReviews, pendingApplicant, pendingSpecialist, pendingHeadOfSection] =
-      await Promise.all([
-        directus.countAll(monthStart),
-        directus.groupByCount('status'),
-        directus.groupByCount('eligible', quarterStart),
-        directus.groupByCount('revision_loop_used'),
-        directus.groupByCount('classification'),
-        directus.avgOf('final_fee'),
-        camunda.getFinishedTasks('Task_HeadOfSectionReview', monthStart),
-        camunda.countTasksForGroup('applicant'),
-        camunda.countTasksForGroup('specialist'),
-        camunda.countTasksForGroup('head_of_section'),
-      ]);
-
-    // Postgres booleans come back through Directus's aggregate API as 1/0/null,
-    // not JS true/false — coerce explicitly rather than comparing by identity.
-    const boolBucket = (val) => (val === null ? null : Number(val) === 1);
-    const statusCounts = Object.fromEntries(statusGroups.map((g) => [g.status ?? 'unknown', g.count.id]));
-    const eligibleTrue = eligibleGroups.find((g) => boolBucket(g.eligible) === true)?.count.id ?? 0;
-    const eligibleFalse = eligibleGroups.find((g) => boolBucket(g.eligible) === false)?.count.id ?? 0;
-    const pendingEvaluation = eligibleGroups.find((g) => boolBucket(g.eligible) === null)?.count.id ?? 0;
-    const evaluatedTotal = eligibleTrue + eligibleFalse;
-    const eligiblePct = evaluatedTotal ? Math.round((eligibleTrue / evaluatedTotal) * 1000) / 10 : null;
-    // Historical flag, not current status — see the ensureField note on
-    // revision_loop_used above for why status alone undercounts this.
-    const revisionLoopCount = revisionLoopGroups.find((g) => boolBucket(g.revision_loop_used) === true)?.count.id ?? 0;
-    const classificationBreakdown = Object.fromEntries(
-      classificationGroups.map((g) => [g.classification ?? 'Unspecified', g.count.id])
-    );
-
-    const completed = finishedReviews.filter((t) => t.deleteReason === 'completed');
-    const breached = finishedReviews.filter((t) => t.deleteReason === 'deleted'); // cancelled by the SLA boundary timer
-    const totalResolvedReviews = completed.length + breached.length;
-    const withinSla = completed.filter((t) => typeof t.duration === 'number' && t.duration <= 3600000).length;
-    const slaCompletionPct = totalResolvedReviews ? Math.round((withinSla / totalResolvedReviews) * 1000) / 10 : null;
-
-    res.json({
-      generatedAt: new Date().toISOString(),
-      requestsReceivedPeriod: 'This Month',
-      eligiblePctPeriod: 'This Quarter',
-      slaCompletionPctPeriod: 'This Month',
-      requestsReceived,
-      eligiblePct,
-      eligibleTrue,
-      eligibleFalse,
-      pendingEvaluation,
-      eligibleTarget: 90,
-      slaCompletionPct,
-      slaWithinTarget: withinSla,
-      slaTotalReviews: totalResolvedReviews,
-      slaBreaches: breached.length,
-      slaTarget: 90,
-      avgFinalFee: avgFinalFee !== null ? Math.round(avgFinalFee * 100) / 100 : null,
-      approved: statusCounts.approved ?? 0,
-      rejected: statusCounts.rejected ?? 0,
-      revisionLoopCount,
-      pendingApplicant,
-      pendingSpecialist,
-      pendingHeadOfSection,
-      statusCounts,
-      classificationBreakdown,
-    });
+/**
+ * Machine-readable Custom Service Summary for external applications.
+ * Auth: open by default; set SERVICE_SUMMARY_API_KEY and send X-Api-Key to lock it down.
+ */
+app.get('/api/public/service-summary', requireServiceSummaryAccess, async (_req, res) => {
+  try {
+    const metrics = await buildDashboardMetrics();
+    res.json(buildServiceSummaryPayload(metrics));
   } catch (err) {
     res.status(500).json({ error: err.message });
   }

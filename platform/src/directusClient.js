@@ -24,17 +24,24 @@ async function getServiceToken() {
 
 async function directusFetch(path, options = {}) {
   const token = await getServiceToken();
+  const method = (options.method || 'GET').toUpperCase();
+  const headers = {
+    Authorization: `Bearer ${token}`,
+    ...(options.headers || {}),
+  };
+  // Don't force JSON Content-Type on body-less DELETE/GET — some Directus
+  // versions reject DELETE when Content-Type is application/json with no body.
+  if (options.body != null && !headers['Content-Type']) {
+    headers['Content-Type'] = 'application/json';
+  }
   const res = await fetch(`${DIRECTUS_URL}${path}`, {
     ...options,
-    headers: {
-      'Content-Type': 'application/json',
-      Authorization: `Bearer ${token}`,
-      ...(options.headers || {}),
-    },
+    method,
+    headers,
   });
   if (!res.ok) {
     const body = await res.text();
-    throw new Error(`Directus ${options.method || 'GET'} ${path} failed: ${res.status} ${body}`);
+    throw new Error(`Directus ${method} ${path} failed: ${res.status} ${body}`);
   }
   return res.status === 204 ? null : res.json();
 }
