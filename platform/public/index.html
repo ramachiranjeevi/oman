@@ -2263,7 +2263,10 @@ const _nativeFetch = window.fetch.bind(window);
 window.fetch = async (...args) => {
   const res = await _nativeFetch(...args);
   const url = typeof args[0] === 'string' ? args[0] : args[0]?.url || '';
-  if (res.status === 401 && !url.includes('/api/auth/')) {
+  // Ignore auth endpoints. Also ignore 401s while the login gate is visible so a
+  // failed post-login API call cannot clear the password field mid-attempt.
+  const onLoginGate = !document.getElementById('loginGate')?.classList.contains('hidden');
+  if (res.status === 401 && !url.includes('/api/auth/') && currentUser && !onLoginGate) {
     currentUser = null;
     showLoginGate();
   }
@@ -2306,7 +2309,10 @@ function showAppShell() {
 }
 
 async function checkSession() {
-  const res = await _nativeFetch('/api/auth/me');
+  const res = await _nativeFetch('/api/auth/me', { credentials: 'same-origin' });
+  // If the user already signed in while this request was in flight, do not
+  // overwrite the UI with a stale 401 from the pre-login /api/auth/me call.
+  if (currentUser) return;
   if (res.ok) {
     currentUser = await res.json();
     showAppShell();
@@ -2321,16 +2327,35 @@ async function doLogin(event) {
   const password = document.getElementById('loginPassword').value;
   const errorEl = document.getElementById('loginError');
   errorEl.textContent = '';
-  const res = await fetch('/api/auth/login', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ username, password }),
-  });
-  if (!res.ok) {
+  if (!username || !password) {
     errorEl.textContent = I18N[getLanguage()].loginErrorMsg;
     return;
   }
-  currentUser = await res.json();
+  const res = await _nativeFetch('/api/auth/login', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    credentials: 'same-origin',
+    body: JSON.stringify({ username, password }),
+  });
+  if (!res.ok) {
+    let detail = '';
+    try { detail = (await res.json()).error || ''; } catch { /* ignore */ }
+    errorEl.textContent = detail && res.status !== 401
+      ? detail
+      : I18N[getLanguage()].loginErrorMsg;
+    return;
+  }
+  const user = await res.json();
+  // Confirm the session cookie actually stuck (common failure behind HTTPS LB
+  // when TRUST_PROXY / SESSION_COOKIE_SECURE are wrong).
+  const me = await _nativeFetch('/api/auth/me', { credentials: 'same-origin' });
+  if (!me.ok) {
+    errorEl.textContent = getLanguage() === 'ar'
+      ? 'تم التحقق لكن تعذر حفظ الجلسة. تحقق من إعدادات HTTPS للكوكي.'
+      : 'Credentials OK but session cookie was not kept. On the VM set TRUST_PROXY=true and SESSION_COOKIE_SECURE=true, then restart Platform.';
+    return;
+  }
+  currentUser = user;
   document.getElementById('loginPassword').value = '';
   showAppShell();
 }

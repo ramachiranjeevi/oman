@@ -29,6 +29,7 @@ app.use(
     secret: process.env.SESSION_SECRET || 'oman-info-platform-dev-secret',
     resave: false,
     saveUninitialized: false,
+    proxy: process.env.TRUST_PROXY === 'true',
     cookie: {
       httpOnly: true,
       sameSite: 'lax',
@@ -71,6 +72,11 @@ app.post('/api/auth/login', async (req, res) => {
       displayName,
     };
     req.session.user = user;
+    // Ensure Set-Cookie is committed before the response body returns — avoids
+    // a race where the browser's next /api/* call has no session yet.
+    await new Promise((resolve, reject) => {
+      req.session.save((err) => (err ? reject(err) : resolve()));
+    });
     res.json(user);
   } catch (err) {
     console.error('[auth/login]', err.message);
