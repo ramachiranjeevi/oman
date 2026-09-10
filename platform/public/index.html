@@ -2564,7 +2564,13 @@ function switchTab(id) {
   }
   if (id === 'specialist') loadTasks('specialist');
   if (id === 'head') loadTasks('head_of_section');
-  if (id === 'admin') { loadFormSchema(); loadFieldPermissions(); loadPricing(); loadEligibilityRule(); loadSla(); loadSchedule(); loadPipelineLog(); loadCanvasProcess(); switchAdminSubtab(localStorage.getItem('omanActiveAdminSubtab') || 'addfield'); }
+  if (id === 'admin') {
+    loadFormSchema(); loadFieldPermissions(); loadPricing(); loadEligibilityRule();
+    loadSla(); loadSchedule(); loadPipelineLog();
+    // Do not load/paint the process canvas here — the designer panel is often
+    // still display:none (clientWidth 0). switchAdminSubtab('designer') loads it.
+    switchAdminSubtab(localStorage.getItem('omanActiveAdminSubtab') || 'addfield');
+  }
   if (id === 'dashboard') loadDashboard();
 }
 
@@ -2606,6 +2612,23 @@ function renderAdminSubtabs() {
   ).join('');
 }
 
+function scheduleCanvasPaint() {
+  const paint = () => {
+    if (!canvasShapes.length) return;
+    if (!document.getElementById('adm-sub-designer')?.classList.contains('active')) return;
+    renderCanvasAll();
+    if (document.body.classList.contains('mobile-frame')) canvasZoomFit();
+    else canvasApplyZoom();
+  };
+  // Double rAF + short timeout: first display:block frame often still has width 0.
+  requestAnimationFrame(() => {
+    requestAnimationFrame(() => {
+      paint();
+      setTimeout(paint, 50);
+    });
+  });
+}
+
 function switchAdminSubtab(id) {
   for (const t of ADMIN_SUBTABS) {
     const panel = document.getElementById(`adm-sub-${t.id}`);
@@ -2614,13 +2637,9 @@ function switchAdminSubtab(id) {
     if (navBtn) navBtn.classList.toggle('active', t.id === id);
   }
   localStorage.setItem('omanActiveAdminSubtab', id);
-  // Designer was often measured while hidden (clientWidth 0); re-sync once visible.
   if (id === 'designer') {
-    requestAnimationFrame(() => {
-      if (canvasShapes.length) renderCanvasAll();
-      if (document.body.classList.contains('mobile-frame')) canvasZoomFit();
-      else canvasApplyZoom();
-    });
+    const ready = canvasShapes.length ? Promise.resolve() : loadCanvasProcess();
+    Promise.resolve(ready).then(() => scheduleCanvasPaint());
   }
 }
 
@@ -4959,15 +4978,12 @@ async function loadCanvasProcess() {
   ]);
   const canvas = await canvasRes.json();
   canvasAutomaticActions = await actionsRes.json();
-  canvasShapes = canvas.shapes;
-  canvasConnections = canvas.connections;
+  canvasShapes = canvas.shapes || [];
+  canvasConnections = canvas.connections || [];
   canvasSelectedId = null;
   renderCanvasPropertyPanel();
-  renderCanvasAll();
-  requestAnimationFrame(() => {
-    if (document.body.classList.contains('mobile-frame')) canvasZoomFit();
-    else canvasApplyZoom();
-  });
+  // Paint only when the designer panel is visible; otherwise wait for switchAdminSubtab.
+  scheduleCanvasPaint();
   log(`Approval process loaded with ${canvasShapes.length} steps and ${canvasConnections.length} connections.`);
 }
 
