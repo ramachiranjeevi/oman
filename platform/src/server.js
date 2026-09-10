@@ -38,7 +38,16 @@ app.use(
     },
   })
 );
-app.use(express.static(path.join(__dirname, '..', 'public')));
+// Avoid stale UI after assistant/portal HTML edits during local demos.
+app.use(express.static(path.join(__dirname, '..', 'public'), {
+  etag: false,
+  lastModified: false,
+  setHeaders(res, filePath) {
+    if (filePath.endsWith('.html')) {
+      res.setHeader('Cache-Control', 'no-store');
+    }
+  },
+}));
 
 const PROCESS_KEY = 'cinema_film_screening_license';
 
@@ -398,6 +407,8 @@ app.post('/api/admin/fields', async (req, res) => {
 const PROTECTED_FIELDS = new Set([
   'film_title', 'classification', 'applicant_name', 'has_riyada_card',
   'valid_commercial_registration', 'valid_prior_practice_license', 'final_fee',
+  'date', 'duration', 'language', 'subtitle_language_dubbing_language',
+  'production_country', 'production_year', 'producer_distributor',
 ]);
 
 app.delete('/api/admin/fields/:field', async (req, res) => {

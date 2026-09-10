@@ -142,6 +142,10 @@
     border-color: var(--danger) !important;
     background: var(--danger-bg);
   }
+  .approval-declaration.is-invalid {
+    border-color: var(--danger) !important;
+    background: var(--danger-bg);
+  }
   .card { border: 1px solid var(--border); padding: .75rem .9rem; margin-top: .45rem; border-radius: var(--radius); background: var(--card-bg); box-shadow: none; }
   .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: .85rem; margin-top: .55rem; }
   .kpi { border: 1px solid var(--border); border-radius: var(--radius); padding: .85rem .95rem; background: var(--card-bg); position: relative; color: var(--text); border-top: 1px solid var(--border); box-shadow: none; }
@@ -723,6 +727,39 @@
   #licenseQrModal code { display: block; margin: .55rem 0; font-size: .75rem; word-break: break-all; }
   #licenseQrModal img[data-clickable="true"] { cursor: pointer; }
   .license-modal-actions { display: flex; justify-content: center; gap: .45rem; flex-wrap: wrap; }
+  #applicationDocModal {
+    position: fixed; inset: 0; z-index: 85;
+    display: none; align-items: flex-start; justify-content: center;
+    background: rgba(17, 17, 17, .5); padding: 1rem; overflow: auto;
+  }
+  #applicationDocModal.open { display: flex; }
+  #applicationDocModal .app-doc-shell {
+    width: min(920px, 100%); margin: .5rem auto 2rem; background: var(--card-bg);
+    border-radius: 12px; box-shadow: var(--shadow); overflow: hidden;
+  }
+  #applicationDocModal .app-doc-toolbar {
+    display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between;
+    gap: .55rem; padding: .75rem 1rem; border-bottom: 1px solid var(--border);
+    background: var(--page-bg); position: sticky; top: 0; z-index: 1;
+  }
+  #applicationDocModal .app-doc-toolbar-actions { display: flex; flex-wrap: wrap; gap: .4rem; }
+  #applicationDocModal .app-doc-toolbar button { margin-top: 0; }
+  #applicationDocModal .app-doc-body { padding: 0; }
+  #applicationDocModal .approval-document { margin: 0; border-radius: 0; box-shadow: none; max-width: none; }
+  #applicationDocModal .app-doc-meta {
+    display: flex; flex-wrap: wrap; gap: .75rem 1.25rem; padding: .85rem 1.15rem;
+    border-bottom: 1px solid #dfd2c2; font-size: .875rem;
+  }
+  #applicationDocModal .app-doc-meta span { color: var(--muted, #6d6255); }
+  #applicationDocModal .app-doc-meta strong { color: var(--text); }
+  @media print {
+    body * { visibility: hidden !important; }
+    #applicationDocModal, #applicationDocModal.open, #applicationDocModal .app-doc-print-root,
+    #applicationDocModal .app-doc-print-root * { visibility: visible !important; }
+    #applicationDocModal { position: static !important; display: block !important; background: #fff !important; padding: 0 !important; overflow: visible !important; }
+    #applicationDocModal .app-doc-shell { box-shadow: none; width: 100%; margin: 0; border-radius: 0; }
+    #applicationDocModal .app-doc-toolbar { display: none !important; }
+  }
   #paymentGatewayModal {
     position: fixed; inset: 0; z-index: 90; display: none; align-items: center; justify-content: center;
     padding: 18px; background: rgba(8, 12, 18, .72); backdrop-filter: blur(4px);
@@ -1488,6 +1525,10 @@
     color: var(--primary); background: var(--card-bg); border: 1px solid var(--primary);
   }
   .assistant-chip:hover { color: #fff; background: var(--primary); }
+  .assistant-chip.assistant-nav-link {
+    text-decoration: underline;
+    text-underline-offset: 2px;
+  }
   .assistant-message-bubble ol { margin: 8px 0 4px; padding-inline-start: 20px; }
   .assistant-message-bubble li { margin: 4px 0; }
   .assistant-composer { flex: 0 0 auto; padding: 11px 13px 8px; border-top: 1px solid var(--border); background: var(--card-bg); }
@@ -1990,6 +2031,22 @@
     </div>
   </div>
 
+  <div id="applicationDocModal" onclick="if(event.target===this)closeApplicationDocument()" role="dialog" aria-modal="true" aria-labelledby="applicationDocTitle">
+    <div class="app-doc-shell">
+      <div class="app-doc-toolbar">
+        <strong id="applicationDocTitle">Application details</strong>
+        <div class="app-doc-toolbar-actions">
+          <button type="button" class="small" id="applicationDocDownloadBtn" onclick="downloadApplicationDocument()">Download copy</button>
+          <button type="button" class="small secondary" onclick="printApplicationDocument()">Print / Save PDF</button>
+          <button type="button" class="small secondary" onclick="closeApplicationDocument()">Close</button>
+        </div>
+      </div>
+      <div class="app-doc-body app-doc-print-root" id="applicationDocContent">
+        <p class="field-note" style="padding:1rem;">Loading…</p>
+      </div>
+    </div>
+  </div>
+
   <div id="paymentGatewayModal" onclick="if(event.target===this)closeMockPaymentGateway()" role="dialog" aria-modal="true" aria-labelledby="mockGatewayTitle">
     <div class="mock-gateway">
       <div class="mock-gateway-head">
@@ -2018,7 +2075,7 @@
     </div>
   </footer>
 
-  <button class="digital-assistant-launcher" id="digitalAssistantLauncher" onclick="toggleDigitalAssistant(true)" aria-label="Open Digital Assistant">
+  <button class="digital-assistant-launcher hidden" id="digitalAssistantLauncher" onclick="toggleDigitalAssistant(true)" aria-label="Open Digital Assistant">
     <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9.2 2.4c.25-.9 1.53-.9 1.78 0l.48 1.72a4.5 4.5 0 0 0 3.12 3.12l1.72.48c.9.25.9 1.53 0 1.78l-1.72.48a4.5 4.5 0 0 0-3.12 3.12l-.48 1.72c-.25.9-1.53.9-1.78 0l-.48-1.72A4.5 4.5 0 0 0 5.6 9.98L3.88 9.5c-.9-.25-.9-1.53 0-1.78l1.72-.48a4.5 4.5 0 0 0 3.12-3.12l.48-1.72ZM17.8 13.5c.16-.58.98-.58 1.14 0l.25.9a2.6 2.6 0 0 0 1.8 1.8l.9.25c.58.16.58.98 0 1.14l-.9.25a2.6 2.6 0 0 0-1.8 1.8l-.25.9c-.16.58-.98.58-1.14 0l-.25-.9a2.6 2.6 0 0 0-1.8-1.8l-.9-.25c-.58-.16-.58-.98 0-1.14l.9-.25a2.6 2.6 0 0 0 1.8-1.8l.25-.9Z"/></svg>
     <span id="digitalAssistantLauncherText">Digital Assistant</span>
   </button>
@@ -2097,6 +2154,40 @@ function assistantActionButtons(actions = assistantQuickActions()) {
   ).join('')}</div>`;
 }
 
+/** Short hello used before topic replies when the user taps a chip. */
+function assistantChipGreeting() {
+  const name = currentUser?.displayName ? escapeHtmlLite(String(currentUser.displayName).trim()) : '';
+  if (name) {
+    return assistantText(`Hello ${name}!`, `مرحباً ${name}!`);
+  }
+  const byRole = {
+    admin: assistantText('Hello Admin!', 'مرحباً أيها المسؤول!'),
+    specialist: assistantText('Hello Specialist!', 'مرحباً أيها الأخصائي!'),
+    head_of_section: assistantText('Hello Head of Section!', 'مرحباً رئيس القسم!'),
+    applicant: assistantText('Hello!', 'مرحباً!'),
+  };
+  return byRole[currentUser?.role] || assistantText('Hello!', 'مرحباً!');
+}
+
+/** Post short chat lines one after another, then an optional open-link chip. */
+function postAssistantChat(lines, linkLabel, navAction) {
+  const list = (lines || []).filter(Boolean);
+  list.forEach((line, i) => {
+    const isLast = i === list.length - 1;
+    setTimeout(() => {
+      const linkHtml = isLast && linkLabel && navAction
+        ? `<div class="assistant-quick-actions"><button type="button" class="assistant-chip assistant-nav-link" onclick="assistantNavigate('${navAction}')">${linkLabel}</button></div>`
+        : '';
+      addAssistantMessage('bot', `${line}${linkHtml}`);
+    }, 280 + i * 420);
+  });
+}
+
+/** Chip replies always greet first, then the topic lines. */
+function postAssistantChipReply(lines, linkLabel, navAction) {
+  postAssistantChat([assistantChipGreeting(), ...(lines || [])], linkLabel, navAction);
+}
+
 function addAssistantMessage(kind, html) {
   const messages = document.getElementById('digitalAssistantMessages');
   if (!messages) return;
@@ -2115,12 +2206,19 @@ function startDigitalAssistant() {
   if (digitalAssistantStarted) return;
   digitalAssistantStarted = true;
   const name = currentUser?.displayName ? ` ${escapeHtmlLite(currentUser.displayName)}` : '';
-  addAssistantMessage('bot',
-    assistantText(
-      `Hello${name}. I can guide you through the Cinema Film Screening License service.`,
-      `مرحباً${name}. يمكنني إرشادك خلال خدمة ترخيص عرض الأفلام السينمائية.`,
-    ) + assistantActionButtons()
-  );
+  // Greeting first, then offer help — don't dump topics in the same breath.
+  addAssistantMessage('bot', assistantText(
+    `Hi${name}!`,
+    `مرحباً${name}!`,
+  ));
+  setTimeout(() => {
+    addAssistantMessage('bot',
+      assistantText(
+        'How can I help you with the Cinema Film Screening License service today?',
+        'كيف يمكنني مساعدتك اليوم في خدمة ترخيص عرض الأفلام السينمائية؟',
+      ) + assistantActionButtons()
+    );
+  }, 450);
 }
 
 function toggleDigitalAssistant(open) {
@@ -2139,7 +2237,20 @@ function resetDigitalAssistant() {
   digitalAssistantStarted = false;
   const messages = document.getElementById('digitalAssistantMessages');
   if (messages) messages.innerHTML = '';
-  toggleDigitalAssistant(false);
+  const panel = document.getElementById('digitalAssistantPanel');
+  const launcher = document.getElementById('digitalAssistantLauncher');
+  panel?.classList.add('hidden');
+  // Keep the FAB hidden on the sign-in screen; show it only inside the app shell.
+  const onLoginGate = !document.getElementById('loginGate')?.classList.contains('hidden');
+  launcher?.classList.toggle('hidden', onLoginGate);
+}
+
+function showDigitalAssistantLauncher() {
+  const launcher = document.getElementById('digitalAssistantLauncher');
+  const panel = document.getElementById('digitalAssistantPanel');
+  if (!launcher) return;
+  // Only reveal the FAB when the chat panel is closed.
+  launcher.classList.toggle('hidden', !panel?.classList.contains('hidden'));
 }
 
 function updateDigitalAssistantLanguage() {
@@ -2172,42 +2283,121 @@ function submitAssistantMessage(event) {
 }
 
 function answerAssistantQuestion(question) {
-  const q = question.toLowerCase();
-  if (/هوية|مدني|سجل|identity|civil|\\bcr\\b|verification/.test(q)) {
-    addAssistantMessage('bot', assistantText(
-      '<strong>To verify your identity:</strong><ol><li>Keep your 7-digit CR Number ready.</li><li>Keep your 8-digit Civil ID ready.</li><li>Select Verify & auto-fill.</li></ol>The portal will confirm your Commercial Registration, Civil ID, and prior practice licence. If an application already exists, it will show its current stage.',
-      '<strong>للتحقق من هويتك:</strong><ol><li>جهّز رقم السجل التجاري المكوّن من 7 أرقام.</li><li>جهّز الرقم المدني المكوّن من 8 أرقام.</li><li>اختر التحقق والتعبئة التلقائية.</li></ol>ستتحقق البوابة من السجل التجاري والرقم المدني ورخصة الممارسة السابقة، وستعرض مرحلة أي طلب قائم.',
-    ) + assistantActionButtons([['identity', assistantText('Open Identity Verification', 'فتح التحقق من الهوية')]]));
+  const q = question.toLowerCase().trim();
+  const role = currentUser?.role;
+  const name = currentUser?.displayName ? ` ${escapeHtmlLite(currentUser.displayName)}` : '';
+
+  // Greetings: say hello first, then ask what they need (don't jump into topics).
+  if (/^(hi|hello|hey|hola|yo|sup|good\s*(morning|afternoon|evening)|مرحبا|أهلا|السلام\s*عليكم|صباح\s*الخير|مساء\s*الخير)([\s,!.؟]*)$/i.test(q)) {
+    postAssistantChat(
+      [
+        assistantText(`Hi${name}!`, `مرحباً${name}!`),
+        assistantText(
+          'What would you like to do? You can pick an option below or type your question.',
+          'ماذا تريد أن تفعل؟ يمكنك اختيار خيار أدناه أو كتابة سؤالك.',
+        ),
+      ],
+      null,
+      null,
+    );
+    setTimeout(() => {
+      addAssistantMessage('bot', assistantActionButtons());
+    }, 280 + 2 * 420);
+    return;
+  }
+
+  if (/هوية|مدني|سجل|identity|civil|\bcr\b|verification/.test(q)) {
+    postAssistantChat(
+      [
+        assistantText('Happy to walk you through identity checks.', 'يسعدني أن أوضح لك خطوات التحقق من الهوية.'),
+        assistantText('You’ll need your 7-digit CR Number and 8-digit Civil ID, then select Verify & auto-fill.', 'ستحتاج رقم السجل التجاري (7 أرقام) والرقم المدني (8 أرقام)، ثم اختر التحقق والتعبئة التلقائية.'),
+        assistantText('Want to open Identity Verification?', 'هل تريد فتح التحقق من الهوية؟'),
+      ],
+      assistantText('Yes, open it', 'نعم، افتحه'),
+      'identity',
+    );
   } else if (/دفع|رسوم|payment|pay|fee|wallet|apple|samsung/.test(q)) {
-    addAssistantMessage('bot', assistantText(
-      'Open Payments, select a payment method, review the OMR amount, and confirm payment in the secure payment window.',
-      'افتح المدفوعات، واختر طريقة الدفع، وراجع المبلغ بالريال العُماني، ثم أكد الدفع في نافذة الدفع الآمنة.',
-    ) + assistantActionButtons([['payment', assistantText('Open Payments', 'فتح المدفوعات')]]));
-  } else if (/ترخيص|تصريح|رمز|license|permit|\\bqr\\b/.test(q)) {
-    addAssistantMessage('bot', assistantText(
-      'After final approval, your screening license and QR code appear under My Licenses.',
-      'بعد الموافقة النهائية سيظهر ترخيص العرض ورمز الاستجابة السريعة ضمن تراخيصي.',
-    ) + assistantActionButtons([['license', assistantText('Open My Licenses', 'فتح تراخيصي')]]));
+    postAssistantChat(
+      [
+        assistantText('Payments is where you settle the fee for an application that’s ready.', 'المدفوعات هي حيث تسدّد الرسوم عندما يصبح الطلب جاهزاً.'),
+        assistantText('Pick a method, check the OMR amount, then confirm in the secure window.', 'اختر الطريقة، راجع المبلغ بالريال العُماني، ثم أكّد في النافذة الآمنة.'),
+        assistantText('Shall I open Payments?', 'أفتح المدفوعات؟'),
+      ],
+      assistantText('Yes, open Payments', 'نعم، افتح المدفوعات'),
+      'payment',
+    );
+  } else if (/ترخيص|تصريح|رمز|license|permit|\bqr\b/.test(q)) {
+    postAssistantChat(
+      [
+        assistantText('Once the Head of Section approves, your screening license and QR show up under My Licenses.', 'بعد موافقة رئيس القسم يظهر ترخيص العرض ورمز الاستجابة السريعة ضمن تراخيصي.'),
+        assistantText('Want to open that now?', 'هل تريد فتحها الآن؟'),
+      ],
+      assistantText('Yes, open My Licenses', 'نعم، افتح تراخيصي'),
+      'license',
+    );
   } else if (/مراجعة|أخصائي|رئيس|review|specialist|head/.test(q)) {
-    addAssistantMessage('bot', assistantText(
-      'After payment, the Specialist evaluates the application. It then moves to the Head of Section for approval, return with comments, or rejection.',
-      'بعد الدفع يقيّم الأخصائي الطلب، ثم ينتقل إلى رئيس القسم للموافقة أو الإعادة مع الملاحظات أو الرفض.',
-    ));
+    const staffNav = role === 'head_of_section' ? 'queue-head' : role === 'specialist' ? 'queue-specialist' : null;
+    postAssistantChat(
+      [
+        assistantText('Here’s the flow in plain terms.', 'إليك المسار باختصار.'),
+        assistantText('After payment, the Specialist reviews the application. Then the Head of Section decides — approve, send back with comments, or reject.', 'بعد الدفع يراجع الأخصائي الطلب. ثم يقرر رئيس القسم — موافقة، أو إعادة مع ملاحظات، أو رفض.'),
+        staffNav
+          ? assistantText('Want me to open your queue?', 'هل تريد أن أفتح قائمتك؟')
+          : assistantText('Anything else I can help with?', 'هل يمكنني مساعدتك بشيء آخر؟'),
+      ],
+      staffNav ? (role === 'head_of_section'
+        ? assistantText('Yes, go to decision queue', 'نعم، انتقل إلى قائمة القرارات')
+        : assistantText('Yes, go to review queue', 'نعم، انتقل إلى قائمة المراجعة')) : null,
+      staffNav,
+    );
   } else if (/حالة|تتبع|طلبي|history|status|track|existing|application/.test(q)) {
-    addAssistantMessage('bot', assistantText(
-      'Application History shows the reference number, current status, submission date, and next stage.',
-      'يعرض سجل الطلبات الرقم المرجعي والحالة الحالية وتاريخ التقديم والمرحلة التالية.',
-    ) + assistantActionButtons([['status', assistantText('Open Application History', 'فتح سجل الطلبات')]]));
+    if (role === 'applicant') {
+      postAssistantChat(
+        [
+          assistantText('History is where you track each application.', 'السجل هو مكان متابعة كل طلب.'),
+          assistantText('You’ll see the reference, status, and what’s next.', 'سترى الرقم المرجعي والحالة وما التالي.'),
+          assistantText('Open History?', 'أفتح السجل؟'),
+        ],
+        assistantText('Yes, open History', 'نعم، افتح السجل'),
+        'status',
+      );
+    } else {
+      postAssistantChat(
+        [
+          assistantText('Citizens track status in their History tab.', 'يتابع المواطنون الحالة من تبويب السجل.'),
+          assistantText('For you, the live cases sit in your task queue.', 'بالنسبة لك، الحالات الحالية في قائمة المهام.'),
+          assistantText('Want me to open your queue?', 'هل تريد أن أفتح قائمتك؟'),
+        ],
+        role === 'head_of_section'
+          ? assistantText('Yes, go to decision queue', 'نعم، انتقل إلى قائمة القرارات')
+          : role === 'specialist'
+            ? assistantText('Yes, go to review queue', 'نعم، انتقل إلى قائمة المراجعة')
+            : assistantText('Yes, open Reports', 'نعم، افتح التقارير'),
+        role === 'head_of_section' ? 'queue-head' : role === 'specialist' ? 'queue-specialist' : 'dashboard',
+      );
+    }
   } else if (/تقديم|جديد|apply|new|film|screening/.test(q)) {
-    addAssistantMessage('bot', assistantText(
-      'Begin with Identity Verification. When all checks pass and no existing application is found, the New Application form opens automatically.',
-      'ابدأ بالتحقق من الهوية. عند نجاح جميع الفحوصات وعدم وجود طلب قائم، يفتح نموذج الطلب الجديد تلقائياً.',
-    ) + assistantActionButtons([['apply', assistantText('Start Application', 'بدء الطلب')]]));
+    postAssistantChat(
+      [
+        assistantText('Start with identity verification first.', 'ابدأ أولاً بالتحقق من الهوية.'),
+        assistantText('When the checks pass and there’s no existing application, the New Application form opens.', 'عند نجاح الفحوصات وعدم وجود طلب قائم، يفتح نموذج الطلب الجديد.'),
+        assistantText('Want to begin?', 'هل تريد البدء؟'),
+      ],
+      assistantText('Yes, start application', 'نعم، ابدأ الطلب'),
+      'apply',
+    );
   } else {
-    addAssistantMessage('bot', assistantText(
-      'I can help with identity verification, new applications, payments, application tracking, reviews, and issued licenses.',
-      'يمكنني مساعدتك في التحقق من الهوية والطلبات الجديدة والمدفوعات ومتابعة الطلبات والمراجعات والتراخيص الصادرة.',
-    ) + assistantActionButtons());
+    postAssistantChat(
+      [
+        assistantText('I can help with identity, applications, payments, reviews, and licenses.', 'يمكنني المساعدة في الهوية والطلبات والمدفوعات والمراجعات والتراخيص.'),
+        assistantText('Pick one of the options below, or type what you need.', 'اختر أحد الخيارات أدناه، أو اكتب ما تحتاجه.'),
+      ],
+      null,
+      null,
+    );
+    setTimeout(() => {
+      addAssistantMessage('bot', assistantActionButtons());
+    }, 280 + 2 * 420);
   }
 }
 
@@ -2222,9 +2412,121 @@ function assistantAction(action) {
   if (promptActions[action]) {
     const [label, question] = promptActions[action];
     addAssistantMessage('user', label);
-    setTimeout(() => answerAssistantQuestion(question), 220);
+    // Greet first, then answer the topic (same pattern as admin/specialist/head chips).
+    addAssistantMessage('bot', assistantChipGreeting());
+    setTimeout(() => answerAssistantQuestion(question), 450);
     return;
   }
+
+  // Role topics: short chat replies first; navigation only via the link.
+  const explainTopics = {
+    'admin-fields': {
+      label: assistantText('Service fields', 'حقول الخدمة'),
+      lines: [
+        assistantText('Sure — that’s the form builder for citizen applications.', 'تمام — هذا منشئ نموذج طلبات المواطنين.'),
+        assistantText('You can add or change questions there (like film title or screening dates). Once saved, applicants see them on the form.', 'يمكنك إضافة الأسئلة أو تعديلها هناك (مثل عنوان الفيلم أو تواريخ العرض). بعد الحفظ يراها مقدّمو الطلبات في النموذج.'),
+        assistantText('Want me to open it for you?', 'هل تريد أن أفتحه لك؟'),
+      ],
+      linkLabel: assistantText('Yes, open Service fields', 'نعم، افتح حقول الخدمة'),
+    },
+    'admin-process': {
+      label: assistantText('Approval process', 'إجراءات الموافقة'),
+      lines: [
+        assistantText('That’s the Process Designer — where you sketch who does what in the licensing flow.', 'هذا مصمم سير العمل — حيث ترسم من يفعل ماذا في مسار الترخيص.'),
+        assistantText('Drag steps for staff review, system actions, and approvals. Publish when you’re ready so new applications follow it.', 'اسحب خطوات لمراجعة الموظفين وإجراءات النظام والموافقات. انشر عندما تكون جاهزاً لتتبع الطلبات الجديدة هذا المسار.'),
+        assistantText('Shall I take you there?', 'هل تريد أن أنقلك إليه؟'),
+      ],
+      linkLabel: assistantText('Yes, open Process Designer', 'نعم، افتح مصمم سير العمل'),
+    },
+    dashboard: {
+      label: assistantText('Reports', 'التقارير'),
+      lines: [
+        assistantText('Reports is your quick view of how the cinema licensing service is doing.', 'التقارير تعطيك نظرة سريعة على أداء خدمة ترخيص السينما.'),
+        assistantText('You’ll see counts like submitted, under review, and licensed — handy for a status check.', 'سترى أعداداً مثل المقدَّم وقيد المراجعة والمرخَّص — مفيدة لمتابعة الوضع.'),
+        assistantText('Open it now?', 'أفتحه الآن؟'),
+      ],
+      linkLabel: assistantText('Yes, open Reports', 'نعم، افتح التقارير'),
+    },
+    'queue-specialist': {
+      label: assistantText('Open review queue', 'فتح قائمة المراجعة'),
+      lines: [
+        assistantText('That’s your review inbox — applications waiting after payment.', 'هذه قائمة مراجعتك — الطلبات المنتظرة بعد الدفع.'),
+        assistantText('Pick a task, check the details, leave comments, then complete the review.', 'اختر مهمة، راجع التفاصيل، أضف ملاحظات، ثم أكمل المراجعة.'),
+        assistantText('Ready to open the queue?', 'جاهز لفتح القائمة؟'),
+      ],
+      linkLabel: assistantText('Yes, go to my queue', 'نعم، انتقل إلى قائمتي'),
+    },
+    'queue-head': {
+      label: assistantText('Open decision queue', 'فتح قائمة القرارات'),
+      lines: [
+        assistantText('That’s your decision inbox — cases the specialist already reviewed.', 'هذه قائمة قراراتك — الحالات التي راجعها الأخصائي.'),
+        assistantText('From there you can approve, send back with comments, or reject.', 'من هناك يمكنك الموافقة أو الإعادة مع ملاحظات أو الرفض.'),
+        assistantText('Want to open it?', 'هل تريد فتحها؟'),
+      ],
+      linkLabel: assistantText('Yes, go to decision queue', 'نعم، انتقل إلى قائمة القرارات'),
+    },
+    status: {
+      label: assistantText('Application status', 'حالة الطلب'),
+      lines: currentUser?.role === 'applicant'
+        ? [
+          assistantText('You can track your applications under History.', 'يمكنك متابعة طلباتك من السجل.'),
+          assistantText('Each one shows where it is — payment, review, license, and so on.', 'كل طلب يوضح أين وصل — الدفع، المراجعة، الترخيص، وغير ذلك.'),
+          assistantText('Open History?', 'أفتح السجل؟'),
+        ]
+        : [
+          assistantText('Citizens see status in their own History tab.', 'المواطنون يرون الحالة في تبويب السجل لديهم.'),
+          assistantText('For your role, the live work is in your task queue — open a task to see that application’s progress.', 'لدورك، العمل الحالي في قائمة المهام — افتح مهمة لرؤية تقدم ذلك الطلب.'),
+          assistantText('Want me to open your queue?', 'هل تريد أن أفتح قائمتك؟'),
+        ],
+      linkLabel: currentUser?.role === 'applicant'
+        ? assistantText('Yes, open History', 'نعم، افتح السجل')
+        : currentUser?.role === 'head_of_section'
+          ? assistantText('Yes, go to decision queue', 'نعم، انتقل إلى قائمة القرارات')
+          : currentUser?.role === 'specialist'
+            ? assistantText('Yes, go to review queue', 'نعم، انتقل إلى قائمة المراجعة')
+            : assistantText('Yes, open Reports', 'نعم، افتح التقارير'),
+      navigateAs: currentUser?.role === 'applicant'
+        ? 'status'
+        : currentUser?.role === 'head_of_section'
+          ? 'queue-head'
+          : currentUser?.role === 'specialist'
+            ? 'queue-specialist'
+            : 'dashboard',
+    },
+  };
+  if (explainTopics[action]) {
+    const topic = explainTopics[action];
+    const navAction = topic.navigateAs || action;
+    addAssistantMessage('user', topic.label);
+    postAssistantChipReply(topic.lines, topic.linkLabel, navAction);
+    return;
+  }
+
+  if (action === 'review-help') {
+    const role = currentUser?.role;
+    const staffNav = role === 'head_of_section' ? 'queue-head' : role === 'specialist' ? 'queue-specialist' : null;
+    addAssistantMessage('user', assistantText('Review decisions', 'قرارات المراجعة'));
+    postAssistantChipReply(
+      [
+        assistantText('Sure — here’s how reviews work.', 'تمام — إليك كيف تعمل المراجعات.'),
+        assistantText('After payment, the Specialist reviews the file. Then the Head of Section decides — approve, send back with comments, or reject.', 'بعد الدفع يراجع الأخصائي الملف. ثم يقرر رئيس القسم — موافقة، أو إعادة مع ملاحظات، أو رفض.'),
+        staffNav
+          ? assistantText('Want me to open your queue?', 'هل تريد أن أفتح قائمتك؟')
+          : assistantText('Anything else I can help with?', 'هل يمكنني مساعدتك بشيء آخر؟'),
+      ],
+      staffNav ? (role === 'head_of_section'
+        ? assistantText('Yes, go to decision queue', 'نعم، انتقل إلى قائمة القرارات')
+        : assistantText('Yes, go to review queue', 'نعم، انتقل إلى قائمة المراجعة')) : null,
+      staffNav,
+    );
+    return;
+  }
+
+  assistantNavigate(action);
+}
+
+/** Actually open the matching portal tab/pane (used by chat links). */
+function assistantNavigate(action) {
   const paneMap = { identity: 'identity', apply: 'new', payment: 'payment', status: 'history', license: 'license' };
   if (paneMap[action]) {
     if (!currentUser) {
@@ -2249,6 +2551,7 @@ function assistantAction(action) {
     switchTab('dashboard');
   } else if (action === 'review-help') {
     answerAssistantQuestion('review');
+    return;
   }
   if (document.body.classList.contains('mobile-frame') || window.innerWidth <= 560) toggleDigitalAssistant(false);
 }
@@ -2299,6 +2602,7 @@ function showAppShell() {
   document.getElementById('userBadge').classList.remove('hidden');
   document.getElementById('userBadgeName').textContent = `${currentUser.displayName} (${currentUser.role})`;
   resetDigitalAssistant();
+  showDigitalAssistantLauncher();
   resetIdentityVerification({ close: true });
   renderTabs();
   updatePortalRoleName();
@@ -2467,16 +2771,17 @@ function toggleApplicantApplicationMenu() {
   setApplicantApplicationMenu(parent?.getAttribute('aria-expanded') !== 'true');
 }
 function updateNewApplicationAccess() {
-  const protectedPanes = ['history', 'new', 'payment', 'license'];
-  protectedPanes.forEach((pane) => {
+  // Only New Application stays locked until identity verification passes.
+  // History, Payments, and Licenses remain available without it.
+  ['history', 'new', 'payment', 'license'].forEach((pane) => {
     const button = document.getElementById(`app-pane-btn-${pane}`);
     if (!button) return;
-    const locked = !identityVerificationPassed || (pane === 'new' && !!existingIdentityApplication);
+    const locked = pane === 'new' && (!identityVerificationPassed || !!existingIdentityApplication);
     button.classList.toggle('is-locked', locked);
     button.setAttribute('aria-disabled', locked ? 'true' : 'false');
     button.title = !locked
       ? ''
-      : existingIdentityApplication && pane === 'new'
+      : existingIdentityApplication
         ? (getLanguage() === 'ar' ? 'يوجد طلب قائم بالفعل' : 'An application already exists')
         : (getLanguage() === 'ar' ? 'أكمل التحقق من الهوية أولاً' : 'Complete Identity Verification first');
   });
@@ -2512,7 +2817,7 @@ function routeExistingApplication(application) {
 
 function showApplicantPane(id) {
   let target = APPLICANT_PANES.includes(id) ? id : 'history';
-  if (target !== 'identity' && !identityVerificationPassed) {
+  if (target === 'new' && !identityVerificationPassed) {
     target = 'identity';
     const result = document.getElementById('lookupResult');
     if (result && !result.innerHTML.trim()) {
@@ -2836,7 +3141,23 @@ const I18N = {
     evaluatorSignature: 'Evaluator signature',
     evaluationDate: 'Evaluation date',
     signSubmitEvaluation: 'Sign & Submit Evaluation',
+    findingsRequiredMsg: 'Please add inspection findings and recommendation before submitting.',
+    declarationRequiredMsg: 'Please tick the confirmation checkbox before submitting.',
+    signatureNameRequiredMsg: 'Please type your full name as signature before submitting.',
+    decisionCommentsRequiredMsg: 'Please add review comments before signing your decision.',
+    returnCommentsRequiredMsg: 'Please add review comments before returning this to the Specialist.',
+    addCommentsInline: 'Please add comments',
+    tickConfirmationInline: 'Please tick the confirmation',
+    enterSignatureInline: 'Please enter your signature',
     evaluationSignatureRequired: 'Complete the findings, confirm the declaration, and enter your full name before signing.',
+    applicationDocTitle: 'Submitted application',
+    applicationDocDownload: 'Download copy',
+    applicationDocPrint: 'Print / Save PDF',
+    applicationDocClose: 'Close',
+    applicationDocSubmitted: 'Submitted',
+    applicationDocStatus: 'Status',
+    applicationDocRef: 'Reference',
+    viewApplicationBtn: 'View',
   },
   ar: {
     mobileToggle: 'عرض الجوال',
@@ -3024,7 +3345,23 @@ const I18N = {
     evaluatorSignature: 'توقيع المقيّم',
     evaluationDate: 'تاريخ التقييم',
     signSubmitEvaluation: 'توقيع وإرسال التقييم',
+    findingsRequiredMsg: 'يرجى إضافة نتائج المعاينة والتوصية قبل الإرسال.',
+    declarationRequiredMsg: 'يرجى تحديد خانة التأكيد قبل الإرسال.',
+    signatureNameRequiredMsg: 'يرجى كتابة اسمك الكامل كتوقيع قبل الإرسال.',
+    decisionCommentsRequiredMsg: 'يرجى إضافة ملاحظات المراجعة قبل توقيع القرار.',
+    returnCommentsRequiredMsg: 'يرجى إضافة ملاحظات المراجعة قبل إعادة الطلب إلى الأخصائي.',
+    addCommentsInline: 'يرجى إضافة الملاحظات',
+    tickConfirmationInline: 'يرجى تحديد خانة التأكيد',
+    enterSignatureInline: 'يرجى إدخال التوقيع',
     evaluationSignatureRequired: 'أكمل النتائج وأكد الإقرار وأدخل اسمك الكامل قبل التوقيع.',
+    applicationDocTitle: 'الطلب المقدَّم',
+    applicationDocDownload: 'تنزيل نسخة',
+    applicationDocPrint: 'طباعة / حفظ PDF',
+    applicationDocClose: 'إغلاق',
+    applicationDocSubmitted: 'تاريخ التقديم',
+    applicationDocStatus: 'الحالة',
+    applicationDocRef: 'المرجع',
+    viewApplicationBtn: 'عرض',
   },
 };
 
@@ -3622,6 +3959,8 @@ const SCHEMA_TYPE_LABELS = { string: 'Text', text: 'Text (long)', boolean: 'Yes/
 const PROTECTED_FIELDS = new Set([
   'film_title', 'classification', 'applicant_name', 'has_riyada_card',
   'valid_commercial_registration', 'valid_prior_practice_license', 'final_fee',
+  'date', 'duration', 'language', 'subtitle_language_dubbing_language',
+  'production_country', 'production_year', 'producer_distributor',
 ]);
 
 function renderExistingFieldsPreview() {
@@ -3983,6 +4322,149 @@ function openDigitalLicense(payload) {
   window.open(licenseVerificationUrl(code), '_blank', 'noopener');
 }
 
+let applicationDocCurrent = null;
+
+function applicationDocPlainValue(key, value) {
+  if (value === true || value === 'true' || value === 1 || value === '1') return getLanguage() === 'ar' ? 'نعم' : 'Yes';
+  if (value === false || value === 'false' || value === 0 || value === '0') return getLanguage() === 'ar' ? 'لا' : 'No';
+  if (key === 'payment_method') return paymentMethodLabel(value);
+  if (key === 'duration') return `${value} ${getLanguage() === 'ar' ? 'دقيقة' : 'minutes'}`;
+  if (key === 'final_fee') return `${value} ${getLanguage() === 'ar' ? 'ر.ع.' : 'OMR'}`;
+  return String(value ?? '');
+}
+
+function applicationDocSectionsHtml(app) {
+  const entries = Object.entries(app || {})
+    .filter(([k, v]) => !SNAPSHOT_SKIP.has(k) && v !== null && v !== undefined && v !== '');
+  const parties = entries.filter(([k]) => APPROVAL_PARTY_FIELDS.has(k));
+  const eligibility = entries.filter(([k]) => APPROVAL_ELIGIBILITY_FIELDS.has(k));
+  const film = entries.filter(([k]) => !APPROVAL_PARTY_FIELDS.has(k) && !APPROVAL_ELIGIBILITY_FIELDS.has(k));
+  return (
+    approvalSection(tMsg('filmDetailsSection', 'Film details'), film)
+    + approvalSection(tMsg('applicantSection', 'Applicant / responsible party'), parties)
+    + approvalSection(tMsg('eligibilitySection', 'Eligibility & payment verification'), eligibility)
+  );
+}
+
+function applicationDocReference(app) {
+  const id = app?.id ?? '';
+  return `CFS-${new Date(app?.date_created || Date.now()).getFullYear()}-${String(id).padStart(5, '0')}`;
+}
+
+function renderApplicationDocumentContent(app) {
+  const ar = getLanguage() === 'ar';
+  const submitted = app.date_created
+    ? new Date(app.date_created).toLocaleString(ar ? 'ar-OM' : 'en-GB')
+    : '—';
+  const status = String(app.status || 'submitted').replaceAll('_', ' ');
+  const ref = applicationDocReference(app);
+  return `
+    <div class="card approval-document">
+      <div class="approval-doc-head">
+        <div>
+          <h3>${tMsg('applicationDocTitle', 'Submitted application')}</h3>
+          <div class="field-note">${escapeHtml(app.film_title || (ar ? 'طلب إجازة عرض' : 'Cinema screening application'))}</div>
+        </div>
+        <div class="approval-doc-ref">
+          ${tMsg('applicationDocRef', 'Reference')}
+          <strong>#${escapeHtml(String(app.id))} · ${escapeHtml(ref)}</strong>
+        </div>
+      </div>
+      <div class="app-doc-meta">
+        <div><span>${tMsg('applicationDocSubmitted', 'Submitted')}</span><br /><strong>${escapeHtml(submitted)}</strong></div>
+        <div><span>${tMsg('applicationDocStatus', 'Status')}</span><br /><strong>${escapeHtml(status)}</strong></div>
+        ${app.applicant_name ? `<div><span>${approvalFieldLabel('applicant_name')}</span><br /><strong>${escapeHtml(String(app.applicant_name))}</strong></div>` : ''}
+      </div>
+      <div class="app-field-snapshot" style="margin:0;padding:1rem 1.15rem;border:none;background:transparent;">
+        ${applicationDocSectionsHtml(app) || `<p class="field-note">${ar ? 'لا توجد بيانات.' : 'No submitted details available.'}</p>`}
+      </div>
+    </div>`;
+}
+
+async function openApplicationDocument(applicationId) {
+  const modal = document.getElementById('applicationDocModal');
+  const content = document.getElementById('applicationDocContent');
+  const titleEl = document.getElementById('applicationDocTitle');
+  const downloadBtn = document.getElementById('applicationDocDownloadBtn');
+  if (!modal || !content) return;
+  titleEl.textContent = tMsg('applicationDocTitle', 'Submitted application');
+  if (downloadBtn) downloadBtn.textContent = tMsg('applicationDocDownload', 'Download copy');
+  const printBtn = modal.querySelector('.app-doc-toolbar-actions button:nth-child(2)');
+  const closeBtn = modal.querySelector('.app-doc-toolbar-actions button:nth-child(3)');
+  if (printBtn) printBtn.textContent = tMsg('applicationDocPrint', 'Print / Save PDF');
+  if (closeBtn) closeBtn.textContent = tMsg('applicationDocClose', 'Close');
+  content.innerHTML = `<p class="field-note" style="padding:1rem;">${getLanguage() === 'ar' ? 'جاري التحميل…' : 'Loading…'}</p>`;
+  modal.classList.add('open');
+
+  let app = allApplications.find((item) => String(item.id) === String(applicationId));
+  try {
+    const res = await fetch(`/api/applications/${applicationId}`);
+    const data = await res.json();
+    if (res.ok) app = data;
+  } catch {
+    // Fall back to cached list row if the detail request fails.
+  }
+  if (!app) {
+    content.innerHTML = `<p class="field-note" style="padding:1rem;">${getLanguage() === 'ar' ? 'تعذر تحميل الطلب.' : 'Could not load application.'}</p>`;
+    applicationDocCurrent = null;
+    return;
+  }
+  applicationDocCurrent = app;
+  titleEl.textContent = `${tMsg('applicationDocTitle', 'Submitted application')} #${app.id}`;
+  content.innerHTML = renderApplicationDocumentContent(app);
+}
+
+function closeApplicationDocument() {
+  document.getElementById('applicationDocModal')?.classList.remove('open');
+  applicationDocCurrent = null;
+}
+
+function printApplicationDocument() {
+  if (!document.getElementById('applicationDocModal')?.classList.contains('open')) return;
+  window.print();
+}
+
+function downloadApplicationDocument() {
+  const app = applicationDocCurrent;
+  if (!app) return;
+  const ar = getLanguage() === 'ar';
+  const ref = applicationDocReference(app);
+  const entries = Object.entries(app)
+    .filter(([k, v]) => !SNAPSHOT_SKIP.has(k) && v !== null && v !== undefined && v !== '');
+  const lines = [
+    ar ? 'طلب إجازة عرض فيلم سينمائي' : 'Cinema Film Screening License Application',
+    `${ar ? 'المرجع' : 'Reference'}: #${app.id} · ${ref}`,
+    `${ar ? 'الحالة' : 'Status'}: ${String(app.status || '').replaceAll('_', ' ')}`,
+    `${ar ? 'تاريخ التقديم' : 'Submitted'}: ${app.date_created ? new Date(app.date_created).toLocaleString(ar ? 'ar-OM' : 'en-GB') : '—'}`,
+    '',
+    ...entries.map(([k, v]) => `${approvalFieldLabel(k)}: ${applicationDocPlainValue(k, v)}`),
+    '',
+    ar ? 'نسخة محفوظة من بوابة الخدمات.' : 'Saved copy from the service portal.',
+  ];
+  const text = lines.join('\r\n');
+  const htmlBody = document.getElementById('applicationDocContent')?.innerHTML || '';
+  const html = `<!DOCTYPE html><html lang="${ar ? 'ar' : 'en'}" dir="${ar ? 'rtl' : 'ltr'}"><head><meta charset="utf-8"/><title>${escapeHtml(ref)}</title>
+<style>
+  body{font-family:Segoe UI,Tahoma,sans-serif;color:#1a1a1a;margin:24px;line-height:1.45}
+  h3{margin:0 0 .35rem;color:#8b1538} .field-note{opacity:.8;font-size:.9rem}
+  .approval-doc-head,.app-doc-meta,.app-field-snapshot{margin-bottom:1rem}
+  .afs-row{display:flex;gap:1rem;padding:.35rem 0;border-bottom:1px dashed #ddd}
+  .afs-key{min-width:11rem;color:#666} .afs-val{font-weight:600}
+  .approval-section-title{margin:1rem 0 .4rem;color:#8b1538;font-size:.85rem;text-transform:uppercase}
+  .approval-value-yes{color:#0f7b5f} .approval-value-no{color:#d42027}
+</style></head><body>${htmlBody}<pre style="display:none">${escapeHtml(text)}</pre></body></html>`;
+  const blob = new Blob([html], { type: 'text/html;charset=utf-8' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `${ref}-application.html`;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  URL.revokeObjectURL(url);
+  log(ar ? `تم تنزيل نسخة من الطلب #${app.id}` : `Downloaded a copy of application #${app.id}`);
+}
+
 function paymentMethodLabel(key) {
   const map = {
     e_payment: tMsg('payMethodEPayment', 'E-Payment Gateway'),
@@ -4009,16 +4491,17 @@ function appsRowHtml(r) {
     ? '<span class="tag" style="background:#fef3f3;color:#d42027;">● Breached</span>'
     : '<span class="tag" style="background:#e8f5f0;color:#0f7b5f;">● On track</span>';
   const submitted = r.date_created ? new Date(r.date_created).toLocaleDateString(getLanguage() === 'ar' ? 'ar-OM' : 'en-GB') : '—';
-  const action = r.license_qr
+  const viewBtn = `<button class="small secondary" onclick="openApplicationDocument(${Number(r.id)})">${tMsg('viewApplicationBtn', 'View')}</button>`;
+  const permitBtn = r.license_qr
     ? `<button class="small secondary" onclick='openDigitalLicense(${JSON.stringify(String(r.license_qr))})'>${tMsg('openDigitalLicenseBtn', 'Open permit')}</button>`
-    : `<button class="small secondary" onclick="showApplicantPane('${status === 'submitted' ? 'payment' : 'new'}')">${getLanguage() === 'ar' ? 'عرض' : 'View'}</button>`;
+    : '';
   return `<tr>
     <td><strong>#${r.id}</strong><span class="field-note" style="display:block;font-size:10px;">CFS-${new Date().getFullYear()}-${String(r.id).padStart(5, '0')}</span></td>
     <td><strong>${escapeHtml(r.film_title || '—')}</strong><span class="field-note" style="display:block;font-size:10px;">${escapeHtml(r.applicant_name || '')}</span></td>
     <td>${submitted}</td>
     <td><span class="tag" style="${statusColor}">${escapeHtml(status.replaceAll('_', ' '))}</span></td>
     <td>${slaTag}</td>
-    <td>${action}</td>
+    <td style="white-space:nowrap;display:flex;gap:.35rem;flex-wrap:wrap;">${viewBtn}${permitBtn}</td>
   </tr>`;
 }
 
@@ -4088,23 +4571,116 @@ function roleTaskStats(group, tasks) {
     <div class="application-stat"><div class="stat-label">${ar ? 'مصعّدة' : 'Escalated'}</div><div class="stat-value">0</div><div class="stat-note">${ar ? 'لا توجد مهام متأخرة' : 'No breached tasks'}</div></div>`;
 }
 
-function roleQueueHtml(group, tasks) {
+const roleQueueState = {
+  specialist: { tasks: [], page: 1 },
+  head_of_section: { tasks: [], page: 1 },
+};
+let roleQueuePageSize = Number(localStorage.getItem('omanRoleQueuePageSize')) || 10;
+
+function roleQueuePageSlice(group) {
+  const state = roleQueueState[group] || { tasks: [], page: 1 };
+  const total = state.tasks.length;
+  const totalPages = Math.max(1, Math.ceil(total / roleQueuePageSize) || 1);
+  state.page = Math.min(Math.max(1, state.page || 1), totalPages);
+  const start = total ? (state.page - 1) * roleQueuePageSize : 0;
+  return {
+    pageTasks: state.tasks.slice(start, start + roleQueuePageSize),
+    start,
+    total,
+    totalPages,
+    page: state.page,
+  };
+}
+
+function roleQueueRowHtml(group, task) {
   const ar = getLanguage() === 'ar';
-  const title = group === 'specialist'
-    ? (ar ? 'الزيارات الميدانية المسندة' : 'Assigned field visits')
-    : (ar ? 'طلبات بانتظار القرار' : 'Applications awaiting decision');
-  const rows = tasks.map((task) => `
-    <tr>
+  return `<tr>
       <td><strong>#${escapeHtml(String(task.businessKey))}</strong><span class="field-note" style="display:block;font-size:10px;">CFS-${new Date().getFullYear()}-${String(task.businessKey).padStart(5, '0')}</span></td>
       <td><strong>${escapeHtml(canvasLocalizedName(task.name))}</strong></td>
       <td><span class="tag" style="background:#edf3f9;color:#2b5f8c;">${group === 'specialist' ? (ar ? 'زيارة ميدانية' : 'Field visit') : (ar ? 'مراجعة نهائية' : 'Final review')}</span></td>
       <td><span class="tag" style="background:#e8f5f0;color:#0f7b5f;">● ${ar ? 'ضمن المدة' : 'On track'}</span></td>
-      <td><button class="small secondary" onclick="openRoleTaskDetail('${group}','${task.id}')">${getLanguage() === 'ar' ? 'فتح' : 'Open'}</button></td>
-    </tr>`).join('');
+      <td><button class="small secondary" onclick="openRoleTaskDetail('${group}','${task.id}')">${ar ? 'فتح' : 'Open'}</button></td>
+    </tr>`;
+}
+
+function roleQueuePaginationMeta(group) {
+  const { start, total, totalPages, page } = roleQueuePageSlice(group);
+  const rangeEnd = total ? Math.min(start + roleQueuePageSize, total) : 0;
+  const info = total ? `${start + 1}–${rangeEnd} of ${total}` : '0 of 0';
+  return { info, totalPages, page, prevDisabled: page <= 1, nextDisabled: page >= totalPages || total === 0 };
+}
+
+function roleQueueHtml(group, tasks) {
+  const ar = getLanguage() === 'ar';
+  roleQueueState[group] = { tasks: Array.isArray(tasks) ? tasks : [], page: 1 };
+  const { pageTasks, total } = roleQueuePageSlice(group);
+  const meta = roleQueuePaginationMeta(group);
+  const title = group === 'specialist'
+    ? (ar ? 'الزيارات الميدانية المسندة' : 'Assigned field visits')
+    : (ar ? 'طلبات بانتظار القرار' : 'Applications awaiting decision');
+  const rows = pageTasks.length
+    ? pageTasks.map((task) => roleQueueRowHtml(group, task)).join('')
+    : `<tr><td colspan="5" class="field-note" style="text-align:center;">${ar ? 'لا توجد مهام.' : 'No pending tasks.'}</td></tr>`;
+  const groupArg = group === 'head_of_section' ? 'head_of_section' : 'specialist';
   return `<div class="role-queue-panel" id="${group}_queue">
-    <div class="role-queue-title"><strong>${title}</strong><span class="queue-count">${tasks.length}</span><span style="flex:1"></span><button class="small secondary" onclick="loadTasks('${group === 'head_of_section' ? 'head_of_section' : group}')">${tMsg('refreshBtn', 'Refresh')}</button></div>
-    <div class="table-scroll" style="border:0;border-radius:0;"><table><thead><tr><th>${ar ? 'المرجع' : 'Reference'}</th><th>${ar ? 'المهمة' : 'Task'}</th><th>${ar ? 'المرحلة' : 'Stage'}</th><th>${ar ? 'مدة الخدمة' : 'Service Time'}</th><th></th></tr></thead><tbody>${rows}</tbody></table></div>
+    <div class="role-queue-title"><strong>${title}</strong><span class="queue-count">${total}</span><span style="flex:1"></span><button class="small secondary" onclick="loadTasks('${groupArg}')">${tMsg('refreshBtn', 'Refresh')}</button></div>
+    <div class="table-scroll" style="border:0;border-radius:0;"><table><thead><tr><th>${ar ? 'المرجع' : 'Reference'}</th><th>${ar ? 'المهمة' : 'Task'}</th><th>${ar ? 'المرحلة' : 'Stage'}</th><th>${ar ? 'مدة الخدمة' : 'Service Time'}</th><th></th></tr></thead><tbody id="${group}_queue_tbody">${rows}</tbody></table></div>
+    <div class="pagination-bar">
+      <div class="pagination-nav">
+        <button class="small secondary" id="${group}_prevBtn" onclick="roleQueueGoToPage('${groupArg}', roleQueueState['${groupArg}'].page - 1)" ${meta.prevDisabled ? 'disabled' : ''}>‹ Prev</button>
+        <span class="field-note" id="${group}_pageInfo">${meta.info}</span>
+        <button class="small secondary" id="${group}_nextBtn" onclick="roleQueueGoToPage('${groupArg}', roleQueueState['${groupArg}'].page + 1)" ${meta.nextDisabled ? 'disabled' : ''}>Next ›</button>
+      </div>
+      <label class="pagination-size">
+        <span>Show</span>
+        <select id="${group}_pageSize" onchange="roleQueueChangePageSize('${groupArg}', this.value)">
+          <option value="10"${roleQueuePageSize === 10 ? ' selected' : ''}>10</option>
+          <option value="25"${roleQueuePageSize === 25 ? ' selected' : ''}>25</option>
+          <option value="50"${roleQueuePageSize === 50 ? ' selected' : ''}>50</option>
+          <option value="100"${roleQueuePageSize === 100 ? ' selected' : ''}>100</option>
+        </select>
+        <span>per page</span>
+      </label>
+    </div>
   </div>`;
+}
+
+function updateRoleQueuePagination(group) {
+  const panel = document.getElementById(`${group}_queue`);
+  if (!panel) return;
+  const { pageTasks } = roleQueuePageSlice(group);
+  const meta = roleQueuePaginationMeta(group);
+  const ar = getLanguage() === 'ar';
+  const tbody = document.getElementById(`${group}_queue_tbody`);
+  if (tbody) {
+    tbody.innerHTML = pageTasks.length
+      ? pageTasks.map((task) => roleQueueRowHtml(group, task)).join('')
+      : `<tr><td colspan="5" class="field-note" style="text-align:center;">${ar ? 'لا توجد مهام.' : 'No pending tasks.'}</td></tr>`;
+  }
+  const info = document.getElementById(`${group}_pageInfo`);
+  const prev = document.getElementById(`${group}_prevBtn`);
+  const next = document.getElementById(`${group}_nextBtn`);
+  const sizeEl = document.getElementById(`${group}_pageSize`);
+  if (info) info.textContent = meta.info;
+  if (prev) prev.disabled = meta.prevDisabled;
+  if (next) next.disabled = meta.nextDisabled;
+  if (sizeEl) sizeEl.value = String(roleQueuePageSize);
+}
+
+function roleQueueGoToPage(group, page) {
+  if (!roleQueueState[group]) return;
+  roleQueueState[group].page = page;
+  updateRoleQueuePagination(group);
+}
+
+function roleQueueChangePageSize(group, size) {
+  roleQueuePageSize = Number(size) || 10;
+  localStorage.setItem('omanRoleQueuePageSize', roleQueuePageSize);
+  if (roleQueueState[group]) roleQueueState[group].page = 1;
+  updateRoleQueuePagination(group);
+  const other = group === 'specialist' ? 'head_of_section' : 'specialist';
+  const otherSize = document.getElementById(`${other}_pageSize`);
+  if (otherSize) otherSize.value = String(roleQueuePageSize);
 }
 
 function openRoleTaskDetail(group, taskId) {
@@ -4173,10 +4749,19 @@ function applicantPaymentPanelHtml(task, app, active) {
 
 async function loadTasks(group) {
   const res = await fetch('/api/tasks?group=' + group);
-  const tasks = await res.json();
+  const tasks = await res.json().catch(() => ({}));
   const containerId = { applicant: 'applicantTasks', specialist: 'specialistTasks', head_of_section: 'headTasks' }[group];
   const container = document.getElementById(containerId);
-  if (!res.ok) { container.textContent = 'Error: ' + JSON.stringify(tasks); return; }
+  if (!res.ok) {
+    const raw = tasks?.error || res.status;
+    const camundaDown = /fetch failed|ECONNREFUSED|unavailable|Failed to fetch/i.test(String(raw));
+    container.innerHTML = camundaDown
+      ? `<p class="field-note">${getLanguage() === 'ar'
+        ? 'تعذر الاتصال بمحرك سير العمل (Camunda). تأكد أنه يعمل على المنفذ 8080 ثم حدّث الصفحة.'
+        : 'Cannot reach the workflow engine (Camunda). Start Camunda on port 8080, then click Refresh.'}</p>`
+      : `<p class="field-note">${getLanguage() === 'ar' ? 'تعذر تحميل المهام.' : 'Could not load tasks.'} ${escapeHtmlLite(String(raw))}</p>`;
+    return;
+  }
   if (group !== 'applicant') roleTaskStats(group, tasks);
   if (tasks.length === 0) {
     container.innerHTML = group === 'applicant'
@@ -4220,15 +4805,18 @@ async function loadTasks(group) {
         <div id="snap_${t.businessKey}" class="app-field-snapshot"><span class="field-note">${tMsg('loadingAppFields', 'Loading application fields…')}</span></div>
         <div class="approval-review-area">
           <label for="notes_${t.id}">${tMsg('fieldVisitFindingsLabel', 'Inspection findings and recommendation')}</label>
-          <textarea id="notes_${t.id}" rows="4" placeholder="${tMsg('fieldVisitNotesPh', 'Record the on-site inspection findings...')}">${tMsg('fieldVisitNotesDefault', 'On-site inspection completed, no issues found.')}</textarea>
-          <label class="approval-declaration">
-            <input type="checkbox" id="specialist_declaration_${t.id}" />
+          <textarea id="notes_${t.id}" rows="4" placeholder="${tMsg('fieldVisitNotesPh', 'Record the on-site inspection findings...')}" oninput="clearApprovalFieldError(this)"></textarea>
+          <div class="field-error" id="notes_err_${t.id}"></div>
+          <label class="approval-declaration" id="specialist_declaration_wrap_${t.id}">
+            <input type="checkbox" id="specialist_declaration_${t.id}" onchange="clearApprovalFieldError(this)" />
             <span>${tMsg('specialistDeclaration', 'I confirm that I conducted the field visit, verified the information recorded above, and submit this evaluation in my official capacity.')}</span>
           </label>
+          <div class="field-error" id="specialist_declaration_err_${t.id}"></div>
           <div class="approval-signature-grid">
             <label>
               ${tMsg('evaluatorSignature', 'Evaluator signature')}
-              <input class="approval-signature-input" id="specialist_signature_${t.id}" value="${escapeHtml(currentUser?.displayName || '')}" placeholder="${tMsg('typeFullName', 'Type full name to sign')}" />
+              <input class="approval-signature-input" id="specialist_signature_${t.id}" value="${escapeHtml(currentUser?.displayName || '')}" placeholder="${tMsg('typeFullName', 'Type full name to sign')}" oninput="clearApprovalFieldError(this)" />
+              <div class="field-error" id="specialist_signature_err_${t.id}"></div>
             </label>
             <label>
               ${tMsg('evaluationDate', 'Evaluation date')}
@@ -4259,16 +4847,19 @@ async function loadTasks(group) {
         </div>
         <div id="snap_${t.businessKey}" class="app-field-snapshot"><span class="field-note">${tMsg('loadingAppFields', 'Loading application fields…')}</span></div>
         <div class="approval-review-area">
-          <label for="comments_${t.id}">${tMsg('reviewCommentsLabel', 'Review comments (required when returning)')}</label>
-          <textarea id="comments_${t.id}" rows="3" placeholder="${tMsg('reviewCommentsPh', 'Record your observations or explain what must be revisited...')}"></textarea>
-          <label class="approval-declaration">
-            <input type="checkbox" id="declaration_${t.id}" />
+          <label for="comments_${t.id}">${tMsg('reviewCommentsLabel', 'Review comments (required)')}</label>
+          <textarea id="comments_${t.id}" rows="3" placeholder="${tMsg('reviewCommentsPh', 'Record your decision comments or explain what must be revisited...')}" oninput="clearApprovalFieldError(this)"></textarea>
+          <div class="field-error" id="comments_err_${t.id}"></div>
+          <label class="approval-declaration" id="declaration_wrap_${t.id}">
+            <input type="checkbox" id="declaration_${t.id}" onchange="clearApprovalFieldError(this)" />
             <span>${tMsg('reviewDeclaration', 'I confirm that I have reviewed the application details and supporting eligibility information, and that this decision is made in my official capacity.')}</span>
           </label>
+          <div class="field-error" id="declaration_err_${t.id}"></div>
           <div class="approval-signature-grid">
             <label>
               ${tMsg('reviewerSignature', 'Reviewer signature')}
-              <input class="approval-signature-input" id="signature_${t.id}" value="${escapeHtml(currentUser?.displayName || '')}" placeholder="${tMsg('typeFullName', 'Type full name to sign')}" />
+              <input class="approval-signature-input" id="signature_${t.id}" value="${escapeHtml(currentUser?.displayName || '')}" placeholder="${tMsg('typeFullName', 'Type full name to sign')}" oninput="clearApprovalFieldError(this)" />
+              <div class="field-error" id="signature_err_${t.id}"></div>
             </label>
             <label>
               ${tMsg('decisionDate', 'Decision date')}
@@ -4518,14 +5109,48 @@ async function confirmMockPayment() {
   }, 1800);
 }
 
+function clearApprovalFieldError(el) {
+  if (!el?.id) return;
+  const errEl = document.getElementById(`${el.id}_err`);
+  const target = el.type === 'checkbox' ? (el.closest('.approval-declaration') || el) : el;
+  if (errEl) setFieldError(target, errEl, '');
+  else {
+    target.classList.remove('is-invalid');
+    el.classList.remove('is-invalid');
+  }
+}
+
 async function completeSpecialistTask(taskId, applicationId) {
-  const notes = document.getElementById(`notes_${taskId}`)?.value.trim();
-  const declaration = document.getElementById(`specialist_declaration_${taskId}`)?.checked;
-  const signature = document.getElementById(`specialist_signature_${taskId}`)?.value.trim();
-  if (!notes || !declaration || !signature) {
-    alert(tMsg('evaluationSignatureRequired', 'Complete the findings, confirm the declaration, and enter your full name before signing.'));
+  const notesEl = document.getElementById(`notes_${taskId}`);
+  const declarationEl = document.getElementById(`specialist_declaration_${taskId}`);
+  const signatureEl = document.getElementById(`specialist_signature_${taskId}`);
+  const notesErr = document.getElementById(`notes_err_${taskId}`);
+  const declarationErr = document.getElementById(`specialist_declaration_err_${taskId}`);
+  const signatureErr = document.getElementById(`specialist_signature_err_${taskId}`);
+  const notes = notesEl?.value.trim();
+  const declaration = declarationEl?.checked;
+  const signature = signatureEl?.value.trim();
+
+  setFieldError(notesEl, notesErr, notes ? '' : tMsg('addCommentsInline', 'Please add comments'));
+  setFieldError(declarationEl?.closest('.approval-declaration') || declarationEl, declarationErr, declaration ? '' : tMsg('tickConfirmationInline', 'Please tick the confirmation'));
+  setFieldError(signatureEl, signatureErr, signature ? '' : tMsg('enterSignatureInline', 'Please enter your signature'));
+
+  if (!notes) {
+    alert(tMsg('findingsRequiredMsg', 'Please add inspection findings and recommendation before submitting.'));
+    notesEl?.focus();
     return;
   }
+  if (!declaration) {
+    alert(tMsg('declarationRequiredMsg', 'Please tick the confirmation checkbox before submitting.'));
+    declarationEl?.focus();
+    return;
+  }
+  if (!signature) {
+    alert(tMsg('signatureNameRequiredMsg', 'Please type your full name as signature before submitting.'));
+    signatureEl?.focus();
+    return;
+  }
+
   const signedNotes = `${notes}\n\nDigitally signed by evaluator: ${signature}`;
   const res = await fetch(`/api/tasks/${taskId}/complete`, {
     method: 'POST', headers: { 'Content-Type': 'application/json' },
@@ -4545,10 +5170,40 @@ async function completeSpecialistTask(taskId, applicationId) {
 // routes straight back to Task_FieldVisitEvaluation — the Specialist sees the
 // task reappear in their queue, with the Head of Section's comments attached.
 async function completeReview(taskId, applicationId, outcome) {
+  const commentsEl = document.getElementById(`comments_${taskId}`);
+  const declarationEl = document.getElementById(`declaration_${taskId}`);
+  const signatureEl = document.getElementById(`signature_${taskId}`);
+  const commentsErr = document.getElementById(`comments_err_${taskId}`);
+  const declarationErr = document.getElementById(`declaration_err_${taskId}`);
+  const signatureErr = document.getElementById(`signature_err_${taskId}`);
+  const comments = commentsEl?.value.trim() || '';
+  const declaration = declarationEl?.checked;
+  const signature = signatureEl?.value.trim();
+
+  setFieldError(commentsEl, commentsErr, comments ? '' : tMsg('addCommentsInline', 'Please add comments'));
+  setFieldError(declarationEl?.closest('.approval-declaration') || declarationEl, declarationErr, declaration ? '' : tMsg('tickConfirmationInline', 'Please tick the confirmation'));
+  setFieldError(signatureEl, signatureErr, signature ? '' : tMsg('enterSignatureInline', 'Please enter your signature'));
+
+  if (!comments) {
+    alert(outcome === 'comments'
+      ? tMsg('returnCommentsRequiredMsg', 'Please add review comments before returning this to the Specialist.')
+      : tMsg('decisionCommentsRequiredMsg', 'Please add review comments before signing your decision.'));
+    commentsEl?.focus();
+    return;
+  }
+  if (!declaration) {
+    alert(tMsg('declarationRequiredMsg', 'Please tick the confirmation checkbox before submitting.'));
+    declarationEl?.focus();
+    return;
+  }
+  if (!signature) {
+    alert(tMsg('signatureNameRequiredMsg', 'Please type your full name as signature before submitting.'));
+    signatureEl?.focus();
+    return;
+  }
+
   if (outcome === 'comments') {
-    const comments = document.getElementById(`comments_${taskId}`)?.value.trim();
-    if (!comments) { alert('Add a comment before sending this back to the Specialist.'); return; }
-    await fetch(`/api/tasks/${taskId}/complete`, {
+    const res = await fetch(`/api/tasks/${taskId}/complete`, {
       method: 'POST', headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         variables: { outcome },
@@ -4556,17 +5211,15 @@ async function completeReview(taskId, applicationId, outcome) {
         applicationUpdate: { status: 'revision_requested', review_outcome: outcome, review_comments: comments, revision_loop_used: true },
       })
     });
-    log(`Head of Section sent application #${applicationId} back to the Specialist: "${comments}"`);
-  } else {
-    const declaration = document.getElementById(`declaration_${taskId}`)?.checked;
-    const signature = document.getElementById(`signature_${taskId}`)?.value.trim();
-    if (!declaration || !signature) {
-      alert(tMsg('signatureRequiredMsg', 'Confirm the declaration and enter your full name before signing the decision.'));
+    if (!res.ok) {
+      const data = await res.json().catch(() => ({}));
+      alert(data.error || 'Could not return the application');
       return;
     }
+    log(`Head of Section sent application #${applicationId} back to the Specialist: "${comments}"`);
+  } else {
     const statusMap = { approve: 'approved', reject: 'rejected' };
-    const comments = document.getElementById(`comments_${taskId}`)?.value.trim() || '';
-    await fetch(`/api/tasks/${taskId}/complete`, {
+    const res = await fetch(`/api/tasks/${taskId}/complete`, {
       method: 'POST', headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         variables: { outcome },
@@ -4574,12 +5227,15 @@ async function completeReview(taskId, applicationId, outcome) {
         applicationUpdate: {
           status: statusMap[outcome],
           review_outcome: outcome,
-          review_comments: comments
-            ? `${comments}\n\nDigitally signed by: ${signature}`
-            : `Digitally signed by: ${signature}`,
+          review_comments: `${comments}\n\nDigitally signed by: ${signature}`,
         },
       })
     });
+    if (!res.ok) {
+      const data = await res.json().catch(() => ({}));
+      alert(data.error || 'Could not complete the review');
+      return;
+    }
     log(`Head of Section digitally signed and completed review (${outcome}) for application #${applicationId}`);
   }
   loadTasks('head_of_section'); loadApplications();
