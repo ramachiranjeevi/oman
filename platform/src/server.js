@@ -742,6 +742,9 @@ async function buildDashboardMetrics() {
     slaBreaches: breached.length,
     slaTarget: 90,
     avgFinalFee: avgFinalFee !== null ? Math.round(avgFinalFee * 100) / 100 : null,
+    // Successful end-state is stored as `completed` (license issued). Include
+    // legacy `approved` counts so older records still appear on the KPI.
+    completed: (statusCounts.completed ?? 0) + (statusCounts.approved ?? 0),
     approved: statusCounts.approved ?? 0,
     rejected: statusCounts.rejected ?? 0,
     revisionLoopCount,
@@ -758,6 +761,7 @@ const SERVICE_SUMMARY_CARDS = [
   { key: 'requestsReceived', label: 'Requests Received', format: 'number', periodKey: 'requestsReceivedPeriod', core: true },
   { key: 'eligiblePct', label: '% Meeting Conditions', format: 'percent', periodKey: 'eligiblePctPeriod', targetKey: 'eligibleTarget', core: true },
   { key: 'slaCompletionPct', label: 'Reviews Completed on Time', format: 'percent', periodKey: 'slaCompletionPctPeriod', targetKey: 'slaTarget', core: true },
+  { key: 'completed', label: 'Completed', format: 'number', core: true },
   { key: 'rejected', label: 'Rejected', format: 'number', core: true },
   { key: 'revisionLoopCount', label: 'Went Through Revision Loop', format: 'number', core: true },
   { key: 'avgFinalFee', label: 'Average Final Fee', format: 'currency', core: true },
@@ -838,6 +842,7 @@ function buildServiceSummaryPayload(metrics) {
       slaBreaches: metrics.slaBreaches,
       slaTarget: metrics.slaTarget,
       approved: metrics.approved,
+      completed: metrics.completed,
       rejected: metrics.rejected,
       revisionLoopCount: metrics.revisionLoopCount,
       avgFinalFee: metrics.avgFinalFee,
