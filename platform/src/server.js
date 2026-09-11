@@ -3,6 +3,8 @@ import express from 'express';
 import session from 'express-session';
 import path from 'node:path';
 import os from 'node:os';
+import { mkdtemp, rm, writeFile } from 'node:fs/promises';
+import { spawn } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 import * as directus from './directusClient.js';
 import * as camunda from './camundaClient.js';
@@ -23,7 +25,7 @@ import {
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const app = express();
 if (process.env.TRUST_PROXY === 'true') app.set('trust proxy', 1);
-app.use(express.json());
+app.use(express.json({ limit: '10mb' }));
 app.use(
   session({
     secret: process.env.SESSION_SECRET || 'oman-info-platform-dev-secret',
@@ -119,9 +121,94 @@ app.use('/api', (req, res, next) => {
   if (
     req.path.startsWith('/auth/') ||
     req.path.startsWith('/public/') ||
+    req.path.startsWith('/ci/') ||
     req.path === '/health'
   ) return next();
   return requireAuth(req, res, next);
+});
+
+/** Repo root (sibling of platform/) — where ops/promote-*.mjs live. */
+const REPO_ROOT = path.join(__dirname, '..', '..');
+
+function requireCiPromoteKey(req, res, next) {
+  const expected = process.env.CI_PROMOTE_API_KEY;
+  if (!expected) {
+    return res.status(503).json({ error: 'CI promote is not configured (set CI_PROMOTE_API_KEY).' });
+  }
+  const key = req.get('x-api-key') || req.query.apiKey;
+  if (!key || key !== expected) {
+    return res.status(401).json({ error: 'Unauthorized' });
+  }
+  return next();
+}
+
+function runPromoteScript(scriptName, args, extraEnv = {}) {
+  const scriptPath = path.join(REPO_ROOT, 'ops', scriptName);
+  return new Promise((resolve, reject) => {
+    const child = spawn(process.execPath, [scriptPath, ...args], {
+      cwd: REPO_ROOT,
+      env: { ...process.env, ...extraEnv },
+      windowsHide: true,
+    });
+    let out = '';
+    child.stdout.on('data', (chunk) => { out += chunk; });
+    child.stderr.on('data', (chunk) => { out += chunk; });
+    child.on('error', reject);
+    child.on('close', (code) => {
+      if (code === 0) resolve(out.trim());
+      else reject(new Error(out.trim() || `${scriptName} exited ${code}`));
+    });
+  });
+}
+
+/**
+ * GitHub Actions DEV→UAT gate: Actions posts committed artifacts here over the
+ * public portal URL. Platform then applies them to local Directus/Camunda
+ * (which stay off the public internet). Auth: X-Api-Key = CI_PROMOTE_API_KEY.
+ */
+app.post('/api/ci/promote-schema', requireCiPromoteKey, async (req, res) => {
+  const tmpDir = await mkdtemp(path.join(os.tmpdir(), 'oman-ci-schema-'));
+  const snapshotPath = path.join(tmpDir, 'directus-schema.json');
+  try {
+    if (!req.body || typeof req.body !== 'object') {
+      return res.status(400).json({ error: 'JSON schema snapshot body required' });
+    }
+    await writeFile(snapshotPath, JSON.stringify(req.body), 'utf8');
+    const log = await runPromoteScript('promote-directus-schema.mjs', [snapshotPath], {
+      DIRECTUS_URL: process.env.DIRECTUS_URL || 'http://127.0.0.1:8055',
+      DIRECTUS_ADMIN_EMAIL: process.env.DIRECTUS_SERVICE_EMAIL || process.env.DIRECTUS_ADMIN_EMAIL,
+      DIRECTUS_ADMIN_PASSWORD: process.env.DIRECTUS_SERVICE_PASSWORD || process.env.DIRECTUS_ADMIN_PASSWORD,
+    });
+    res.json({ ok: true, log });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  } finally {
+    await rm(tmpDir, { recursive: true, force: true }).catch(() => {});
+  }
+});
+
+app.post('/api/ci/promote-camunda', requireCiPromoteKey, async (req, res) => {
+  const tmpDir = await mkdtemp(path.join(os.tmpdir(), 'oman-ci-camunda-'));
+  try {
+    const files = req.body?.files;
+    if (!files || typeof files !== 'object' || !Object.keys(files).length) {
+      return res.status(400).json({ error: 'Body must be { files: { "name.bpmn": "<xml>", ... } }' });
+    }
+    for (const [name, content] of Object.entries(files)) {
+      if (!/\.(bpmn|dmn)$/i.test(name) || name.includes('..') || name.includes('/') || name.includes('\\')) {
+        return res.status(400).json({ error: `Invalid resource name: ${name}` });
+      }
+      await writeFile(path.join(tmpDir, name), String(content), 'utf8');
+    }
+    const log = await runPromoteScript('promote-camunda-resources.mjs', [tmpDir], {
+      CAMUNDA_URL: process.env.CAMUNDA_URL || 'http://127.0.0.1:8080/engine-rest',
+    });
+    res.json({ ok: true, log });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  } finally {
+    await rm(tmpDir, { recursive: true, force: true }).catch(() => {});
+  }
 });
 
 // --- Applications (Directus-backed) -----------------------------------

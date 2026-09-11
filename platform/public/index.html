@@ -603,6 +603,16 @@
   #canvasSvg .canvas-conn-endpoint-hit { pointer-events: auto; cursor: grab; fill: transparent; stroke: transparent; }
   .canvas-shape.is-drop-target { outline: 3px solid #B8831A !important; outline-offset: 3px; }
   .canvas-container.is-retargeting .canvas-shape { cursor: copy; }
+  /* While drawing a new arrow, ignore existing line hit targets so a 2nd/3rd path can land on a shape. */
+  .canvas-container.is-connecting #canvasSvg .canvas-conn-hit,
+  .canvas-container.is-connecting #canvasSvg .canvas-conn-endpoint,
+  .canvas-container.is-connecting #canvasSvg .canvas-conn-endpoint-hit,
+  .canvas-container.is-connecting #canvasSvg .canvas-conn-controls,
+  .canvas-container.is-connecting #canvasSvg rect[data-conn-id] {
+    pointer-events: none !important;
+  }
+  .canvas-container.is-connecting { cursor: crosshair; }
+  .canvas-container.is-connecting .canvas-shape { cursor: copy; }
 
   .persona-note {
     font-size: .9375rem; color: var(--text); margin: .3rem 0 .55rem;
@@ -631,6 +641,7 @@
   details.demo-note[open] .demo-note-state-closed { display: none; }
   details.demo-note[open] .demo-note-state-open { display: inline; }
   details.activity-drawer {
+    display: none !important;
     width: calc(100% - 40px); max-width: 1400px; margin: 1.25rem auto 0;
     padding: .55rem .75rem; border: 1px solid var(--border); border-radius: 12px;
     background: var(--card-bg); box-sizing: border-box;
@@ -1125,6 +1136,19 @@
   }
   .portal-mast .user-badge { border-inline-start: 1px solid var(--border); padding-inline-start: 14px; margin: 0; }
   .portal-mast .user-badge { order: 3; }
+  .app-shell-topbar {
+    display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin: 0 0 10px;
+  }
+  .app-shell-topbar > nav.tabs,
+  .app-shell-topbar > nav.tabs.has-multiple {
+    margin: 0;
+  }
+  .app-shell-new-app {
+    display: none; margin: 0; padding: 6px 14px; border-radius: 999px; font-size: 12.5px; font-weight: 500;
+    background: var(--primary); color: #fff; border: 1px solid var(--primary); box-shadow: none; white-space: nowrap;
+  }
+  .app-shell-new-app.is-visible { display: inline-flex; align-items: center; }
+  .app-shell-new-app:hover { background: var(--primary-dark, #1d3c7d); border-color: var(--primary-dark, #1d3c7d); color: #fff; }
   #langBtnEn, #langBtnAr { order: 1; }
   #langBtnEn.active-lang, #langBtnAr.active-lang { display: none; }
   .portal-mast .text-size-group { order: 1; }
@@ -1136,12 +1160,18 @@
   #appShell, #loginGate { max-width: 1440px; margin: 0 auto; padding: 12px 20px 22px; }
   #loginGate { max-width: 440px; padding-top: 38px; }
   #appShell > nav.tabs,
-  #appShell > nav.tabs.has-multiple {
+  #appShell > nav.tabs.has-multiple,
+  .app-shell-topbar > nav.tabs,
+  .app-shell-topbar > nav.tabs.has-multiple {
     display: inline-flex; margin: 0 0 10px; padding: 3px; border: 0;
     border-radius: 9px; background: var(--kpi-bg);
   }
-  #appShell > nav.tabs button { padding: 6px 13px; border: 0; border-radius: 7px; font-size: 12px; color: var(--text-muted); }
-  #appShell > nav.tabs button.active { color: var(--text); background: #fff; box-shadow: var(--shadow); }
+  .app-shell-topbar > nav.tabs,
+  .app-shell-topbar > nav.tabs.has-multiple { margin: 0; }
+  #appShell > nav.tabs button,
+  .app-shell-topbar > nav.tabs button { padding: 6px 13px; border: 0; border-radius: 7px; font-size: 12px; color: var(--text-muted); }
+  #appShell > nav.tabs button.active,
+  .app-shell-topbar > nav.tabs button.active { color: var(--text); background: #fff; box-shadow: var(--shadow); }
   .tab-panel.active { padding-top: 0; }
   .persona-note { font-size: 12.5px; color: var(--text-muted); margin: 0 0 10px; }
   .applicant-shell { margin-top: 0; }
@@ -1408,7 +1438,8 @@
   :root[data-theme="dark"] .portal-mast .toolbar > button,
   :root[data-theme="dark"] button.secondary,
   :root[data-theme="dark"] #adminSubNav button.active,
-  :root[data-theme="dark"] #appShell > nav.tabs button.active {
+  :root[data-theme="dark"] #appShell > nav.tabs button.active,
+  :root[data-theme="dark"] .app-shell-topbar > nav.tabs button.active {
     background: var(--input-bg); color: var(--text);
   }
   :root[data-theme="dark"] thead th { background: #20262e; }
@@ -1442,9 +1473,13 @@
   body.mobile-frame #loginGate { width: 100%; padding: 10px; }
   body.mobile-frame #appShell > nav.tabs,
   body.mobile-frame #appShell > nav.tabs.has-multiple,
+  body.mobile-frame .app-shell-topbar > nav.tabs,
+  body.mobile-frame .app-shell-topbar > nav.tabs.has-multiple,
   body.mobile-frame #adminSubNav {
     display: flex; width: 100%; max-width: 100%; overflow-x: auto; white-space: nowrap;
   }
+  body.mobile-frame .app-shell-topbar { gap: 8px; }
+  body.mobile-frame .app-shell-new-app { margin-inline-start: 0; }
   body.mobile-frame .role-dashboard-head { align-items: flex-start; margin-bottom: 8px; }
   body.mobile-frame .role-dashboard-head h2 { margin: 0; }
   body.mobile-frame .application-stats { grid-template-columns: 1fr 1fr; gap: 7px; }
@@ -1644,7 +1679,10 @@
 
   <!-- ================= APP SHELL (hidden until logged in) ================= -->
   <div id="appShell" class="hidden">
-  <nav class="tabs" id="tabNav"></nav>
+  <div class="app-shell-topbar" id="appShellTopbar">
+    <nav class="tabs" id="tabNav"></nav>
+    <button type="button" class="app-shell-new-app" id="portalNewApplicationBtn" onclick="openNewApplicationFromRoleBar()" data-i18n="appNavNew">New Application</button>
+  </div>
 
   <!-- ================= APPLICANT ================= -->
   <section class="tab-panel" id="tab-applicant">
@@ -1968,7 +2006,7 @@
 
     <div class="admin-subpanel" id="adm-sub-designer">
       <h2 data-i18n="designerHeading">Approval Process</h2>
-      <p class="field-note" data-i18n="designerSimpleNote">Add and arrange steps, then connect them in the required order. Save keeps your changes as a draft. Publish makes the process available for new applications.</p>
+      <p class="field-note" data-i18n="designerSimpleNote">Add and arrange steps, then connect them in the required order. From an Approval Step you can draw several labeled paths (Approve, Reject, Comments). Save keeps a draft; Publish makes it live for new applications.</p>
       <div class="card">
         <div style="display:flex;gap:.4rem;flex-wrap:wrap;margin-bottom:.5rem;">
           <button class="small" onclick="canvasAddShape('start')" style="background:#166534;" data-i18n="shapeStartBtn">+ Start</button>
@@ -2026,16 +2064,8 @@
   </section>
   </div>
 
-  <details class="activity-drawer" id="activityLogPanel">
-    <summary>
-      <span class="activity-title" data-i18n="activityLogHeading">Activity Log</span>
-      <span class="activity-toggle" aria-hidden="true">
-        <span class="activity-state-closed" data-i18n="identityOpenBtn">Open ▾</span>
-        <span class="activity-state-open" data-i18n="identityCloseBtn">Close ▴</span>
-      </span>
-    </summary>
-    <div id="log"></div>
-  </details>
+  <!-- Activity log UI removed for all roles (log() still writes to console only). -->
+  <div id="log" class="hidden" hidden aria-hidden="true"></div>
 
   <div id="licenseQrModal" onclick="if(event.target===this)closeLicenseQrModal()" role="dialog" aria-modal="true" aria-labelledby="licenseQrModalTitle">
     <div class="license-modal-card">
@@ -2123,8 +2153,10 @@
 
 <script>
 function log(msg) {
+  const line = `[${new Date().toLocaleTimeString()}] ${msg}`;
+  try { console.info(line); } catch (_) {}
   const el = document.getElementById('log');
-  el.textContent = `[${new Date().toLocaleTimeString()}] ${msg}\n` + el.textContent;
+  if (el) el.textContent = `${line}\n` + el.textContent;
 }
 
 // ============================= DIGITAL ASSISTANT =============================
@@ -2601,6 +2633,7 @@ function showLoginGate() {
   document.getElementById('loginGate').classList.remove('hidden');
   document.getElementById('userBadge').classList.add('hidden');
   document.getElementById('portalRoleName').textContent = getLanguage() === 'ar' ? 'بوابة آمنة' : 'Secure portal';
+  updatePortalRoleQuickActions();
   resetDigitalAssistant();
   resetIdentityVerification({ close: true });
 }
@@ -2612,6 +2645,27 @@ function updatePortalRoleName() {
   el.textContent = getLanguage() === 'ar'
     ? (TAB_LABELS_AR[roleTab?.id] || currentUser.role)
     : (roleTab?.label || currentUser.role);
+  updatePortalRoleQuickActions();
+}
+
+function updatePortalRoleQuickActions() {
+  const btn = document.getElementById('portalNewApplicationBtn');
+  if (!btn) return;
+  btn.classList.toggle('is-visible', currentUser?.role === 'applicant');
+}
+
+/** Role-bar shortcut: start a new application at Identity Verification. */
+function openNewApplicationFromRoleBar() {
+  if (!currentUser || currentUser.role !== 'applicant') return;
+  if (!document.getElementById('tab-applicant')?.classList.contains('active')) {
+    switchTab('applicant');
+  }
+  showApplicantPane('identity');
+  const identity = document.getElementById('identityVerifyPanel');
+  if (identity) {
+    identity.open = true;
+    identity.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
 }
 
 function showAppShell() {
@@ -2625,6 +2679,7 @@ function showAppShell() {
   resetIdentityVerification({ close: true });
   renderTabs();
   updatePortalRoleName();
+  updatePortalRoleQuickActions();
   const allowed = visibleTabs();
   const startTab = localStorage.getItem('omanActiveTab');
   const target = allowed.some(t => t.id === startTab) ? startTab : allowed[0]?.id;
@@ -5829,8 +5884,8 @@ function canvasClearDropHighlight() {
 }
 
 function canvasUpdateDropHighlight(fixedId, x, y) {
-  const hit = canvasShapeAt(x, y, 14);
-  const nextId = hit && hit.id !== fixedId ? hit.id : null;
+  const hit = canvasShapeNear(x, y, { excludeId: fixedId });
+  const nextId = hit ? hit.id : null;
   if (nextId === canvasDropHighlightId) return;
   canvasDropHighlightId = nextId;
   document.querySelectorAll('.canvas-shape').forEach((el) => {
@@ -5904,6 +5959,7 @@ function canvasShapeMouseDown(ev, id) {
 // --- drawing a new connector ---
 function canvasHandleMouseDown(ev, id) {
   canvasConnectingFrom = id;
+  document.getElementById('canvasContainer')?.classList.add('is-connecting');
   canvasEnsureDocDrag();
   ev.stopPropagation();
   ev.preventDefault();
@@ -5912,10 +5968,110 @@ function canvasHandleMouseDown(ev, id) {
 function canvasShapeAt(x, y, pad = 0) {
   for (let i = canvasShapes.length - 1; i >= 0; i--) {
     const s = canvasShapes[i];
-    const [w, h] = CANVAS_SHAPE_DIMS[s.type];
+    const [w, h] = CANVAS_SHAPE_DIMS[s.type] || [140, 80];
     if (x >= s.x - pad && x <= s.x + w + pad && y >= s.y - pad && y <= s.y + h + pad) return s;
   }
   return null;
+}
+
+/** Prefer an exact hit, otherwise snap to the nearest shape center. */
+function canvasShapeNear(x, y, { excludeId = null, pad = 36, maxDist = 90 } = {}) {
+  const direct = canvasShapeAt(x, y, pad);
+  if (direct && direct.id !== excludeId) return direct;
+  let best = null;
+  let bestDist = maxDist;
+  for (const s of canvasShapes) {
+    if (excludeId && s.id === excludeId) continue;
+    const [w, h] = CANVAS_SHAPE_DIMS[s.type] || [140, 80];
+    const dist = Math.hypot(x - (s.x + w / 2), y - (s.y + h / 2));
+    if (dist <= bestDist) {
+      bestDist = dist;
+      best = s;
+    }
+  }
+  return best;
+}
+
+function canvasSuggestedLinkLabel(fromId) {
+  const from = canvasShapes.find((s) => s.id === fromId);
+  const used = new Set(
+    canvasConnections
+      .filter((c) => c.from === fromId)
+      .map((c) => String(c.label || '').trim().toLowerCase())
+      .filter(Boolean)
+  );
+  const pick = (...options) => options.find((o) => !used.has(o.toLowerCase())) || '';
+  if (from?.type === 'approval') return pick('Approve', 'Reject', 'Comments');
+  if (from?.type === 'decision') return pick('Eligible', 'Not Eligible');
+  return pick('Yes', 'No');
+}
+
+function canvasEnsureOutboundLabels(fromId) {
+  const outs = canvasConnections.filter((c) => c.from === fromId);
+  if (outs.length < 1) return true;
+  for (const c of outs) {
+    if (c.label?.trim()) continue;
+    const suggested = canvasSuggestedLinkLabel(fromId) || 'Path';
+    const fromName = canvasShapes.find((s) => s.id === fromId)?.name || 'this step';
+    const input = prompt(`Label the existing unlabeled arrow from "${fromName}" before adding another path:`, suggested);
+    if (input === null || !input.trim()) return false;
+    c.label = input.trim();
+  }
+  return true;
+}
+
+function canvasTryCreateConnection(fromId, toId) {
+  if (!fromId || !toId || fromId === toId) return false;
+  const from = canvasShapes.find((s) => s.id === fromId);
+  const to = canvasShapes.find((s) => s.id === toId);
+  if (!from || !to) return false;
+  if (from.type === 'end') {
+    alert('An End step cannot have an outgoing arrow.');
+    return false;
+  }
+  if (canvasConnections.some((c) => c.from === fromId && c.to === toId)) {
+    alert('An arrow already connects those two shapes in that direction. Drag an arrow tip to reconnect, or delete it first.');
+    return false;
+  }
+  const existingOut = canvasConnections.filter((c) => c.from === fromId);
+  if (existingOut.length >= 1 && !canvasEnsureOutboundLabels(fromId)) {
+    alert('Could not add another path — label the existing arrow(s) first (e.g. Approve, Reject, Comments).');
+    return false;
+  }
+  const needsLabel = existingOut.length >= 1 || from.type === 'approval' || from.type === 'decision';
+  const suggested = canvasSuggestedLinkLabel(fromId);
+  let label = '';
+  if (needsLabel) {
+    const typed = prompt(
+      from.type === 'approval'
+        ? 'Label this path (required). You can add several from the same approval step — e.g. Approve, Reject, Comments:'
+        : 'This step will have more than one outgoing path — enter a short label for this arrow:',
+      suggested
+    );
+    if (typed === null) return false;
+    label = typed.trim();
+    if (!label) {
+      alert('A label is required when a step has more than one outgoing path. Arrow was not created.');
+      return false;
+    }
+  } else {
+    const typed = prompt('Label for this arrow (optional — leave blank for none):', '');
+    if (typed === null) return false;
+    label = typed.trim();
+  }
+  canvasConnections.push({
+    id: `conn_${canvasNextNum++}`,
+    from: fromId,
+    to: toId,
+    label: label || undefined,
+  });
+  const status = document.getElementById('canvasStatus');
+  if (status) {
+    status.style.color = '#166534';
+    status.textContent = `Connected "${from.name}" → "${to.name}"${label ? ` (${label})` : ''}. You can draw more paths from the same step.`;
+  }
+  log(`Connected "${from.name}" → "${to.name}"${label ? ` (${label})` : ''}.`);
+  return true;
 }
 
 function canvasContainerMouseMove(ev) {
@@ -5981,29 +6137,14 @@ function canvasContainerMouseUp(ev) {
 
   if (canvasConnectingFrom) {
     const { x, y } = canvasPointerToWorld(ev);
-    const target = canvasShapeAt(x, y, 14);
-    if (target && target.id !== canvasConnectingFrom) {
-      const existingOut = canvasConnections.filter((c) => c.from === canvasConnectingFrom);
-      const required = existingOut.length >= 1;
-      const promptText = required
-        ? 'This shape now has more than one arrow out — give this arrow a short label (e.g. "Approve", "Eligible", "Reject"):'
-        : 'Label for this arrow (optional — leave blank for none, e.g. "Approve"):';
-      const label = prompt(promptText, '');
-      if (label === null) {
-        canvasConnectingFrom = null; canvasTempLine = null; canvasClearDropHighlight(); renderCanvasSvg(); return;
-      }
-      if (required && !label.trim()) {
-        alert('This shape now has more than one arrow out, so every arrow needs a label. The arrow was not created — try again.');
-        canvasConnectingFrom = null; canvasTempLine = null; canvasClearDropHighlight(); renderCanvasSvg(); return;
-      }
-      canvasConnections.push({ id: `conn_${canvasNextNum++}`, from: canvasConnectingFrom, to: target.id, label: label.trim() || undefined });
-    }
+    const target = canvasShapeNear(x, y, { excludeId: canvasConnectingFrom });
+    if (target) canvasTryCreateConnection(canvasConnectingFrom, target.id);
   }
 
   if (retarget) {
     const { x, y } = canvasPointerToWorld(ev);
     const conn = canvasConnections.find((c) => c.id === retarget.id);
-    const drop = canvasShapeAt(x, y, 14);
+    const drop = canvasShapeNear(x, y);
     if (conn && drop) {
       const otherEnd = retarget.which === 'to' ? conn.from : conn.to;
       if (drop.id === otherEnd) {
@@ -6035,6 +6176,7 @@ function canvasContainerMouseUp(ev) {
   canvasDraggingBend = null;
   canvasDraggingRetarget = null;
   canvasClearDropHighlight();
+  document.getElementById('canvasContainer')?.classList.remove('is-connecting');
   document.querySelectorAll('.canvas-shape.is-dragging').forEach((el) => el.classList.remove('is-dragging'));
   if (wasDragging || wasConnecting || wasBending || wasRetargeting) renderCanvasAll();
 }

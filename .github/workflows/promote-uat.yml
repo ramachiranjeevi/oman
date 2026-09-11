@@ -7,12 +7,12 @@ name: Promote to UAT
 #      JSON + BPMN/DMN XML) before it can merge to main.
 #   2. GitHub Environment approval — merging to main queues the promote job
 #      against the "uat" environment, which requires a *second*, explicit
-#      "Approve and deploy" click (configured once under Settings ->
-#      Environments -> uat -> Required reviewers) before anything actually
-#      touches the UAT machine.
+#      "Approve and deploy" click (Settings → Environments → uat → Required
+#      reviewers) before anything touches UAT.
 #
-# Only runs when the files that actually represent promotable config change
-# — editing app code (platform/, etc.) does not trigger a UAT promotion.
+# Promote talks to the *public Platform URL* with CI_PROMOTE_API_KEY. The
+# Platform on UAT then applies artifacts to local Directus/Camunda (ports
+# 8055/8080 stay private — see SETUP.md).
 
 on:
   pull_request:
@@ -20,11 +20,25 @@ on:
     paths:
       - 'directus/schema/**'
       - 'camunda-module/configuration/resources/**'
+      - '.github/workflows/promote-uat.yml'
+      - 'ops/ci-push-artifacts.mjs'
+      - 'ops/promote-directus-schema.mjs'
+      - 'ops/promote-camunda-resources.mjs'
   push:
     branches: [main]
     paths:
       - 'directus/schema/**'
       - 'camunda-module/configuration/resources/**'
+      - '.github/workflows/promote-uat.yml'
+      - 'ops/ci-push-artifacts.mjs'
+      - 'ops/promote-directus-schema.mjs'
+      - 'ops/promote-camunda-resources.mjs'
+  workflow_dispatch:
+    inputs:
+      reason:
+        description: 'Why are you promoting manually? (demo / hotfix)'
+        required: false
+        default: 'manual demo'
 
 jobs:
   validate:
@@ -57,11 +71,10 @@ jobs:
           done
 
   promote-uat:
-    if: github.event_name == 'push'
+    if: github.event_name == 'push' || github.event_name == 'workflow_dispatch'
     runs-on: ubuntu-latest
-    # This is the deploy-time approval gate: the job pauses here until a
-    # required reviewer on the "uat" environment approves it in the GitHub
-    # Actions UI, separate from and in addition to the PR review above.
+    # Deploy-time approval gate: pauses until a required reviewer on the
+    # "uat" environment approves in the GitHub Actions UI.
     environment: uat
     steps:
       - uses: actions/checkout@v4
@@ -70,14 +83,8 @@ jobs:
         with:
           node-version: 22
 
-      - name: Promote Directus schema to UAT
+      - name: Promote schema + BPMN/DMN to UAT via Platform
         env:
-          DIRECTUS_URL: ${{ secrets.UAT_DIRECTUS_URL }}
-          DIRECTUS_ADMIN_EMAIL: ${{ secrets.UAT_DIRECTUS_ADMIN_EMAIL }}
-          DIRECTUS_ADMIN_PASSWORD: ${{ secrets.UAT_DIRECTUS_ADMIN_PASSWORD }}
-        run: node ops/promote-directus-schema.mjs directus/schema/directus-schema.json
-
-      - name: Promote Camunda BPMN/DMN to UAT
-        env:
-          CAMUNDA_URL: ${{ secrets.UAT_CAMUNDA_URL }}
-        run: node ops/promote-camunda-resources.mjs camunda-module/configuration/resources
+          UAT_PLATFORM_URL: ${{ secrets.UAT_PLATFORM_URL }}
+          CI_PROMOTE_API_KEY: ${{ secrets.CI_PROMOTE_API_KEY }}
+        run: node ops/ci-push-artifacts.mjs
