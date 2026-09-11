@@ -6504,7 +6504,7 @@ const WIDGET_METRICS = [
   { key: 'revisionLoopCount', label: 'Went Through Revision Loop', fmt: 'number' },
   { key: 'classificationBreakdown', label: 'Requests by Film Classification', fmt: 'breakdown' },
   { key: 'avgFinalFee', label: 'Average Final Fee', fmt: 'currency' },
-  { key: 'pendingApplicant', label: 'Pending Applicant (Pay Fee)', fmt: 'number' },
+  { key: 'pendingApplicant', label: 'Pending Applicant Pay Fee', fmt: 'number' },
   { key: 'pendingSpecialist', label: 'Pending Specialist Queue', fmt: 'number' },
   { key: 'pendingHeadOfSection', label: 'Pending Head of Section Queue', fmt: 'number' },
   { key: 'slaBreaches', label: 'Overdue Reviews', fmt: 'number' },
@@ -6591,7 +6591,7 @@ function getWidgets() {
   }).map((w) => {
     const meta = WIDGET_METRICS.find((x) => x.key === w.key);
     if (!meta) return w;
-    if (!w.label || w.label === meta.label || /^Pending — /.test(w.label)) {
+    if (!w.label || w.label === meta.label || /^Pending — /.test(w.label) || w.label === 'Pending Applicant (Pay Fee)') {
       return { ...w, label: null };
     }
     return w;

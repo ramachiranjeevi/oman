@@ -762,7 +762,7 @@ const SERVICE_SUMMARY_CARDS = [
   { key: 'revisionLoopCount', label: 'Went Through Revision Loop', format: 'number', core: true },
   { key: 'avgFinalFee', label: 'Average Final Fee', format: 'currency', core: true },
   { key: 'classificationBreakdown', label: 'Requests by Film Classification', format: 'breakdown', core: false },
-  { key: 'pendingApplicant', label: 'Pending Applicant (Pay Fee)', format: 'number', core: false },
+  { key: 'pendingApplicant', label: 'Pending Applicant Pay Fee', format: 'number', core: false },
   { key: 'pendingSpecialist', label: 'Pending Specialist Queue', format: 'number', core: false },
   { key: 'pendingHeadOfSection', label: 'Pending Head of Section Queue', format: 'number', core: false },
   { key: 'slaBreaches', label: 'Overdue Reviews', format: 'number', core: false },
