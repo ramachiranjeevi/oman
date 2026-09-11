@@ -3141,7 +3141,7 @@ const I18N = {
     shapeDecisionBtn: '+ Requirement Check',
     saveCanvasBtn: 'Save',
     deployCanvasBtn: 'Publish',
-    reloadSavedBtn: 'Reload Draft',
+    reloadSavedBtn: 'Reload',
     clickShapeNote: 'Click a shape to edit it here.',
     applicationNumLabel: 'Application',
     loadingAppFields: 'Loading application fields…',
@@ -6430,8 +6430,10 @@ async function deployCanvasProcess() {
     return;
   }
   status.style.color = '#166534';
-  status.textContent = `${getLanguage() === 'ar' ? 'تم نشر الإصدار' : 'Published version'} ${data.version}.`;
-  log(`Approval process published as version ${data.version}.`);
+  status.textContent = getLanguage() === 'ar'
+    ? `تم نشر الإصدار ${data.version} وحفظه.`
+    : `Published version ${data.version} and saved.`;
+  log(`Approval process published as version ${data.version} and saved for reload.`);
 }
 
 // Mirrors the exact rule server.js enforces on POST /api/admin/pricing —

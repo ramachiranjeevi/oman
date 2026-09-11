@@ -597,8 +597,11 @@ app.post('/api/admin/process-canvas/:key/deploy', async (req, res) => {
   try {
     const canvas = { ...req.body, processKey: req.params.key };
     const { xml } = processCanvas.compileCanvas(canvas);
+    // Persist what we publish so refresh / re-login shows the live diagram,
+    // not a stale draft from an earlier Save.
+    const saved = processCanvas.saveCanvas(req.params.key, canvas);
     const { version } = await camunda.deployProcessXml(req.params.key, xml, 'process-canvas');
-    res.json({ ok: true, version });
+    res.json({ ok: true, version, canvas: saved });
   } catch (err) {
     res.status(400).json({ ok: false, error: err.message, validationErrors: err.validationErrors ?? [err.message] });
   }
