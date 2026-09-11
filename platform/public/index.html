@@ -6500,23 +6500,35 @@ const WIDGET_METRICS = [
   { key: 'requestsReceived', label: 'Requests Received', fmt: 'number' },
   { key: 'eligiblePct', label: '% Meeting Conditions', fmt: 'percent' },
   { key: 'slaCompletionPct', label: 'Reviews Completed on Time', fmt: 'percent' },
-  { key: 'approved', label: 'Approved', fmt: 'number' },
   { key: 'rejected', label: 'Rejected', fmt: 'number' },
   { key: 'revisionLoopCount', label: 'Went Through Revision Loop', fmt: 'number' },
   { key: 'classificationBreakdown', label: 'Requests by Film Classification', fmt: 'breakdown' },
   { key: 'avgFinalFee', label: 'Average Final Fee', fmt: 'currency' },
-  { key: 'pendingApplicant', label: 'Pending — Applicant (Pay Fee)', fmt: 'number' },
-  { key: 'pendingSpecialist', label: 'Pending — Specialist Queue', fmt: 'number' },
-  { key: 'pendingHeadOfSection', label: 'Pending — Head of Section Queue', fmt: 'number' },
+  { key: 'pendingApplicant', label: 'Pending Applicant (Pay Fee)', fmt: 'number' },
+  { key: 'pendingSpecialist', label: 'Pending Specialist Queue', fmt: 'number' },
+  { key: 'pendingHeadOfSection', label: 'Pending Head of Section Queue', fmt: 'number' },
   { key: 'slaBreaches', label: 'Overdue Reviews', fmt: 'number' },
   { key: 'pendingEvaluation', label: 'Pending Eligibility Evaluation', fmt: 'number' },
 ];
+
+const CLASSIFICATION_FULL_LABELS = {
+  G: 'General',
+  PG: 'Parental Guidance',
+  'PG-13': 'Parents Strongly Cautioned',
+  '18+': 'Adults Only',
+};
+
+function classificationFullLabel(code) {
+  if (code == null || code === '') return 'Unspecified';
+  const key = String(code).trim();
+  return CLASSIFICATION_FULL_LABELS[key] || key;
+}
 
 function formatMetric(fmt, value) {
   if (fmt === 'breakdown') {
     const entries = Object.entries(value || {});
     if (!entries.length) return '<span class="field-note">No data yet</span>';
-    return entries.map(([k, v]) => `<div style="display:flex;justify-content:space-between;font-size:.8rem;"><span class="field-note" style="margin:0;">${k}</span><span>${v}</span></div>`).join('');
+    return entries.map(([k, v]) => `<div style="display:flex;justify-content:space-between;font-size:.8rem;gap:.75rem;"><span class="field-note" style="margin:0;">${escapeHtml(classificationFullLabel(k))}</span><span>${v}</span></div>`).join('');
   }
   if (value === null || value === undefined) return '—';
   if (fmt === 'percent') return `${value}%`;
@@ -6544,10 +6556,9 @@ async function loadDashboard() {
   const slaBadge = m.slaCompletionPct === null ? null : { ok: m.slaCompletionPct >= m.slaTarget, text: `target ≥ ${m.slaTarget}%` };
 
   lastCoreTilesHtml = [
-    kpiTile(`Requests Received (${m.requestsReceivedPeriod})`, formatMetric('number', m.requestsReceived)),
-    kpiTile(`% Meeting Conditions (${m.eligiblePctPeriod})`, formatMetric('percent', m.eligiblePct), eligibleBadge),
-    kpiTile(`Reviews Completed on Time (${m.slaCompletionPctPeriod})`, formatMetric('percent', m.slaCompletionPct), slaBadge),
-    kpiTile('Approved', formatMetric('number', m.approved)),
+    kpiTile('Requests Received', formatMetric('number', m.requestsReceived)),
+    kpiTile('% Meeting Conditions', formatMetric('percent', m.eligiblePct), eligibleBadge),
+    kpiTile('Reviews Completed on Time', formatMetric('percent', m.slaCompletionPct), slaBadge),
     kpiTile('Rejected', formatMetric('number', m.rejected)),
     kpiTile('Went Through Revision Loop', formatMetric('number', m.revisionLoopCount)),
     kpiTile('Average Final Fee', formatMetric('currency', m.avgFinalFee)),
@@ -6572,9 +6583,20 @@ function getWidgets() {
   catch { widgets = []; }
   // Clean up any duplicates already saved from before this metric was added
   // was de-duplicated on the way in — keeps the first occurrence of each key.
+  // Also refresh stock labels so older dashboards drop em-dashes like "Pending — …".
   const seen = new Set();
-  const deduped = widgets.filter((w) => (seen.has(w.key) ? false : (seen.add(w.key), true)));
-  if (deduped.length !== widgets.length) saveWidgets(deduped);
+  const deduped = widgets.filter((w) => {
+    if (w.key === 'approved') return false;
+    return seen.has(w.key) ? false : (seen.add(w.key), true);
+  }).map((w) => {
+    const meta = WIDGET_METRICS.find((x) => x.key === w.key);
+    if (!meta) return w;
+    if (!w.label || w.label === meta.label || /^Pending — /.test(w.label)) {
+      return { ...w, label: null };
+    }
+    return w;
+  });
+  if (JSON.stringify(deduped) !== JSON.stringify(widgets)) saveWidgets(deduped);
   return deduped;
 }
 function saveWidgets(widgets) {

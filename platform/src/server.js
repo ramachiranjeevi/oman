@@ -758,23 +758,35 @@ const SERVICE_SUMMARY_CARDS = [
   { key: 'requestsReceived', label: 'Requests Received', format: 'number', periodKey: 'requestsReceivedPeriod', core: true },
   { key: 'eligiblePct', label: '% Meeting Conditions', format: 'percent', periodKey: 'eligiblePctPeriod', targetKey: 'eligibleTarget', core: true },
   { key: 'slaCompletionPct', label: 'Reviews Completed on Time', format: 'percent', periodKey: 'slaCompletionPctPeriod', targetKey: 'slaTarget', core: true },
-  { key: 'approved', label: 'Approved', format: 'number', core: true },
   { key: 'rejected', label: 'Rejected', format: 'number', core: true },
   { key: 'revisionLoopCount', label: 'Went Through Revision Loop', format: 'number', core: true },
   { key: 'avgFinalFee', label: 'Average Final Fee', format: 'currency', core: true },
   { key: 'classificationBreakdown', label: 'Requests by Film Classification', format: 'breakdown', core: false },
-  { key: 'pendingApplicant', label: 'Pending — Applicant (Pay Fee)', format: 'number', core: false },
-  { key: 'pendingSpecialist', label: 'Pending — Specialist Queue', format: 'number', core: false },
-  { key: 'pendingHeadOfSection', label: 'Pending — Head of Section Queue', format: 'number', core: false },
+  { key: 'pendingApplicant', label: 'Pending Applicant (Pay Fee)', format: 'number', core: false },
+  { key: 'pendingSpecialist', label: 'Pending Specialist Queue', format: 'number', core: false },
+  { key: 'pendingHeadOfSection', label: 'Pending Head of Section Queue', format: 'number', core: false },
   { key: 'slaBreaches', label: 'Overdue Reviews', format: 'number', core: false },
   { key: 'pendingEvaluation', label: 'Pending Eligibility Evaluation', format: 'number', core: false },
 ];
+
+const CLASSIFICATION_FULL_LABELS = {
+  G: 'General',
+  PG: 'Parental Guidance',
+  'PG-13': 'Parents Strongly Cautioned',
+  '18+': 'Adults Only',
+};
+
+function classificationFullLabel(code) {
+  if (code == null || code === '') return 'Unspecified';
+  const key = String(code).trim();
+  return CLASSIFICATION_FULL_LABELS[key] || key;
+}
 
 function formatServiceSummaryDisplay(format, value) {
   if (format === 'breakdown') {
     const entries = Object.entries(value || {});
     if (!entries.length) return null;
-    return Object.fromEntries(entries);
+    return Object.fromEntries(entries.map(([k, v]) => [classificationFullLabel(k), v]));
   }
   if (value === null || value === undefined) return null;
   if (format === 'percent') return `${value}%`;
