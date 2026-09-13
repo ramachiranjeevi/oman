@@ -25,6 +25,34 @@ import {
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const app = express();
 if (process.env.TRUST_PROXY === 'true') app.set('trust proxy', 1);
+
+// Allow Quantela (and other embed hosts) to call Oman APIs with cookies from a
+// cross-origin iframe page served under their /portal path.
+const EMBED_CORS_ORIGINS = String(process.env.EMBED_CORS_ORIGINS || 'https://atlantis-in-dashboard.quantela.com')
+  .split(',')
+  .map((s) => s.trim())
+  .filter(Boolean);
+app.use((req, res, next) => {
+  const origin = req.get('Origin');
+  if (origin && EMBED_CORS_ORIGINS.includes(origin)) {
+    res.setHeader('Access-Control-Allow-Origin', origin);
+    res.setHeader('Access-Control-Allow-Credentials', 'true');
+    res.setHeader('Access-Control-Allow-Headers', 'Content-Type, X-Api-Key');
+    res.setHeader('Access-Control-Allow-Methods', 'GET,POST,PUT,PATCH,DELETE,OPTIONS');
+    res.setHeader('Vary', 'Origin');
+  }
+  if (req.method === 'OPTIONS') return res.sendStatus(204);
+  next();
+});
+
+// Cross-site iframe embed (e.g. Quantela host → Oman portal) needs SameSite=None
+// + Secure, otherwise the browser drops the session cookie and the login form stays up.
+const sessionSameSiteRaw = String(process.env.SESSION_COOKIE_SAMESITE || 'lax').toLowerCase();
+const sessionSameSite = sessionSameSiteRaw === 'none' || sessionSameSiteRaw === 'strict'
+  ? sessionSameSiteRaw
+  : 'lax';
+const sessionSecure = process.env.SESSION_COOKIE_SECURE === 'true' || sessionSameSite === 'none';
+
 app.use(express.json({ limit: '10mb' }));
 app.use(
   session({
@@ -34,8 +62,8 @@ app.use(
     proxy: process.env.TRUST_PROXY === 'true',
     cookie: {
       httpOnly: true,
-      sameSite: 'lax',
-      secure: process.env.SESSION_COOKIE_SECURE === 'true',
+      sameSite: sessionSameSite,
+      secure: sessionSecure,
       maxAge: 8 * 60 * 60 * 1000,
     },
   })
@@ -226,6 +254,27 @@ app.get('/api/public/app-origin', (req, res) => {
     .map((item) => item.address);
   const preferred = addresses.find((address) => /^(192\.168\.|10\.|172\.(1[6-9]|2\d|3[01])\.)/.test(address));
   res.json({ origin: preferred ? `${req.protocol}://${preferred}:${port}` : `${req.protocol}://${requestHost}` });
+});
+
+/** Demo: iframe host diagnostics — logs the embed URL Oman actually received. */
+app.post('/api/public/embed-debug', (req, res) => {
+  const href = String(req.body?.href || '');
+  const search = String(req.body?.search || '');
+  const hash = String(req.body?.hash || '');
+  const parsed = (() => {
+    try { return new URL(href); } catch { return null; }
+  })();
+  const keys = parsed ? [...parsed.searchParams.keys()] : [];
+  console.log('[embed-debug] iframe href=', href);
+  console.log('[embed-debug] search=', search, 'hash=', hash, 'queryKeys=', keys.join(',') || '(none)');
+  if (parsed?.searchParams.has('login')) {
+    const loginRaw = parsed.searchParams.get('login');
+    const dash = String(loginRaw || '').indexOf('-');
+    const userPart = dash > 0 ? String(loginRaw).slice(0, dash) : '';
+    const passPart = dash > 0 ? String(loginRaw).slice(dash + 1) : '';
+    console.log('[embed-debug] login param raw=', loginRaw, '→ username=', userPart, 'passwordLen=', passPart.length);
+  }
+  res.json({ ok: true });
 });
 
 app.get('/api/public/licenses/:code', async (req, res) => {

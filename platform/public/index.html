@@ -2,12 +2,46 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8" />
+<script>
+/* Hide Quantela embed login form before first paint (avoids Sign-in flash). */
+(function () {
+  try {
+    var host = location.hostname || '';
+    var path = location.pathname || '';
+    var qs = location.search || '';
+    var embed = /quantela\.com$/i.test(host)
+      || path === '/portal'
+      || path.indexOf('/portal/') === 0
+      || /(?:\?|&)login=/i.test(qs)
+      || /(?:\?|&)(?:username|user|u)=/i.test(qs);
+    if (embed) document.documentElement.classList.add('oman-embed-boot');
+  } catch (e) { /* ignore */ }
+})();
+</script>
 <title>Cinema Film Screening License | Oman</title>
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <link rel="preconnect" href="https://fonts.googleapis.com" />
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Arabic:wght@400;500;600;700&family=Source+Sans+3:ital,wght@0,400;0,500;0,600;0,700;1,400&display=swap" rel="stylesheet" />
 <style>
+  /* Quantela /portal embed: never paint the username/password form on first load. */
+  html.oman-embed-boot #loginForm { display: none !important; }
+  html.oman-embed-boot #embedAuthStatus { display: block !important; }
+  html.oman-embed-boot #embedAuthStatus.hidden { display: block !important; }
+  html.oman-embed-boot #loginGate h2 {
+    font-size: 0 !important;
+    line-height: 0 !important;
+    margin: 0 0 .75rem !important;
+  }
+  html.oman-embed-boot #loginGate h2::before {
+    content: "Signing in…";
+    font-size: 1.15rem;
+    line-height: 1.35;
+    font-weight: 500;
+    color: var(--text);
+  }
+  html.oman-embed-boot.oman-embed-signedout #loginGate h2::before { content: "Signed out"; }
+  html.oman-embed-boot.oman-embed-ready:not(.oman-embed-signedout) #loginGate { display: none !important; }
   :root {
     --font-sans: "Source Sans 3", "Noto Sans Arabic", "Segoe UI", Tahoma, sans-serif;
     --font-mono: "Cascadia Mono", "Consolas", "IBM Plex Mono", monospace;
@@ -1666,6 +1700,10 @@
     </div></div>
     <div class="card">
       <h2 data-i18n="loginHeading" style="margin-top:0;">Sign in</h2>
+      <div id="embedAuthStatus" class="hidden" style="margin:0;">
+        <p class="field-note" id="embedAuthStatusText" style="margin:0;">Signing in…</p>
+        <button type="button" class="secondary hidden" id="embedAuthRetryBtn" onclick="retryEmbedLogin()" style="margin-top:.75rem;">Continue</button>
+      </div>
       <form id="loginForm" onsubmit="doLogin(event)">
         <label for="loginUsername" data-i18n="usernameLabel">Username</label>
         <input id="loginUsername" autocomplete="username" />
@@ -1673,6 +1711,7 @@
         <input id="loginPassword" type="password" autocomplete="current-password" />
         <button type="submit" data-i18n="loginBtn">Sign In</button>
         <div class="login-error" id="loginError"></div>
+        <pre class="field-note" id="embedUrlDebug" style="display:none;margin-top:.75rem;white-space:pre-wrap;word-break:break-all;font-size:.72rem;max-height:7rem;overflow:auto;"></pre>
       </form>
     </div>
   </div>
@@ -2611,18 +2650,62 @@ function assistantNavigate(action) {
 
 let currentUser = null;
 
+// Quantela hosts this app under /portal and sets a strict CSP connect-src that
+// does NOT allow https://omandp.paradigmit.com. Their reverse proxy already
+// forwards /portal/api/* → Oman, so keep API calls same-origin under /portal.
+const OMAN_API_ORIGIN = (() => {
+  try {
+    const host = String(window.location.hostname || '');
+    const path = String(window.location.pathname || '');
+    if (/quantela\.com$/i.test(host) || path === '/portal' || path.startsWith('/portal/')) {
+      return '/portal';
+    }
+  } catch (_) { /* ignore */ }
+  return '';
+})();
+
+function omanApiUrl(input) {
+  if (typeof input !== 'string') return input;
+  if (!OMAN_API_ORIGIN) return input;
+  if (/^https?:\/\//i.test(input)) return input;
+  if (input.startsWith('/api/') || input === '/api') return OMAN_API_ORIGIN + input;
+  return input;
+}
+
+function omanFetchInit(url, init) {
+  const opts = init ? { ...init } : {};
+  // /portal/api is same-origin on Quantela; absolute cross-origin Oman URLs need include.
+  if (/^https?:\/\//i.test(String(url || '')) && String(url).includes('omandp.paradigmit.com')) {
+    opts.credentials = 'include';
+  } else if (!opts.credentials) {
+    opts.credentials = 'same-origin';
+  }
+  return opts;
+}
+
 // Auto-detect an expired/missing session on ANY api call, without touching
 // the ~25 existing ad-hoc fetch() call sites throughout this file.
-const _nativeFetch = window.fetch.bind(window);
+const _rawFetch = window.fetch.bind(window);
+const _nativeFetch = (input, init) => {
+  const url = typeof input === 'string' ? omanApiUrl(input) : input;
+  return _rawFetch(url, typeof url === 'string' ? omanFetchInit(url, init) : init);
+};
 window.fetch = async (...args) => {
-  const res = await _nativeFetch(...args);
-  const url = typeof args[0] === 'string' ? args[0] : args[0]?.url || '';
+  let input = args[0];
+  let init = args[1];
+  if (typeof input === 'string') {
+    input = omanApiUrl(input);
+    init = omanFetchInit(input, init);
+  }
+  const res = await _rawFetch(input, init);
+  const url = typeof input === 'string' ? input : input?.url || '';
   // Ignore auth endpoints. Also ignore 401s while the login gate is visible so a
   // failed post-login API call cannot clear the password field mid-attempt.
   const onLoginGate = !document.getElementById('loginGate')?.classList.contains('hidden');
   if (res.status === 401 && !url.includes('/api/auth/') && currentUser && !onLoginGate) {
     currentUser = null;
-    showLoginGate();
+    if (isQuantelaEmbed()) showEmbedSignedOut();
+    else showLoginGate();
   }
   return res;
 };
@@ -2633,9 +2716,98 @@ function showLoginGate() {
   document.getElementById('loginGate').classList.remove('hidden');
   document.getElementById('userBadge').classList.add('hidden');
   document.getElementById('portalRoleName').textContent = getLanguage() === 'ar' ? 'بوابة آمنة' : 'Secure portal';
+  document.getElementById('loginForm')?.classList.remove('hidden');
+  document.getElementById('embedAuthStatus')?.classList.add('hidden');
+  document.getElementById('embedAuthRetryBtn')?.classList.add('hidden');
+  const heading = document.querySelector('#loginGate h2');
+  if (heading) heading.textContent = getLanguage() === 'ar' ? (I18N.ar?.loginHeading || 'تسجيل الدخول') : (I18N.en?.loginHeading || 'Sign in');
   updatePortalRoleQuickActions();
   resetDigitalAssistant();
   resetIdentityVerification({ close: true });
+}
+
+function isQuantelaEmbed() {
+  try {
+    return /quantela\.com$/i.test(window.location.hostname)
+      || window.location.pathname === '/portal'
+      || window.location.pathname.startsWith('/portal/')
+      || OMAN_API_ORIGIN === '/portal';
+  } catch (_) {
+    return false;
+  }
+}
+
+function rememberEmbedCredentials(creds, loginRaw) {
+  if (!creds?.username || !creds?.password) return;
+  try {
+    sessionStorage.setItem('omanEmbedAuth', JSON.stringify({
+      username: creds.username,
+      password: creds.password,
+      login: loginRaw || `${creds.username}-${creds.password}`,
+    }));
+  } catch (_) { /* ignore */ }
+}
+
+function loadRememberedEmbedCredentials() {
+  try {
+    const raw = sessionStorage.getItem('omanEmbedAuth');
+    return raw ? JSON.parse(raw) : null;
+  } catch (_) {
+    return null;
+  }
+}
+
+function showEmbedSigningIn(message) {
+  document.documentElement.classList.add('oman-embed-boot');
+  document.documentElement.classList.remove('oman-embed-signedout', 'oman-embed-ready');
+  document.getElementById('appShell')?.classList.add('hidden');
+  document.getElementById('userBadge')?.classList.add('hidden');
+  document.getElementById('loginGate')?.classList.remove('hidden');
+  document.getElementById('loginForm')?.classList.add('hidden');
+  document.getElementById('embedAuthStatus')?.classList.remove('hidden');
+  document.getElementById('embedAuthRetryBtn')?.classList.add('hidden');
+  const text = document.getElementById('embedAuthStatusText');
+  if (text) text.textContent = message || (getLanguage() === 'ar' ? 'جارٍ تسجيل الدخول…' : 'Signing in…');
+  const heading = document.querySelector('#loginGate h2');
+  if (heading) heading.textContent = getLanguage() === 'ar' ? 'جارٍ تسجيل الدخول…' : 'Signing in…';
+}
+
+function showEmbedSignedOut(message) {
+  document.documentElement.classList.add('oman-embed-boot', 'oman-embed-signedout');
+  document.documentElement.classList.remove('oman-embed-ready');
+  document.getElementById('appShell')?.classList.add('hidden');
+  document.getElementById('userBadge')?.classList.add('hidden');
+  document.getElementById('loginGate')?.classList.remove('hidden');
+  document.getElementById('loginForm')?.classList.add('hidden');
+  document.getElementById('embedAuthStatus')?.classList.remove('hidden');
+  const text = document.getElementById('embedAuthStatusText');
+  if (text) {
+    text.textContent = message
+      || (getLanguage() === 'ar'
+        ? 'تم تسجيل الخروج. أعد فتح الخدمة من لوحة التحكم، أو اضغط متابعة.'
+        : 'Signed out. Reopen this service from the dashboard, or select Continue.');
+  }
+  const retry = document.getElementById('embedAuthRetryBtn');
+  if (retry) retry.classList.toggle('hidden', !loadRememberedEmbedCredentials());
+  const heading = document.querySelector('#loginGate h2');
+  if (heading) heading.textContent = getLanguage() === 'ar' ? 'تم تسجيل الخروج' : 'Signed out';
+  document.getElementById('portalRoleName').textContent = getLanguage() === 'ar' ? 'بوابة آمنة' : 'Secure portal';
+}
+
+async function retryEmbedLogin() {
+  const saved = loadRememberedEmbedCredentials();
+  if (!saved?.username || !saved?.password) return;
+  showEmbedSigningIn();
+  const ok = await loginWithCredentials(saved.username, saved.password);
+  if (ok) updateEmbedChrome();
+  else showEmbedSignedOut(getLanguage() === 'ar' ? 'تعذر تسجيل الدخول مرة أخرى.' : 'Could not sign in again.');
+}
+
+function updateEmbedChrome() {
+  const badge = document.getElementById('userBadge');
+  if (!badge) return;
+  const logoutBtn = badge.querySelector('button[onclick="doLogout()"]');
+  if (logoutBtn) logoutBtn.classList.toggle('hidden', isQuantelaEmbed());
 }
 
 function updatePortalRoleName() {
@@ -2669,6 +2841,8 @@ function openNewApplicationFromRoleBar() {
 }
 
 function showAppShell() {
+  document.documentElement.classList.add('oman-embed-ready');
+  document.documentElement.classList.remove('oman-embed-signedout');
   document.body.classList.toggle('applicant-sidebar-visible', currentUser?.role === 'applicant');
   document.getElementById('loginGate').classList.add('hidden');
   document.getElementById('appShell').classList.remove('hidden');
@@ -2684,9 +2858,19 @@ function showAppShell() {
   const startTab = localStorage.getItem('omanActiveTab');
   const target = allowed.some(t => t.id === startTab) ? startTab : allowed[0]?.id;
   if (target) switchTab(target);
+  updateEmbedChrome();
 }
 
 async function checkSession() {
+  // Capture iframe URL *before* any credential stripping / navigation.
+  if (document.documentElement.classList.contains('oman-embed-boot') || isQuantelaEmbed()) {
+    showEmbedSigningIn();
+  }
+  reportEmbedIframeUrl('checkSession');
+  const fromUrl = readEmbedCredentialsFromUrl();
+  const loginRaw = new URLSearchParams(window.location.search).get('login') || '';
+  if (fromUrl.username && fromUrl.password) rememberEmbedCredentials(fromUrl, loginRaw);
+
   const res = await _nativeFetch('/api/auth/me', { credentials: 'same-origin' });
   // If the user already signed in while this request was in flight, do not
   // overwrite the UI with a stale 401 from the pre-login /api/auth/me call.
@@ -2694,48 +2878,198 @@ async function checkSession() {
   if (res.ok) {
     currentUser = await res.json();
     showAppShell();
+    clearEmbedCredentialsFromUrl();
+    updateEmbedChrome();
+    return;
+  }
+
+  const embed = (fromUrl.username && fromUrl.password)
+    ? fromUrl
+    : (isQuantelaEmbed() ? loadRememberedEmbedCredentials() : null);
+
+  if (embed?.username && embed?.password) {
+    // Avoid flashing the username/password form while auto-signing in.
+    showEmbedSigningIn();
+    clearEmbedCredentialsFromUrl();
+    const ok = await loginWithCredentials(embed.username, embed.password);
+    if (ok) {
+      updateEmbedChrome();
+      return;
+    }
+    if (isQuantelaEmbed()) {
+      showEmbedSignedOut(getLanguage() === 'ar'
+        ? 'تعذر تسجيل الدخول من البوابة المضيفة.'
+        : 'Could not sign in from the host portal.');
+      listenForEmbedLoginMessage();
+      return;
+    }
+  }
+
+  if (isQuantelaEmbed()) {
+    showEmbedSignedOut(getLanguage() === 'ar'
+      ? 'افتح هذه الخدمة من لوحة التحكم مع بيانات الدخول.'
+      : 'Open this service from the dashboard with login credentials.');
   } else {
+    document.documentElement.classList.remove('oman-embed-boot', 'oman-embed-signedout', 'oman-embed-ready');
     showLoginGate();
+  }
+  listenForEmbedLoginMessage();
+}
+
+/** Show + log the iframe URL Oman actually received (for Quantela wiring). */
+function reportEmbedIframeUrl(reason = 'load') {
+  const href = window.location.href;
+  const search = window.location.search || '';
+  const hash = window.location.hash || '';
+  const creds = readEmbedCredentialsFromUrl();
+  console.info('[oman-embed]', reason, href, 'parsed=', { username: creds.username, passwordLen: creds.password ? creds.password.length : 0 });
+  const debugEl = document.getElementById('embedUrlDebug');
+  if (debugEl) {
+    debugEl.style.display = 'block';
+    debugEl.textContent =
+      `Iframe URL (${reason}):\n${href}\n` +
+      `Parsed → username=${creds.username || '(none)'} password=${creds.password ? '(set, ' + creds.password.length + ' chars)' : '(none)'}\n` +
+      `API origin → ${OMAN_API_ORIGIN || '(same origin)'}`;
+  }
+  // Fire-and-forget to Platform logs (platform.log on the VM).
+  _nativeFetch('/api/public/embed-debug', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    credentials: 'same-origin',
+    body: JSON.stringify({
+      href,
+      search,
+      hash,
+      reason,
+      inIframe: window.self !== window.top,
+      parsedUsername: creds.username || '',
+      parsedPasswordLen: creds.password ? creds.password.length : 0,
+      apiOrigin: OMAN_API_ORIGIN || '',
+    }),
+  }).catch(() => {});
+}
+
+/** Demo-only: pull username/password from the iframe URL query or hash. */
+function readEmbedCredentialsFromUrl() {
+  const query = new URLSearchParams(window.location.search);
+  let username = (query.get('username') || query.get('user') || query.get('u') || '').trim();
+  let password = query.get('password') || query.get('pass') || query.get('pwd') || query.get('p') || '';
+
+  // Quantela portal embed: ?login=admin-admin123  →  user=admin, pass=admin123
+  if ((!username || !password) && query.get('login')) {
+    const parsed = parseQuantelaLoginParam(query.get('login'));
+    if (parsed) {
+      if (!username) username = parsed.username;
+      if (!password) password = parsed.password;
+    }
+  }
+
+  // Also support #username=…&password=… or #login=admin-admin123
+  if ((!username || !password) && window.location.hash) {
+    const hash = window.location.hash.replace(/^#\/?/, '');
+    const hashParams = new URLSearchParams(hash.includes('=') ? hash : hash.replace(/^[^\?]*\?/, ''));
+    if (!username) username = (hashParams.get('username') || hashParams.get('user') || hashParams.get('u') || '').trim();
+    if (!password) password = hashParams.get('password') || hashParams.get('pass') || hashParams.get('pwd') || hashParams.get('p') || '';
+    if ((!username || !password) && hashParams.get('login')) {
+      const parsed = parseQuantelaLoginParam(hashParams.get('login'));
+      if (parsed) {
+        if (!username) username = parsed.username;
+        if (!password) password = parsed.password;
+      }
+    }
+  }
+  return { username, password };
+}
+
+/** Parse Quantela's `login=username-password` (split on the first hyphen). */
+function parseQuantelaLoginParam(raw) {
+  const value = String(raw || '').trim();
+  if (!value) return null;
+  const dash = value.indexOf('-');
+  if (dash <= 0 || dash === value.length - 1) return null;
+  return {
+    username: value.slice(0, dash).trim(),
+    password: value.slice(dash + 1),
+  };
+}
+
+/** Remove credentials from the address bar after reading (still demo-only — URLs leak in logs). */
+function clearEmbedCredentialsFromUrl() {
+  const url = new URL(window.location.href);
+  let changed = false;
+  for (const key of ['username', 'user', 'u', 'password', 'pass', 'pwd', 'p', 'login']) {
+    if (url.searchParams.has(key)) {
+      url.searchParams.delete(key);
+      changed = true;
+    }
+  }
+  if (url.hash && /(?:username|user|u|password|pass|pwd|p|login)=/i.test(url.hash)) {
+    url.hash = '';
+    changed = true;
+  }
+  if (changed) {
+    const next = url.pathname + (url.search ? url.search : '') + url.hash;
+    history.replaceState(null, '', next || url.pathname);
   }
 }
 
-async function doLogin(event) {
-  event.preventDefault();
-  const username = document.getElementById('loginUsername').value.trim();
-  const password = document.getElementById('loginPassword').value;
+async function tryLoginFromIframeUrl() {
+  const { username, password } = readEmbedCredentialsFromUrl();
+  clearEmbedCredentialsFromUrl();
+  if (!username || !password) return false;
+  const userEl = document.getElementById('loginUsername');
+  const passEl = document.getElementById('loginPassword');
+  if (userEl) userEl.value = username;
+  if (passEl) passEl.value = password;
+  return loginWithCredentials(username, password);
+}
+
+/** Parent page can post credentials if it cannot put them on the iframe src. */
+function listenForEmbedLoginMessage() {
+  if (window.__omanEmbedLoginListening) return;
+  window.__omanEmbedLoginListening = true;
+  window.addEventListener('message', async (event) => {
+    const data = event.data;
+    if (!data || typeof data !== 'object') return;
+    if (data.type !== 'OMAN_LOGIN' && data.type !== 'oman-login') return;
+    const username = String(data.username || data.user || '').trim();
+    const password = String(data.password || data.pass || '');
+    if (!username || !password || currentUser) return;
+    const userEl = document.getElementById('loginUsername');
+    const passEl = document.getElementById('loginPassword');
+    if (userEl) userEl.value = username;
+    if (passEl) passEl.value = password;
+    await loginWithCredentials(username, password);
+  });
+}
+
+async function loginWithCredentials(username, password) {
   const errorEl = document.getElementById('loginError');
-  const submitBtn = event.target.querySelector('button[type="submit"]');
-  errorEl.textContent = '';
+  if (errorEl) errorEl.textContent = '';
   if (!username || !password) {
-    errorEl.textContent = I18N[getLanguage()].loginErrorMsg;
-    return;
+    if (errorEl) errorEl.textContent = I18N[getLanguage()].loginErrorMsg;
+    return false;
   }
-  if (submitBtn) {
-    submitBtn.disabled = true;
-    submitBtn.dataset.prevLabel = submitBtn.textContent;
-    submitBtn.textContent = tMsg('loginBusyMsg', 'Signing in…');
-  }
-  try {
-    let res = null;
-    for (let attempt = 1; attempt <= 6; attempt++) {
-      res = await _nativeFetch('/api/auth/login', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        credentials: 'same-origin',
-        body: JSON.stringify({ username, password }),
-      });
-      if (res.ok) break;
-      // Transient LB / upstream blips must not look like bad credentials.
-      if (res.status === 502 || res.status === 503 || res.status === 504 || res.status === 0) {
-        errorEl.textContent = tMsg('loginUnavailableMsg', 'Sign-in service is temporarily unavailable. Retrying…');
-        await new Promise((r) => setTimeout(r, 280 * attempt));
-        continue;
-      }
-      break;
+  let res = null;
+  for (let attempt = 1; attempt <= 6; attempt++) {
+    res = await _nativeFetch('/api/auth/login', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      credentials: 'same-origin',
+      body: JSON.stringify({ username, password }),
+    });
+    if (res.ok) break;
+    if (res.status === 502 || res.status === 503 || res.status === 504 || res.status === 0) {
+      if (errorEl) errorEl.textContent = tMsg('loginUnavailableMsg', 'Sign-in service is temporarily unavailable. Retrying…');
+      await new Promise((r) => setTimeout(r, 280 * attempt));
+      continue;
     }
-    if (!res || !res.ok) {
-      let detail = '';
-      try { detail = (await res.json()).error || ''; } catch { /* ignore non-JSON gateway bodies */ }
+    break;
+  }
+  if (!res || !res.ok) {
+    let detail = '';
+    try { detail = (await res.json()).error || ''; } catch { /* ignore */ }
+    if (errorEl) {
       if (res && (res.status === 502 || res.status === 503 || res.status === 504)) {
         errorEl.textContent = tMsg('loginUnavailableFinalMsg', 'Sign-in service is temporarily unavailable. Please try again in a moment.');
       } else if (detail && res && res.status !== 401) {
@@ -2743,32 +3077,48 @@ async function doLogin(event) {
       } else {
         errorEl.textContent = I18N[getLanguage()].loginErrorMsg;
       }
-      return;
     }
-    const user = await res.json();
-    // Confirm the session cookie actually stuck (common failure behind HTTPS LB
-    // when TRUST_PROXY / SESSION_COOKIE_SECURE are wrong). Retry /me briefly —
-    // a 503 here used to look like a failed login.
-    let me = null;
-    for (let attempt = 1; attempt <= 5; attempt++) {
-      me = await _nativeFetch('/api/auth/me', { credentials: 'same-origin' });
-      if (me.ok) break;
-      if (me.status === 502 || me.status === 503 || me.status === 504) {
-        await new Promise((r) => setTimeout(r, 250 * attempt));
-        continue;
-      }
-      break;
+    return false;
+  }
+  const user = await res.json();
+  let me = null;
+  for (let attempt = 1; attempt <= 5; attempt++) {
+    me = await _nativeFetch('/api/auth/me', { credentials: 'same-origin' });
+    if (me.ok) break;
+    if (me.status === 502 || me.status === 503 || me.status === 504) {
+      await new Promise((r) => setTimeout(r, 250 * attempt));
+      continue;
     }
-    if (!me?.ok) {
+    break;
+  }
+  if (!me?.ok) {
+    if (errorEl) {
       errorEl.textContent = getLanguage() === 'ar'
         ? 'تم التحقق لكن تعذر حفظ الجلسة. تحقق من إعدادات HTTPS للكوكي.'
         : 'Credentials OK but session cookie was not kept. On the VM set TRUST_PROXY=true and SESSION_COOKIE_SECURE=true, then restart Platform.';
-      return;
     }
-    currentUser = user;
-    document.getElementById('loginPassword').value = '';
-    errorEl.textContent = '';
-    showAppShell();
+    return false;
+  }
+  currentUser = user;
+  const passEl = document.getElementById('loginPassword');
+  if (passEl) passEl.value = '';
+  if (errorEl) errorEl.textContent = '';
+  showAppShell();
+  return true;
+}
+
+async function doLogin(event) {
+  event.preventDefault();
+  const username = document.getElementById('loginUsername').value.trim();
+  const password = document.getElementById('loginPassword').value;
+  const submitBtn = event.target.querySelector('button[type="submit"]');
+  if (submitBtn) {
+    submitBtn.disabled = true;
+    submitBtn.dataset.prevLabel = submitBtn.textContent;
+    submitBtn.textContent = tMsg('loginBusyMsg', 'Signing in…');
+  }
+  try {
+    await loginWithCredentials(username, password);
   } finally {
     if (submitBtn) {
       submitBtn.disabled = false;
@@ -2781,6 +3131,10 @@ async function doLogout() {
   await fetch('/api/auth/logout', { method: 'POST' });
   currentUser = null;
   resetIdentityVerification({ close: true });
+  if (isQuantelaEmbed()) {
+    showEmbedSignedOut();
+    return;
+  }
   showLoginGate();
 }
 
