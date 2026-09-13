@@ -76,6 +76,12 @@ jobs:
     # Deploy-time approval gate: pauses until a required reviewer on the
     # "uat" environment approves in the GitHub Actions UI.
     environment: uat
+    # Public UAT host — prefer repo Variable; fall back to Secret; then default.
+    # (Environment-scoped secrets override repo secrets — fix bad values under
+    # Settings → Environments → uat, not only repo secrets.)
+    env:
+      UAT_PLATFORM_URL: ${{ vars.UAT_PLATFORM_URL || secrets.UAT_PLATFORM_URL || 'https://omandp.paradigmit.com' }}
+      CI_PROMOTE_API_KEY: ${{ secrets.CI_PROMOTE_API_KEY }}
     steps:
       - uses: actions/checkout@v4
 
@@ -83,8 +89,8 @@ jobs:
         with:
           node-version: 22
 
+      - name: Validate promote configuration
+        run: node ops/ci-push-artifacts.mjs --check-env
+
       - name: Promote schema + BPMN/DMN to UAT via Platform
-        env:
-          UAT_PLATFORM_URL: ${{ secrets.UAT_PLATFORM_URL }}
-          CI_PROMOTE_API_KEY: ${{ secrets.CI_PROMOTE_API_KEY }}
         run: node ops/ci-push-artifacts.mjs

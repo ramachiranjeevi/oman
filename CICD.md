@@ -66,11 +66,28 @@ git push -u origin my-change-branch
 
 ## One-time GitHub setup
 
+### “Secrets look empty” in GitHub
+
+That is **expected**. After you save a secret, GitHub **never shows the value
+again** — edit forms stay blank. You are not supposed to “see” the key in the
+UI. To change a secret, paste the full value again and save.
+
+If Actions still fails with “empty” / `Invalid URL`, the usual cause is an
+**Environment secret with the same name but no value** on **Environment →
+`uat`**, which **overrides** the repository secret. Open **Settings →
+Environments → uat → Environment secrets** and **delete** `UAT_PLATFORM_URL` /
+`CI_PROMOTE_API_KEY` there unless you intentionally set them on the environment.
+
 1. **Environment `uat`** — Settings → Environments → New environment `uat` →
    add a **required reviewer**.
-2. **Repo secrets** (Settings → Secrets and variables → Actions):
-   - `UAT_PLATFORM_URL` = `https://omandp.paradigmit.com`
-   - `CI_PROMOTE_API_KEY` = same random string as on the VM
+2. **URL + API key** (Settings → Secrets and variables → Actions):
+   - **Variable** (recommended): `UAT_PLATFORM_URL` = `https://omandp.paradigmit.com`
+   - **Secret**: `CI_PROMOTE_API_KEY` = same random string as on the VM  
+   If you also define secrets on **Environment → `uat`**, they **override** repo
+   secrets — a bad `UAT_PLATFORM_URL` there causes `Invalid URL` even when the
+   repo secret is correct. Delete or fix the environment copy.
+   The workflow default URL is `https://omandp.paradigmit.com` if neither
+   variable nor secret is set.
 3. **Branch protection** on `main` (optional but recommended for the demo):
    require a PR + ≥1 approval before merge.
 4. **UAT Platform `.env`**: set `CI_PROMOTE_API_KEY=...` and restart Platform.

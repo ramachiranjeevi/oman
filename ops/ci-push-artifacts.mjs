@@ -10,15 +10,56 @@
 import { readFileSync, readdirSync } from 'node:fs';
 import path from 'node:path';
 
-const base = (process.env.UAT_PLATFORM_URL || '').replace(/\/$/, '');
-const key = process.env.CI_PROMOTE_API_KEY || '';
-if (!base || !key) {
-  console.error('UAT_PLATFORM_URL and CI_PROMOTE_API_KEY must be set');
-  process.exit(1);
+function normalizePlatformUrl(raw) {
+  let base = String(raw || '').trim();
+  if ((base.startsWith('"') && base.endsWith('"')) || (base.startsWith("'") && base.endsWith("'"))) {
+    base = base.slice(1, -1).trim();
+  }
+  base = base.replace(/\/$/, '');
+  if (base && !/^https?:\/\//i.test(base)) {
+    base = `https://${base}`;
+  }
+  try {
+    new URL(base);
+  } catch {
+    console.error(
+      'UAT_PLATFORM_URL must be a valid absolute URL, e.g. https://omandp.paradigmit.com',
+      '(no quotes, no path — check the repository secret value)',
+    );
+    process.exit(1);
+  }
+  return base;
 }
 
-const schemaPath = process.argv[2] || 'directus/schema/directus-schema.json';
-const resourcesDir = process.argv[3] || 'camunda-module/configuration/resources';
+const base = normalizePlatformUrl(process.env.UAT_PLATFORM_URL);
+const key = String(process.env.CI_PROMOTE_API_KEY || '').trim();
+if (!base) {
+  console.error('UAT_PLATFORM_URL is missing or invalid.');
+  process.exit(1);
+}
+if (!key) {
+  console.error(
+    'CI_PROMOTE_API_KEY is empty in this job.',
+    'GitHub always shows secret values as blank in the UI — that is normal.',
+    'If you set the key on the repo but the job still sees empty, check',
+    'Settings → Environments → uat → Environment secrets: a same-named secret',
+    'there overrides the repo secret (delete it or paste the value again).',
+  );
+  process.exit(1);
+}
+console.log(`Target platform: ${base}`);
+
+const checkOnly = process.argv.includes('--check-env');
+if (checkOnly) {
+  console.log('CI_PROMOTE_API_KEY is set');
+  process.exit(0);
+}
+
+const schemaPath =
+  process.argv.find((a) => !a.startsWith('-')) || 'directus/schema/directus-schema.json';
+const resourcesDir =
+  process.argv.filter((a) => !a.startsWith('-'))[1] ||
+  'camunda-module/configuration/resources';
 
 async function post(pathname, body) {
   const res = await fetch(`${base}${pathname}`, {
