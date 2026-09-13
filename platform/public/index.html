@@ -2877,10 +2877,36 @@ async function checkSession() {
   if (currentUser) return;
   if (res.ok) {
     currentUser = await res.json();
-    showAppShell();
-    clearEmbedCredentialsFromUrl();
-    updateEmbedChrome();
-    return;
+    // Atlantis may reopen the iframe with a different ?login=user-pass while a
+    // previous role's cookie (often admin) is still on omandp.paradigmit.com.
+    // Prefer the URL credentials over the stale session.
+    if (
+      fromUrl.username &&
+      fromUrl.password &&
+      String(currentUser.username || '').toLowerCase() !== String(fromUrl.username).toLowerCase()
+    ) {
+      showEmbedSigningIn();
+      clearEmbedCredentialsFromUrl();
+      try { localStorage.removeItem('omanActiveTab'); } catch (_) { /* ignore */ }
+      const switched = await loginWithCredentials(fromUrl.username, fromUrl.password);
+      if (switched) {
+        updateEmbedChrome();
+        return;
+      }
+      currentUser = null;
+      if (isQuantelaEmbed()) {
+        showEmbedSignedOut(getLanguage() === 'ar'
+          ? 'تعذر تبديل الحساب من البوابة المضيفة.'
+          : 'Could not switch account from the host portal.');
+        listenForEmbedLoginMessage();
+        return;
+      }
+    } else {
+      showAppShell();
+      clearEmbedCredentialsFromUrl();
+      updateEmbedChrome();
+      return;
+    }
   }
 
   const embed = (fromUrl.username && fromUrl.password)
