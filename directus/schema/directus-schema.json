@@ -1755,50 +1755,6 @@
         "foreign_key_table": null,
         "foreign_key_column": null
       }
-    },
-    {
-      "collection": "license_applications",
-      "field": "dev",
-      "type": "string",
-      "meta": {
-        "collection": "license_applications",
-        "conditions": null,
-        "display": null,
-        "display_options": null,
-        "field": "dev",
-        "group": null,
-        "hidden": false,
-        "interface": "input",
-        "note": "developer",
-        "options": null,
-        "readonly": false,
-        "required": false,
-        "searchable": true,
-        "sort": 50,
-        "special": null,
-        "translations": null,
-        "validation": null,
-        "validation_message": null,
-        "width": "full"
-      },
-      "schema": {
-        "name": "dev",
-        "table": "license_applications",
-        "data_type": "character varying",
-        "default_value": null,
-        "max_length": 255,
-        "numeric_precision": null,
-        "numeric_scale": null,
-        "is_nullable": true,
-        "is_unique": false,
-        "is_indexed": false,
-        "is_primary_key": false,
-        "is_generated": false,
-        "generation_expression": null,
-        "has_auto_increment": false,
-        "foreign_key_table": null,
-        "foreign_key_column": null
-      }
     }
   ],
   "systemFields": [
