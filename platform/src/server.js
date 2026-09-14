@@ -146,20 +146,17 @@ function requireRole(...roles) {
 }
 
 app.use('/api', (req, res, next) => {
-  // When mounted at /api, req.path is usually "/ci/..." — also accept full
-  // "/api/ci/..." in case a proxy or Express version leaves the mount prefix.
-  const p = req.path || '';
-  const url = req.originalUrl || '';
+  // Session auth for /api/* except login/public/CI promote/health.
+  // Match on path, url, and originalUrl — mount/proxy quirks vary by Express version.
+  const haystack = `${req.baseUrl || ''}${req.path || ''} ${req.url || ''} ${req.originalUrl || ''}`;
   if (
-    p.startsWith('/auth/') ||
-    p.startsWith('/public/') ||
-    p.startsWith('/ci/') ||
-    p === '/health' ||
-    url.startsWith('/api/auth/') ||
-    url.startsWith('/api/public/') ||
-    url.startsWith('/api/ci/') ||
-    url.startsWith('/api/health')
-  ) return next();
+    haystack.includes('/auth/') ||
+    haystack.includes('/public/') ||
+    haystack.includes('/ci/') ||
+    /\/health(\?|$)/.test(haystack)
+  ) {
+    return next();
+  }
   return requireAuth(req, res, next);
 });
 
