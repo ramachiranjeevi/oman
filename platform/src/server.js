@@ -21,6 +21,7 @@ import {
   resolveLoginEmail,
   emailToUsername,
 } from './users.js';
+import QRCode from 'qrcode';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const app = express();
@@ -249,9 +250,22 @@ app.post('/api/ci/promote-camunda', requireCiPromoteKey, async (req, res) => {
 // Public QR verification endpoint. The QR payload is an unguessable license
 // code; only certificate-safe fields are returned (never the full application).
 app.get('/api/public/app-origin', (req, res) => {
+  // Prefer an explicit public portal URL (required when Oman is embedded under
+  // another host such as Quantela /portal — window.location.origin is wrong there).
+  const configured = String(process.env.PUBLIC_APP_ORIGIN || process.env.UAT_PLATFORM_URL || '')
+    .trim()
+    .replace(/\/$/, '');
+  if (configured) {
+    try {
+      return res.json({ origin: new URL(configured).origin });
+    } catch {
+      /* fall through */
+    }
+  }
   const requestHost = req.get('host') || '';
   if (requestHost && !/^(localhost|127\.0\.0\.1|\[::1\])(?::|$)/i.test(requestHost)) {
-    return res.json({ origin: `${req.protocol}://${requestHost}` });
+    const proto = req.protocol || 'https';
+    return res.json({ origin: `${proto}://${requestHost}` });
   }
   const addresses = Object.values(os.networkInterfaces())
     .flat()
@@ -259,6 +273,24 @@ app.get('/api/public/app-origin', (req, res) => {
     .map((item) => item.address);
   const preferred = addresses.find((address) => /^(192\.168\.|10\.|172\.(1[6-9]|2\d|3[01])\.)/.test(address));
   res.json({ origin: preferred ? `${req.protocol}://${preferred}:${port}` : `${req.protocol}://${requestHost}` });
+});
+
+/** Same-origin QR PNG — Quantela CSP blocks external QR APIs like api.qrserver.com. */
+app.get('/api/public/qr', async (req, res) => {
+  const data = String(req.query.data || '');
+  if (!data || data.length > 2048) {
+    return res.status(400).json({ error: 'data query required (max 2048 chars)' });
+  }
+  const size = Math.min(400, Math.max(80, Number(req.query.size) || 200));
+  try {
+    const buf = await QRCode.toBuffer(data, { type: 'png', width: size, margin: 1, errorCorrectionLevel: 'M' });
+    res.setHeader('Content-Type', 'image/png');
+    res.setHeader('Cache-Control', 'public, max-age=3600');
+    return res.send(buf);
+  } catch (err) {
+    console.error('[public/qr]', err.message);
+    return res.status(500).json({ error: 'QR generation failed' });
+  }
 });
 
 /** Demo: iframe host diagnostics — logs the embed URL Oman actually received. */

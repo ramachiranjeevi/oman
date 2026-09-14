@@ -4808,13 +4808,21 @@ let appsStatusFilter = '';
 let licensePublicOrigin = window.location.origin;
 
 async function resolveLicensePublicOrigin() {
-  if (!/^(localhost|127\.0\.0\.1|\[::1\])$/i.test(window.location.hostname)) return;
+  // Always ask Platform for the public portal origin. On Quantela embed,
+  // window.location.origin is quantela.com — license.html and QR links must
+  // point at the real Oman portal (omandp.paradigmit.com).
   try {
     const res = await fetch('/api/public/app-origin');
     const data = await res.json();
-    if (res.ok && data.origin) licensePublicOrigin = data.origin;
+    if (res.ok && data.origin) {
+      licensePublicOrigin = String(data.origin).replace(/\/$/, '');
+      return;
+    }
   } catch {
-    // Keep the browser's current origin when no LAN address is available.
+    // fall through
+  }
+  if (typeof isQuantelaEmbed === 'function' && isQuantelaEmbed()) {
+    licensePublicOrigin = 'https://omandp.paradigmit.com';
   }
 }
 
@@ -4838,7 +4846,11 @@ function licenseVerificationUrl(payload) {
   return `${licensePublicOrigin}/license.html?code=${encodeURIComponent(payload)}`;
 }
 function licenseQrImageUrl(payload) {
-  return `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(licenseVerificationUrl(payload))}`;
+  // Same-origin QR PNG from Platform — Quantela CSP blocks api.qrserver.com.
+  // Use omanApiUrl so Quantela embed hits /portal/api/public/qr (img src is not fetch).
+  const data = licenseVerificationUrl(payload);
+  const path = `/api/public/qr?size=200&data=${encodeURIComponent(data)}`;
+  return typeof omanApiUrl === 'function' ? omanApiUrl(path) : path;
 }
 
 function renderLicensePortal() {
