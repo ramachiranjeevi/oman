@@ -111,5 +111,34 @@ jobs:
       - name: Validate promote configuration
         run: node ops/ci-push-artifacts.mjs --check-env
 
-      - name: Promote schema + BPMN/DMN to UAT via Platform
-        run: node ops/ci-push-artifacts.mjs
+      - name: Probe promote-schema endpoint
+        run: |
+          set -e
+          CODE=$(curl -sS -o /tmp/promote-probe.out -w "%{http_code}" \
+            -X POST "${UAT_PLATFORM_URL}/api/ci/promote-schema" \
+            -H "Content-Type: application/json" \
+            -H "X-Api-Key: ${CI_PROMOTE_API_KEY}" \
+            --data-binary @directus/schema/directus-schema.json)
+          CTYPE=$(file -b /tmp/promote-probe.out || true)
+          echo "HTTP $CODE"
+          echo "file(1): $CTYPE"
+          xxd -l 16 /tmp/promote-probe.out || true
+          echo "body head:"
+          head -c 400 /tmp/promote-probe.out; echo
+          echo "## Promote probe" >> "$GITHUB_STEP_SUMMARY"
+          echo "" >> "$GITHUB_STEP_SUMMARY"
+          echo "- HTTP status: \`$CODE\`" >> "$GITHUB_STEP_SUMMARY"
+          echo "- Body type: \`$CTYPE\`" >> "$GITHUB_STEP_SUMMARY"
+          if [ "$CODE" != "200" ]; then
+            echo "::error::promote-schema probe returned HTTP $CODE"
+            exit 1
+          fi
+          if head -c 4 /tmp/promote-probe.out | grep -q $'\x7fELF'; then
+            echo "::error::promote-schema returned an ELF binary — nginx/proxy misrouted /api/ci/promote-schema"
+            exit 1
+          fi
+
+      - name: Promote Camunda BPMN/DMN only
+        run: |
+          # Schema already applied by probe; still run full script for Camunda + clear logs
+          node ops/ci-push-artifacts.mjs
