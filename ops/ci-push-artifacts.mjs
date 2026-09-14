@@ -55,11 +55,10 @@ if (checkOnly) {
   process.exit(0);
 }
 
-const schemaPath =
-  process.argv.find((a) => !a.startsWith('-')) || 'directus/schema/directus-schema.json';
-const resourcesDir =
-  process.argv.filter((a) => !a.startsWith('-'))[1] ||
-  'camunda-module/configuration/resources';
+// argv[0]=node, argv[1]=script — only positional args after that count
+const positional = process.argv.slice(2).filter((a) => a !== '--check-env' && !a.startsWith('-'));
+const schemaPath = positional[0] || 'directus/schema/directus-schema.json';
+const resourcesDir = positional[1] || 'camunda-module/configuration/resources';
 
 async function post(pathname, body) {
   const res = await fetch(`${base}${pathname}`, {
