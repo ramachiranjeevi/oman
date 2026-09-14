@@ -146,11 +146,19 @@ function requireRole(...roles) {
 }
 
 app.use('/api', (req, res, next) => {
+  // When mounted at /api, req.path is usually "/ci/..." — also accept full
+  // "/api/ci/..." in case a proxy or Express version leaves the mount prefix.
+  const p = req.path || '';
+  const url = req.originalUrl || '';
   if (
-    req.path.startsWith('/auth/') ||
-    req.path.startsWith('/public/') ||
-    req.path.startsWith('/ci/') ||
-    req.path === '/health'
+    p.startsWith('/auth/') ||
+    p.startsWith('/public/') ||
+    p.startsWith('/ci/') ||
+    p === '/health' ||
+    url.startsWith('/api/auth/') ||
+    url.startsWith('/api/public/') ||
+    url.startsWith('/api/ci/') ||
+    url.startsWith('/api/health')
   ) return next();
   return requireAuth(req, res, next);
 });
