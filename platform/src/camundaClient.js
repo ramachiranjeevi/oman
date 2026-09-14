@@ -268,9 +268,19 @@ export async function getSlaMinutes() {
 
 export async function updateSlaMinutes(minutes) {
   const { bpmn20Xml } = await camundaFetch(`/process-definition/key/${PROCESS_KEY}/xml`);
-  const updated = bpmn20Xml.replace(
+  let updated = bpmn20Xml.replace(
     /(<bpmn:timeDuration[^>]*>)[^<]*(<\/bpmn:timeDuration>)/,
     `$1${minutesToIsoDuration(minutes)}$2`
+  );
+  // Keep Head review open after SLA fires so they can still decide.
+  updated = updated.replace(
+    /<bpmn:boundaryEvent([^>]*attachedToRef="[^"]+"[^>]*)>/g,
+    (full, attrs) => {
+      if (/\bcancelActivity\s*=/.test(attrs)) {
+        return `<bpmn:boundaryEvent${attrs.replace(/\bcancelActivity\s*=\s*"[^"]*"/, 'cancelActivity="false"')}>`;
+      }
+      return `<bpmn:boundaryEvent${attrs} cancelActivity="false">`;
+    }
   );
   await deployResource('cinema_film_screening_license.bpmn', updated, 'admin-sla-update');
   return { slaMinutes: minutes };

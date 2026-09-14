@@ -72,6 +72,17 @@ export async function listApplications() {
   return data;
 }
 
+/** Lightweight lookup for task-queue enrichment (id + sla_breached). */
+export async function getApplicationsSlaByIds(ids) {
+  const unique = [...new Set((ids || []).map((id) => String(id)).filter(Boolean))];
+  if (!unique.length) return {};
+  const filter = encodeURIComponent(JSON.stringify({ id: { _in: unique.map((id) => Number(id) || id) } }));
+  const { data } = await directusFetch(
+    `/items/license_applications?filter=${filter}&fields=id,sla_breached&limit=${unique.length}`
+  );
+  return Object.fromEntries((data || []).map((row) => [String(row.id), !!row.sla_breached]));
+}
+
 export async function findApplicationByIdentity(crNumber, civilId) {
   const cr = encodeURIComponent(String(crNumber || '').trim());
   const civil = encodeURIComponent(String(civilId || '').trim());

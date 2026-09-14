@@ -14,7 +14,7 @@
     <bpmn:serviceTask id="El_schedule" name="Auto-schedule Field Visit" camunda:type="external" camunda:topic="auto-schedule-field-visit" />
     <bpmn:userTask id="El_evaluate" name="Field Visit &amp; Evaluation" camunda:candidateGroups="specialist" />
     <bpmn:userTask id="El_review" name="Head of Section Review" camunda:candidateGroups="head_of_section" />
-    <bpmn:boundaryEvent id="El_review_timer" name="Timeout" attachedToRef="El_review"><bpmn:timerEventDefinition><bpmn:timeDuration xsi:type="bpmn:tFormalExpression" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">PT60M</bpmn:timeDuration></bpmn:timerEventDefinition></bpmn:boundaryEvent>
+    <bpmn:boundaryEvent id="El_review_timer" name="Timeout" attachedToRef="El_review" cancelActivity="false"><bpmn:timerEventDefinition><bpmn:timeDuration xsi:type="bpmn:tFormalExpression" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">PT60M</bpmn:timeDuration></bpmn:timerEventDefinition></bpmn:boundaryEvent>
     <bpmn:serviceTask id="El_review_escalate" name="Escalate" camunda:type="external" camunda:topic="escalate-sla-breach" />
     <bpmn:endEvent id="El_review_timer_end" name="Escalation Sent" />
     <bpmn:endEvent id="El_rejected" name="Rejected" />

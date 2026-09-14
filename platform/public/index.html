@@ -1187,6 +1187,15 @@
   #langBtnEn.active-lang, #langBtnAr.active-lang { display: none; }
   .portal-mast .text-size-group { order: 1; }
   #mobileViewBtn, #themeToggleBtn { order: 1; }
+  /* RFP demo surface: hide non-script chrome */
+  .text-size-group,
+  #themeToggleBtn,
+  #digitalAssistantLauncher,
+  #digitalAssistantPanel,
+  #app-pane-btn-history,
+  #adm-sub-cicd {
+    display: none !important;
+  }
   .portal-mast .toolbar #mobileViewBtn.active-lang {
     min-width: 76px; background: var(--card-bg); color: var(--primary);
     border-color: var(--primary); font-weight: 500;
@@ -1301,6 +1310,7 @@
   .portal-step.done .portal-step-number { color: #fff; background: var(--success); }
   .portal-step.done::after { background: var(--success); }
   .application-stats { display: grid; grid-template-columns: repeat(4,1fr); gap: 10px; margin-bottom: 10px; }
+  .application-stats.role-sla-stats { grid-template-columns: repeat(2, minmax(0, 1fr)); max-width: 520px; }
   .application-stat {
     position: relative; overflow: hidden; padding: 10px 13px; border: 1px solid var(--border);
     border-radius: 14px; background: #fff; box-shadow: var(--shadow);
@@ -1671,13 +1681,13 @@
     </div>
     <button id="langBtnEn" onclick="applyLanguage('en')">English</button>
     <button id="langBtnAr" onclick="applyLanguage('ar')">العربية</button>
-    <span class="text-size-group" title="Text size" aria-label="Text size">
+    <span class="text-size-group hidden" hidden aria-hidden="true" title="Text size" aria-label="Text size">
       <button type="button" id="textSizeDefault" onclick="applyTextSize('default')" title="Default text size" aria-label="Default text">A</button>
       <button type="button" id="textSizeComfortable" onclick="applyTextSize('comfortable')" title="Larger text" aria-label="Comfortable text">A+</button>
       <button type="button" id="textSizeLarge" onclick="applyTextSize('large')" title="Largest text" aria-label="Large text">A++</button>
     </span>
     <button id="mobileViewBtn" onclick="toggleMobileView()"><span data-i18n="mobileToggle">Mobile View</span></button>
-    <button id="themeToggleBtn" onclick="toggleTheme()"><span data-i18n="themeToggle">Dark / Light</span></button>
+    <button id="themeToggleBtn" class="hidden" hidden aria-hidden="true" onclick="toggleTheme()"><span data-i18n="themeToggle">Dark / Light</span></button>
   </div>
 
   <div class="brand-row">
@@ -1725,7 +1735,7 @@
 
   <!-- ================= APPLICANT ================= -->
   <section class="tab-panel" id="tab-applicant">
-    <p class="persona-note" data-i18n="applicantPersonaNote">Citizen applicant — submit a license request and complete payment when prompted.</p>
+    <p class="persona-note hidden" hidden aria-hidden="true" data-i18n="applicantPersonaNote">Citizen applicant — submit a license request and complete payment when prompted.</p>
     <div class="applicant-shell">
       <aside class="applicant-side-nav" aria-label="Applicant services">
         <div class="applicant-side-title">
@@ -1755,7 +1765,7 @@
           <span class="applicant-nav-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="9" r="5"/><path d="m9 13-1 8 4-2 4 2-1-8M10 9l1.3 1.3L14 7.5"/></svg></span>
           <span data-i18n="appNavLicense">My Licenses</span>
         </button>
-        <button id="app-pane-btn-history" onclick="showApplicantPane('history')" aria-label="Application History">
+        <button id="app-pane-btn-history" class="hidden" hidden aria-hidden="true" tabindex="-1" onclick="showApplicantPane('history')" aria-label="Application History">
           <span class="applicant-nav-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2M3 12H1"/></svg></span>
           <span data-i18n="appNavHistory">Application History</span>
         </button>
@@ -1786,13 +1796,13 @@
           <div class="applicant-pane-card">
             <details class="demo-note" id="identityVerifyPanel" open>
               <summary>
-                <span class="demo-note-title" data-i18n="identityVerifyHeading">Identity Verification</span>
+                <span class="demo-note-title" data-i18n="identityVerifyHeading">Identity Verification (simulated)</span>
                 <span class="demo-note-toggle" aria-hidden="true">
                   <span class="demo-note-state-closed" data-i18n="identityOpenBtn">Open ▾</span>
                   <span class="demo-note-state-open" data-i18n="identityCloseBtn">Close ▴</span>
                 </span>
               </summary>
-              <p class="field-note" style="margin:0;" data-i18n="identityLookupNote">Enter the Commercial Registration number and Civil ID to retrieve applicant details.</p>
+              <p class="field-note" style="margin:0;" data-i18n="identityLookupNote">Commercial Registration and Civil Status lookups are simulated for this demonstration.</p>
               <div class="card" style="margin-top:.4rem;">
                 <div class="form-grid">
                   <label for="lookupCr" data-i18n="crNumberLabel">CR Number</label>
@@ -1840,7 +1850,7 @@
           </div>
         </div>
 
-        <div class="applicant-pane" id="app-pane-history">
+        <div class="applicant-pane hidden" hidden aria-hidden="true" id="app-pane-history">
           <div class="application-stats" id="applicationStats"></div>
           <div class="applicant-pane-card">
             <div class="section-head">
@@ -1891,7 +1901,7 @@
       <div class="role-dashboard-icon">✓</div>
       <div><h2 data-i18n="specialistQueueHeading">Field Visit &amp; Evaluation</h2><p class="field-note">Review assigned inspections and submit signed findings.</p></div>
     </div>
-    <div class="application-stats" id="specialistStats"></div>
+    <div class="application-stats role-sla-stats" id="specialistStats"></div>
     <div id="specialistTasks"></div>
   </section>
 
@@ -1901,7 +1911,7 @@
       <div class="role-dashboard-icon">§</div>
       <div><h2 data-i18n="headQueueHeading">Review &amp; Decision</h2><p class="field-note">Review cinema applications against service-level targets.</p></div>
     </div>
-    <div class="application-stats" id="headStats"></div>
+    <div class="application-stats role-sla-stats" id="headStats"></div>
     <div id="headTasks"></div>
   </section>
 
@@ -1918,13 +1928,12 @@
       <h2 data-i18n="addFieldHeading">Manage Application Fields</h2>
       <p class="field-note" data-i18n="addFieldNote">Add a new field to the application form.</p>
       <div class="card form-grid">
-        <label for="admFieldKey" data-i18n="fieldKeyLabel">Field name for records</label>
-        <input id="admFieldKey" placeholder="e.g. screening_date" oninput="clearFieldKeyError()" />
+        <label for="admFieldLabel" data-i18n="fieldLabelEnLabel">Label shown on the form (English)</label>
+        <input id="admFieldLabel" placeholder="e.g. Accessibility requirements for the screening" oninput="clearFieldKeyError()" />
         <div class="field-note" id="fieldKeyError" style="color:var(--danger);display:none;"></div>
-        <label for="admFieldLabel" data-i18n="fieldLabelEnLabel">Label / note shown on the form (English)</label>
-        <input id="admFieldLabel" placeholder="e.g. Accessibility requirements for the screening" />
-        <label for="admFieldLabelAr" data-i18n="fieldLabelArLabel">Label shown on the form (Arabic) — optional, confirms it renders correctly when toggled</label>
+        <label for="admFieldLabelAr" data-i18n="fieldLabelArLabel">Label shown on the form (Arabic) — optional</label>
         <input id="admFieldLabelAr" dir="rtl" placeholder="مثال: متطلبات إمكانية الوصول للعرض" />
+        <input type="hidden" id="admFieldKey" value="" />
         <label for="admFieldKind" data-i18n="typeLabel">Type</label>
         <select id="admFieldKind">
           <option value="text" data-i18n="typeTextShort">Text (short)</option>
@@ -2021,7 +2030,7 @@
       </div>
     </div>
 
-    <div class="admin-subpanel" id="adm-sub-cicd">
+    <div class="admin-subpanel hidden" hidden aria-hidden="true" id="adm-sub-cicd">
       <h2><span data-i18n="cicdHeading">Configuration Approval</span></h2>
       <p class="field-note" data-i18n="cicdNote">Review the current service settings and record an approval before applying them.</p>
       <div class="card form-grid">
@@ -2045,7 +2054,7 @@
 
     <div class="admin-subpanel" id="adm-sub-designer">
       <h2 data-i18n="designerHeading">Approval Process</h2>
-      <p class="field-note" data-i18n="designerSimpleNote">Add and arrange steps, then connect them in the required order. From an Approval Step you can draw several labeled paths (Approve, Reject, Comments). Save keeps a draft; Publish makes it live for new applications.</p>
+      <p class="field-note" data-i18n="designerSimpleNote">Arrange steps and connect them. From an Approval Step you can add Approve, Reject, and Comments paths. Save keeps a draft; Publish applies to new applications.</p>
       <div class="card">
         <div style="display:flex;gap:.4rem;flex-wrap:wrap;margin-bottom:.5rem;">
           <button class="small" onclick="canvasAddShape('start')" style="background:#166534;" data-i18n="shapeStartBtn">+ Start</button>
@@ -2086,18 +2095,17 @@
 
   <!-- ================= DASHBOARD ================= -->
   <section class="tab-panel" id="tab-dashboard">
-    <p class="persona-note">A summary of application activity and service performance.</p>
     <h2 data-i18n="liveMetricsHeading">Service Overview</h2>
     <button class="small" onclick="loadDashboard()">Refresh</button>
     <span class="field-note" id="dashUpdated"></span>
     <div class="grid" id="dashCore"></div>
 
-    <h3>Custom Service Summary</h3>
+    <h3 data-i18n="customSummaryHeading">Add a dashboard widget</h3>
     <div class="card">
       <label for="widgetMetric">Metric</label>
       <select id="widgetMetric"></select>
-      <label for="widgetLabel">Widget label (optional override)</label>
-      <input id="widgetLabel" placeholder="Leave blank to use the metric's default label" />
+      <label for="widgetLabel">Widget label (optional)</label>
+      <input id="widgetLabel" placeholder="Leave blank to use the default label" />
       <button onclick="addWidget()">Add Widget to Dashboard</button>
     </div>
   </section>
@@ -2163,11 +2171,11 @@
     </div>
   </footer>
 
-  <button class="digital-assistant-launcher hidden" id="digitalAssistantLauncher" onclick="toggleDigitalAssistant(true)" aria-label="Open Digital Assistant">
+  <button class="digital-assistant-launcher hidden" hidden aria-hidden="true" id="digitalAssistantLauncher" tabindex="-1" onclick="toggleDigitalAssistant(true)" aria-label="Open Digital Assistant">
     <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9.2 2.4c.25-.9 1.53-.9 1.78 0l.48 1.72a4.5 4.5 0 0 0 3.12 3.12l1.72.48c.9.25.9 1.53 0 1.78l-1.72.48a4.5 4.5 0 0 0-3.12 3.12l-.48 1.72c-.25.9-1.53.9-1.78 0l-.48-1.72A4.5 4.5 0 0 0 5.6 9.98L3.88 9.5c-.9-.25-.9-1.53 0-1.78l1.72-.48a4.5 4.5 0 0 0 3.12-3.12l.48-1.72ZM17.8 13.5c.16-.58.98-.58 1.14 0l.25.9a2.6 2.6 0 0 0 1.8 1.8l.9.25c.58.16.58.98 0 1.14l-.9.25a2.6 2.6 0 0 0-1.8 1.8l-.25.9c-.16.58-.98.58-1.14 0l-.25-.9a2.6 2.6 0 0 0-1.8-1.8l-.9-.25c-.58-.16-.58-.98 0-1.14l.9-.25a2.6 2.6 0 0 0 1.8-1.8l.25-.9Z"/></svg>
     <span id="digitalAssistantLauncherText">Digital Assistant</span>
   </button>
-  <section class="digital-assistant-panel hidden" id="digitalAssistantPanel" role="dialog" aria-modal="false" aria-labelledby="digitalAssistantTitle">
+  <section class="digital-assistant-panel hidden" hidden aria-hidden="true" id="digitalAssistantPanel" role="dialog" aria-modal="false" aria-labelledby="digitalAssistantTitle">
     <header class="digital-assistant-head">
       <span class="digital-assistant-mark">
         <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 18l-4 3v-5a7 7 0 0 1-2-5c0-4.4 4.5-8 10-8s10 3.6 10 8-4.5 8-10 8a12 12 0 0 1-4-.7"/><path d="M9 10h.01M12 10h.01M15 10h.01"/></svg>
@@ -2312,14 +2320,16 @@ function startDigitalAssistant() {
 }
 
 function toggleDigitalAssistant(open) {
+  // Assistant is out of RFP demo script — keep fully hidden.
   const panel = document.getElementById('digitalAssistantPanel');
   const launcher = document.getElementById('digitalAssistantLauncher');
-  if (!panel || !launcher) return;
-  panel.classList.toggle('hidden', !open);
-  launcher.classList.toggle('hidden', open);
-  if (open) {
-    startDigitalAssistant();
-    setTimeout(() => document.getElementById('digitalAssistantInput')?.focus(), 50);
+  if (panel) {
+    panel.classList.add('hidden');
+    panel.setAttribute('hidden', '');
+  }
+  if (launcher) {
+    launcher.classList.add('hidden');
+    launcher.setAttribute('hidden', '');
   }
 }
 
@@ -2336,11 +2346,17 @@ function resetDigitalAssistant() {
 }
 
 function showDigitalAssistantLauncher() {
+  // Intentionally no-op: assistant is not part of the RFP demo script.
   const launcher = document.getElementById('digitalAssistantLauncher');
   const panel = document.getElementById('digitalAssistantPanel');
-  if (!launcher) return;
-  // Only reveal the FAB when the chat panel is closed.
-  launcher.classList.toggle('hidden', !panel?.classList.contains('hidden'));
+  if (launcher) {
+    launcher.classList.add('hidden');
+    launcher.setAttribute('hidden', '');
+  }
+  if (panel) {
+    panel.classList.add('hidden');
+    panel.setAttribute('hidden', '');
+  }
 }
 
 function updateDigitalAssistantLanguage() {
@@ -2849,7 +2865,7 @@ function showAppShell() {
   document.getElementById('userBadge').classList.remove('hidden');
   document.getElementById('userBadgeName').textContent = `${currentUser.displayName} (${currentUser.role})`;
   resetDigitalAssistant();
-  showDigitalAssistantLauncher();
+  // Digital Assistant is out of RFP demo script — keep launcher hidden.
   resetIdentityVerification({ close: true });
   renderTabs();
   updatePortalRoleName();
@@ -3304,12 +3320,14 @@ function routeExistingApplication(application) {
     approved: 'final permit issuance',
     rejected: 'a completed decision',
   }[status] || 'the review team';
-  alert(`Application ${reference} already exists and is currently with ${pendingAt}. Please check Application History for details.`);
-  showApplicantPane('history');
+  alert(`Application ${reference} already exists and is currently with ${pendingAt}.`);
+  showApplicantPane('license');
 }
 
 function showApplicantPane(id) {
-  let target = APPLICANT_PANES.includes(id) ? id : 'history';
+  // Application History is hidden from the RFP demo surface.
+  let target = APPLICANT_PANES.includes(id) && id !== 'history' ? id : 'identity';
+  if (id === 'history') target = 'license';
   if (target === 'new' && !identityVerificationPassed) {
     target = 'identity';
     const result = document.getElementById('lookupResult');
@@ -3386,7 +3404,6 @@ const ADMIN_SUBTABS = [
   { id: 'fee', label: 'Fee Configuration' },
   { id: 'sla', label: 'Review Time Limit' },
   { id: 'schedule', label: 'Scheduling' },
-  { id: 'cicd', label: 'Configuration Approval' },
   { id: 'designer', label: 'Process Designer' },
 ];
 
@@ -3397,7 +3414,6 @@ const ADMIN_SUBTAB_LABELS_AR = {
   fee: 'إعداد الرسوم',
   sla: 'مهلة المراجعة',
   schedule: 'الجدولة',
-  cicd: 'اعتماد الإعدادات',
   designer: 'مصمم سير العمل',
 };
 
@@ -3428,14 +3444,18 @@ function scheduleCanvasPaint() {
 }
 
 function switchAdminSubtab(id) {
+  const allowed = ADMIN_SUBTABS.some((t) => t.id === id) ? id : ADMIN_SUBTABS[0].id;
   for (const t of ADMIN_SUBTABS) {
     const panel = document.getElementById(`adm-sub-${t.id}`);
-    if (panel) panel.classList.toggle('active', t.id === id);
+    if (panel) panel.classList.toggle('active', t.id === allowed);
     const navBtn = document.getElementById(`adm-navbtn-${t.id}`);
-    if (navBtn) navBtn.classList.toggle('active', t.id === id);
+    if (navBtn) navBtn.classList.toggle('active', t.id === allowed);
   }
-  localStorage.setItem('omanActiveAdminSubtab', id);
-  if (id === 'designer') {
+  // Legacy subtab (e.g. Configuration Approval) removed from RFP surface.
+  const cicdPanel = document.getElementById('adm-sub-cicd');
+  if (cicdPanel) cicdPanel.classList.remove('active');
+  localStorage.setItem('omanActiveAdminSubtab', allowed);
+  if (allowed === 'designer') {
     const ready = canvasShapes.length ? Promise.resolve() : loadCanvasProcess();
     Promise.resolve(ready).then(() => scheduleCanvasPaint());
   }
@@ -3480,7 +3500,7 @@ const I18N = {
     footerVision: 'Supporting Oman Vision 2040',
     submitAppHeading: 'Submit Application',
     submitAppBtn: 'Submit Application',
-    identityVerifyHeading: 'Identity Verification',
+    identityVerifyHeading: 'Identity Verification (simulated)',
     identityOpenBtn: 'Open ▾',
     identityCloseBtn: 'Close ▴',
     errCrDigits: 'CR number should be 7 digits.',
@@ -3509,8 +3529,8 @@ const I18N = {
     reloadCurrentBtn: 'Refresh',
     addFieldNote: 'Add a new field to the application form.',
     fieldKeyLabel: 'Field name for records',
-    fieldLabelEnLabel: 'English label',
-    fieldLabelArLabel: 'Arabic label (optional)',
+    fieldLabelEnLabel: 'Label shown on the form (English)',
+    fieldLabelArLabel: 'Label shown on the form (Arabic) — optional',
     typeLabel: 'Type',
     typeTextShort: 'Text (short)',
     typeTextLong: 'Text (long)',
@@ -3567,7 +3587,7 @@ const I18N = {
     approvedByCol: 'Approved By',
     configSnapshotCol: 'Settings',
     designerHeading: 'Approval Process',
-    designerSimpleNote: 'Add and arrange steps, then connect them in the required order. Save keeps your changes as a draft. Publish makes the process available for new applications.',
+    designerSimpleNote: 'Arrange steps and connect them. From an Approval Step you can add Approve, Reject, and Comments paths. Save keeps a draft; Publish applies to new applications.',
     shapeStartBtn: '+ Start',
     shapeEndBtn: '+ End',
     shapeTaskBtn: '+ Staff Action',
@@ -3592,8 +3612,9 @@ const I18N = {
     crNumberLabel: 'CR Number',
     civilIdLabel: 'Civil ID',
     verifyLookupBtn: 'Verify & auto-fill',
-    identityLookupNote: 'Enter the Commercial Registration number and Civil ID to retrieve applicant details.',
+    identityLookupNote: 'Commercial Registration and Civil Status lookups are simulated for this demonstration.',
     applicantPersonaNote: 'Submit a film screening licence application and pay the required fee.',
+    customSummaryHeading: 'Add a dashboard widget',
     applicantServicesNav: 'Applicant Services',
     appNavApplication: 'Application',
     appNavNew: 'New Application',
@@ -3617,7 +3638,7 @@ const I18N = {
     payMethodSamsungPay: 'Samsung Pay',
     completePaymentBtn: 'Pay & Continue',
     selectPayMethodMsg: 'Select a payment method first.',
-    payInsufficientBalanceMsg: 'Insufficient balance. Available {balance} OMR, but {amount} OMR is due. Choose another payment method or top up the wallet.',
+    payInsufficientBalanceMsg: 'Insufficient balance for this method ({balance} OMR available, {amount} OMR due). Choose E-Payment to continue.',
     payAvailableBalanceLabel: 'Available balance',
     payInsufficientShort: 'Insufficient balance',
     payCardLimitLabel: 'Available card limit',
@@ -3688,7 +3709,7 @@ const I18N = {
     brandKicker: 'سلطنة عُمان',
     footerTitle: 'إجازة عرض فيلم سينمائي',
     footerBlurb: 'بوابة خدمات الترخيص الرسمية — مستوحاة من معايير التجربة الرقمية للجهات الحكومية العُمانية.',
-    footerCopy: '© سلطنة عُمان — بوابة تجريبية لمناقصة وزارة الإعلام DTM-T-007-26',
+    footerCopy: '© وزارة الإعلام، سلطنة عُمان',
     footerVision: 'متوافقة مع خدمات عُمان رؤية 2040 الرقمية',
     submitAppHeading: 'تقديم الطلب',
     submitAppBtn: 'إرسال الطلب',
@@ -3714,15 +3735,16 @@ const I18N = {
     specialistQueueHeading: 'قائمة المهام — الزيارة الميدانية والتقييم',
     headQueueHeading: 'قائمة المهام — المراجعة',
     addFieldHeading: 'إدارة حقول الطلب',
-    liveMetricsHeading: 'مؤشرات المعاملات الحية',
+    liveMetricsHeading: 'مؤشرات الخدمة',
+    customSummaryHeading: 'إضافة عنصر إلى لوحة المؤشرات',
     themeToggle: 'داكن / فاتح',
     adminPersonaNote: 'إدارة نماذج الطلبات والرسوم والمتطلبات والمواعيد وخطوات الموافقة.',
     activityLogHeading: 'سجل النشاط',
     reloadCurrentBtn: 'إعادة تحميل الحالة الحالية',
     addFieldNote: 'يضيف حقلاً يظهر فورًا في نموذج مقدم الطلب.',
     fieldKeyLabel: 'اسم الحقل في السجلات',
-    fieldLabelEnLabel: 'التسمية / الملاحظة المعروضة في النموذج (بالإنجليزية)',
-    fieldLabelArLabel: 'التسمية المعروضة في النموذج (بالعربية) — اختياري، للتأكد من ظهورها بشكل صحيح عند التبديل',
+    fieldLabelEnLabel: 'التسمية المعروضة في النموذج (بالإنجليزية)',
+    fieldLabelArLabel: 'التسمية المعروضة في النموذج (بالعربية) — اختياري',
     typeLabel: 'النوع',
     typeTextShort: 'نص (قصير)',
     typeTextLong: 'نص (طويل)',
@@ -3779,7 +3801,7 @@ const I18N = {
     approvedByCol: 'اعتمدها',
     configSnapshotCol: 'لقطة الإعدادات',
     designerHeading: 'مصمم سير العمل',
-    designerSimpleNote: 'أضف الخطوات ورتبها ثم اربطها بالتسلسل المطلوب. يحفظ زر "حفظ" التغييرات كمسودة، ويجعل زر "نشر" العملية متاحة للطلبات الجديدة.',
+    designerSimpleNote: 'رتّب الخطوات واربطها. من خطوة الموافقة يمكن إضافة مسارات الاعتماد والرفض والتعليقات. الحفظ للمسودة والنشر للطلبات الجديدة.',
     shapeStartBtn: '+ بداية',
     shapeEndBtn: '+ نهاية',
     shapeTaskBtn: '+ مهمة بشرية',
@@ -3829,7 +3851,7 @@ const I18N = {
     payMethodApplePay: 'Apple Pay',
     payMethodSamsungPay: 'Samsung Pay',
     selectPayMethodMsg: 'يرجى اختيار طريقة الدفع أولًا.',
-    payInsufficientBalanceMsg: 'الرصيد غير كافٍ. المتاح {balance} ر.ع. بينما المستحق {amount} ر.ع. اختر طريقة دفع أخرى أو اشحن المحفظة.',
+    payInsufficientBalanceMsg: 'الرصيد غير كافٍ لهذه الطريقة (المتاح {balance} ر.ع.، المستحق {amount} ر.ع.). اختر الدفع الإلكتروني للمتابعة.',
     payAvailableBalanceLabel: 'الرصيد المتاح',
     payInsufficientShort: 'رصيد غير كافٍ',
     payCardLimitLabel: 'حد البطاقة المتاح',
@@ -4724,9 +4746,9 @@ async function runSimulatedLookup() {
         <div class="identity-success-check">✓</div>
         <strong style="color:var(--success);font-size:16px;">${existingIdentityApplication
           ? (getLanguage() === 'ar' ? 'يوجد طلب قائم' : 'Existing application found')
-          : (getLanguage() === 'ar' ? 'تم التحقق بنجاح' : 'Verification successful')}</strong>
+          : (getLanguage() === 'ar' ? 'تم التحقق بنجاح (محاكاة)' : 'Verification successful (simulated)')}</strong>
         <div class="field-note">${existingIdentityApplication
-          ? (getLanguage() === 'ar' ? `الطلب رقم #${existingIdentityApplication.id} موجود بالفعل. جارٍ فتح المرحلة الحالية…` : `Application #${existingIdentityApplication.id} already exists. Opening its current stage…`)
+          ? (getLanguage() === 'ar' ? `الطلب ${applicationDocReference(existingIdentityApplication)} موجود بالفعل. جارٍ فتح المرحلة الحالية…` : `Application ${applicationDocReference(existingIdentityApplication)} already exists. Opening its current stage…`)
           : (getLanguage() === 'ar' ? 'تم استيفاء جميع المتطلبات. جارٍ فتح الطلب الجديد…' : 'All requirements are valid. Opening the New Application…')}</div>
         <div class="identity-checks">
           <span class="identity-check-item">✓ ${getLanguage() === 'ar' ? 'السجل التجاري ساري' : 'Commercial Registration valid'}</span>
@@ -4890,7 +4912,6 @@ function renderLicensePortal() {
           <div>
             <strong>${getLanguage() === 'ar' ? 'امسح للتحقق من الإجازة' : 'Scan to verify this permit'}</strong>
             <p class="field-note">${getLanguage() === 'ar' ? 'يمكن لأي جهة التأكد من صحة الإجازة وسريانها عبر مسح الرمز.' : 'Any party can confirm this permit is genuine and currently valid by scanning the code.'}</p>
-            <code style="font-size:10px;">${escapeHtml(licenseVerificationUrl(r.license_qr))}</code>
             <div class="portal-permit-actions">
               <button type="button" class="small" onclick='openDigitalLicense(${JSON.stringify(String(r.license_qr))})'>${tMsg('openDigitalLicenseBtn', 'Open Digital License')}</button>
               <button type="button" class="small secondary" onclick='openLicenseQrModal(${JSON.stringify(String(r.license_qr))}, ${r.id})'>${tMsg('viewQrBtn', 'View QR')}</button>
@@ -5136,7 +5157,7 @@ function appsRowHtml(r) {
     ? `<button class="small secondary" onclick='openDigitalLicense(${JSON.stringify(String(r.license_qr))})'>${tMsg('openDigitalLicenseBtn', 'Open permit')}</button>`
     : '';
   return `<tr>
-    <td><strong>#${r.id}</strong><span class="field-note" style="display:block;font-size:10px;">CFS-${new Date().getFullYear()}-${String(r.id).padStart(5, '0')}</span></td>
+    <td><strong>${escapeHtml(applicationDocReference(r))}</strong></td>
     <td><strong>${escapeHtml(r.film_title || '—')}</strong><span class="field-note" style="display:block;font-size:10px;">${escapeHtml(r.applicant_name || '')}</span></td>
     <td>${submitted}</td>
     <td><span class="tag" style="${statusColor}">${escapeHtml(status.replaceAll('_', ' '))}</span></td>
@@ -5199,16 +5220,21 @@ function appsChangePageSize(size) {
 
 // ============================= TASK QUEUES (role-scoped) =============================
 
+function taskIsSlaBreached(task) {
+  return task?.sla_breached === true || task?.sla_breached === 1 || task?.sla_breached === '1';
+}
+
 function roleTaskStats(group, tasks) {
   const target = document.getElementById(group === 'specialist' ? 'specialistStats' : 'headStats');
   if (!target) return;
   const ar = getLanguage() === 'ar';
-  const label = group === 'specialist' ? (ar ? 'الزيارات الميدانية' : 'Field visits') : (ar ? 'القرارات' : 'Decisions');
+  const breached = tasks.filter(taskIsSlaBreached).length;
+  const onTrack = tasks.length - breached;
+  target.classList.add('role-sla-stats');
+  // Two real signals only: within SLA vs breached (Assigned / Action required were the same count).
   target.innerHTML = `
-    <div class="application-stat progress"><div class="stat-label">${ar ? 'المهام المسندة' : 'Assigned queue'}</div><div class="stat-value">${tasks.length}</div><div class="stat-note">${ar ? label + ' المعلقة' : `Pending ${label.toLowerCase()}`}</div></div>
-    <div class="application-stat action"><div class="stat-label">${ar ? 'إجراء مطلوب' : 'Action required'}</div><div class="stat-value">${tasks.length}</div><div class="stat-note">${ar ? 'بانتظار مراجعتك' : 'Awaiting your review'}</div></div>
-    <div class="application-stat complete"><div class="stat-label">${ar ? 'ضمن المدة' : 'On track'}</div><div class="stat-value">${tasks.length}</div><div class="stat-note">${ar ? 'ضمن هدف الخدمة' : 'Within service target'}</div></div>
-    <div class="application-stat"><div class="stat-label">${ar ? 'مصعّدة' : 'Escalated'}</div><div class="stat-value">0</div><div class="stat-note">${ar ? 'لا توجد مهام متأخرة' : 'No breached tasks'}</div></div>`;
+    <div class="application-stat complete"><div class="stat-label">${ar ? 'ضمن المدة' : 'On track'}</div><div class="stat-value">${onTrack}</div><div class="stat-note">${ar ? `${tasks.length} معلقة · ضمن هدف الخدمة` : `${tasks.length} pending · within service target`}</div></div>
+    <div class="application-stat"><div class="stat-label">${ar ? 'مصعّدة' : 'Escalated'}</div><div class="stat-value">${breached}</div><div class="stat-note">${breached ? (ar ? 'تجاوزت مدة الخدمة — استجب الآن' : 'Past service target — respond now') : (ar ? 'لا توجد مهام متأخرة' : 'No breached tasks')}</div></div>`;
 }
 
 const roleQueueState = {
@@ -5234,11 +5260,15 @@ function roleQueuePageSlice(group) {
 
 function roleQueueRowHtml(group, task) {
   const ar = getLanguage() === 'ar';
-  return `<tr>
-      <td><strong>#${escapeHtml(String(task.businessKey))}</strong><span class="field-note" style="display:block;font-size:10px;">CFS-${new Date().getFullYear()}-${String(task.businessKey).padStart(5, '0')}</span></td>
+  const breached = taskIsSlaBreached(task);
+  const slaTag = breached
+    ? `<span class="tag" style="background:#fef3f3;color:#d42027;">● ${ar ? 'متجاوز' : 'Breached'}</span>`
+    : `<span class="tag" style="background:#e8f5f0;color:#0f7b5f;">● ${ar ? 'ضمن المدة' : 'On track'}</span>`;
+  return `<tr${breached ? ' style="background:#fff8f8;"' : ''}>
+      <td><strong>${escapeHtml(applicationDocReference({ id: task.businessKey }))}</strong></td>
       <td><strong>${escapeHtml(canvasLocalizedName(task.name))}</strong></td>
       <td><span class="tag" style="background:#edf3f9;color:#2b5f8c;">${group === 'specialist' ? (ar ? 'زيارة ميدانية' : 'Field visit') : (ar ? 'مراجعة نهائية' : 'Final review')}</span></td>
-      <td><span class="tag" style="background:#e8f5f0;color:#0f7b5f;">● ${ar ? 'ضمن المدة' : 'On track'}</span></td>
+      <td>${slaTag}</td>
       <td><button class="small secondary" onclick="openRoleTaskDetail('${group}','${task.id}')">${ar ? 'فتح' : 'Open'}</button></td>
     </tr>`;
 }
@@ -5402,6 +5432,9 @@ async function loadTasks(group) {
       : `<p class="field-note">${getLanguage() === 'ar' ? 'تعذر تحميل المهام.' : 'Could not load tasks.'} ${escapeHtmlLite(String(raw))}</p>`;
     return;
   }
+  if (Array.isArray(tasks) && group !== 'applicant') {
+    tasks.sort((a, b) => Number(taskIsSlaBreached(b)) - Number(taskIsSlaBreached(a)));
+  }
   if (group !== 'applicant') roleTaskStats(group, tasks);
   if (tasks.length === 0) {
     container.innerHTML = group === 'applicant'
@@ -5422,13 +5455,20 @@ async function loadTasks(group) {
     });
     const tabs = taskData.map(({ task, app }, index) => `
       <button type="button" class="payment-task-tab${index === 0 ? ' active' : ''}" data-task-id="${task.id}" onclick="showApplicantPaymentTask('${task.id}')">
-        <strong>${escapeHtml(app.film_title || `${getLanguage() === 'ar' ? 'طلب' : 'Application'} #${task.businessKey}`)}</strong>
-        <span>#${task.businessKey} · ${payableAmountFor(app).toFixed(3)} OMR</span>
+        <strong>${escapeHtml(app.film_title || applicationDocReference(app.id ? app : { id: task.businessKey }))}</strong>
+        <span>${applicationDocReference(app.id ? app : { id: task.businessKey })} · ${payableAmountFor(app).toFixed(3)} OMR</span>
       </button>`).join('');
     const panels = taskData.map(({ task, app }, index) => applicantPaymentPanelHtml(task, app, index === 0)).join('');
     container.innerHTML = `<div class="payment-task-tabs" role="tablist">${tabs}</div>${panels}`;
   } else if (group === 'specialist') {
-    container.innerHTML = roleQueueHtml(group, tasks) + `<div class="role-task-details">` + tasks.map(t => `
+    container.innerHTML = roleQueueHtml(group, tasks) + `<div class="role-task-details">` + tasks.map(t => {
+      const app = allApplications.find((item) => String(item.id) === String(t.businessKey)) || {};
+      const visitNote = app.field_visit_date
+        ? `<div class="field-note" style="margin:0 0 .75rem;padding:.55rem .75rem;border:1px solid #cddfee;border-radius:8px;background:#edf3f9;">${getLanguage() === 'ar'
+          ? `الزيارة الميدانية مجدولة في ${escapeHtml(String(app.field_visit_date))} — تم إشعار مقدم الطلب والأخصائي.`
+          : `Field visit scheduled for ${escapeHtml(String(app.field_visit_date))} — applicant and specialist notified.`}</div>`
+        : '';
+      return `
       <div class="role-task-detail" data-task-id="${t.id}">
         <button class="small secondary role-back-button" onclick="showRoleTaskQueue('specialist')">← ${getLanguage() === 'ar' ? 'العودة إلى القائمة' : 'Back to queue'}</button>
         <div class="card approval-document specialist-document">
@@ -5439,9 +5479,10 @@ async function loadTasks(group) {
           </div>
           <div class="approval-doc-ref">
             ${tMsg('applicationReference', 'Application reference')}
-            <strong>#${t.businessKey}</strong>
+            <strong>${applicationDocReference({ id: t.businessKey })}</strong>
           </div>
         </div>
+        ${visitNote}
         <div id="snap_${t.businessKey}" class="app-field-snapshot"><span class="field-note">${tMsg('loadingAppFields', 'Loading application fields…')}</span></div>
         <div class="approval-review-area">
           <label for="notes_${t.id}">${tMsg('fieldVisitFindingsLabel', 'Inspection findings and recommendation')}</label>
@@ -5468,7 +5509,8 @@ async function loadTasks(group) {
           </div>
         </div>
         </div>
-      </div>`).join('') + `</div>`;
+      </div>`;
+    }).join('') + `</div>`;
     for (const t of tasks) loadApplicationSnapshot(t.businessKey, 'approval');
   } else {
     container.innerHTML = roleQueueHtml(group, tasks) + `<div class="role-task-details">` + tasks.map(t => `
@@ -5482,9 +5524,15 @@ async function loadTasks(group) {
           </div>
           <div class="approval-doc-ref">
             ${tMsg('applicationReference', 'Application reference')}
-            <strong>#${t.businessKey}</strong>
+            <strong>${applicationDocReference({ id: t.businessKey })}</strong>
           </div>
         </div>
+        ${taskIsSlaBreached(t) ? `<div class="sla-breach-banner" role="alert" style="margin:0 0 1rem;padding:.75rem 1rem;border:1px solid #fbdcdd;border-radius:8px;background:#fef3f3;color:#9b1c1f;">
+          <strong>${getLanguage() === 'ar' ? 'تم تجاوز مدة الخدمة — إشعار تصعيد مسجّل' : 'Service time breached — escalation notice recorded'}</strong>
+          <div class="field-note" style="color:#9b1c1f;margin-top:.25rem;">${getLanguage() === 'ar'
+            ? 'انتهت مهلة مراجعة رئيس القسم. يرجى اتخاذ القرار الآن — الطلب ما زال لديك.'
+            : 'The Head of Section review window has elapsed. Please decide now — the case remains with you.'}</div>
+        </div>` : ''}
         <div id="snap_${t.businessKey}" class="app-field-snapshot"><span class="field-note">${tMsg('loadingAppFields', 'Loading application fields…')}</span></div>
         <div class="approval-review-area">
           <label for="comments_${t.id}">${tMsg('reviewCommentsLabel', 'Review comments (required)')}</label>
@@ -5924,22 +5972,17 @@ function toSnakeCaseFieldKey(raw) {
 
 async function addFieldLive() {
   const keyInput = document.getElementById('admFieldKey');
-  const typed = keyInput.value.trim();
-  const field = toSnakeCaseFieldKey(typed);
   const label = document.getElementById('admFieldLabel').value.trim();
   const labelAr = document.getElementById('admFieldLabelAr').value.trim();
   const kind = document.getElementById('admFieldKind').value;
+  const field = toSnakeCaseFieldKey(label);
 
-  if (!typed) { showFieldKeyError('Field key is required.'); return; }
+  if (!label) { showFieldKeyError('English label is required.'); return; }
   if (!field || !/^[a-z][a-z0-9_]*$/.test(field)) {
-    showFieldKeyError('Use a short record name with letters, numbers, or underscores, for example screening_date.');
+    showFieldKeyError('Use an English label that starts with a letter (e.g. Screening date).');
     return;
   }
-  // Soft-correct Title Case / spaces so demo typing like "Date" still works.
-  if (field !== typed) {
-    keyInput.value = field;
-    log(`Field name adjusted to "${field}".`);
-  }
+  if (keyInput) keyInput.value = field;
   clearFieldKeyError();
 
   // Guard against a second click (or the user typing the next field's key)
@@ -5952,7 +5995,7 @@ async function addFieldLive() {
   try {
     const res = await fetch('/api/admin/fields', {
       method: 'POST', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ field, label: label || typed, kind })
+      body: JSON.stringify({ field, label, kind })
     });
     const data = await res.json();
     if (!res.ok) {
@@ -5965,8 +6008,8 @@ async function addFieldLive() {
       overrides[field] = labelAr;
       localStorage.setItem('omanArFieldLabels', JSON.stringify(overrides));
     }
-    log(`Field "${field}" added to the application form.`);
-    document.getElementById('admFieldKey').value = '';
+    log(`Field "${label}" added to the application form.`);
+    if (keyInput) keyInput.value = '';
     document.getElementById('admFieldLabel').value = '';
     document.getElementById('admFieldLabelAr').value = '';
     loadFormSchema();
@@ -7036,11 +7079,11 @@ const WIDGET_METRICS = [
   { key: 'requestsReceived', label: 'Requests Received', fmt: 'number', core: true },
   { key: 'eligiblePct', label: '% Meeting Conditions', fmt: 'percent', core: true },
   { key: 'slaCompletionPct', label: 'Reviews Completed on Time', fmt: 'percent', core: true },
-  { key: 'completed', label: 'Completed', fmt: 'number', core: true },
-  { key: 'rejected', label: 'Rejected', fmt: 'number', core: true },
-  { key: 'revisionLoopCount', label: 'Went Through Revision Loop', fmt: 'number', core: true },
-  { key: 'avgFinalFee', label: 'Average Final Fee', fmt: 'currency', core: true },
   { key: 'classificationBreakdown', label: 'Requests by Film Classification', fmt: 'breakdown' },
+  { key: 'revisionLoopCount', label: 'Went Through Revision Loop', fmt: 'number' },
+  { key: 'completed', label: 'Completed', fmt: 'number' },
+  { key: 'rejected', label: 'Rejected', fmt: 'number' },
+  { key: 'avgFinalFee', label: 'Average Final Fee', fmt: 'currency' },
   { key: 'pendingApplicant', label: 'Pending Applicant Pay Fee', fmt: 'number' },
   { key: 'pendingSpecialist', label: 'Pending Specialist Queue', fmt: 'number' },
   { key: 'pendingHeadOfSection', label: 'Pending Head of Section Queue', fmt: 'number' },
@@ -7098,10 +7141,6 @@ async function loadDashboard() {
     kpiTile('Requests Received', formatMetric('number', m.requestsReceived)),
     kpiTile('% Meeting Conditions', formatMetric('percent', m.eligiblePct), eligibleBadge),
     kpiTile('Reviews Completed on Time', formatMetric('percent', m.slaCompletionPct), slaBadge),
-    kpiTile('Completed', formatMetric('number', m.completed)),
-    kpiTile('Rejected', formatMetric('number', m.rejected)),
-    kpiTile('Went Through Revision Loop', formatMetric('number', m.revisionLoopCount)),
-    kpiTile('Average Final Fee', formatMetric('currency', m.avgFinalFee)),
   ].join('');
 
   renderWidgets();

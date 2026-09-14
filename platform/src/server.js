@@ -471,7 +471,12 @@ app.get('/api/tasks', async (req, res) => {
     // regardless of what ?group= is passed.
     const group = role === 'admin' ? req.query.group || 'specialist' : ROLE_CANDIDATE_GROUP[role];
     if (!group) return res.status(403).json({ error: 'This role has no task queue' });
-    res.json(await camunda.listTasksForGroup(group));
+    const tasks = await camunda.listTasksForGroup(group);
+    const slaById = await directus.getApplicationsSlaByIds(tasks.map((t) => t.businessKey));
+    res.json(tasks.map((t) => ({
+      ...t,
+      sla_breached: !!slaById[String(t.businessKey)],
+    })));
   } catch (err) {
     res.status(500).json({ error: err.message });
   }

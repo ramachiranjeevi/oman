@@ -42,7 +42,12 @@ const handlers = {
     const visitDate = new Date(Date.now() + leadDays * 24 * 60 * 60 * 1000).toISOString().slice(0, 10);
     console.log(`[worker] auto-scheduling field visit for application #${applicationId} on ${visitDate} (lead time: ${leadDays} day(s))`);
     if (applicationId) {
-      await directus.updateApplication(applicationId, { status: 'field_visit_scheduled', field_visit_date: visitDate });
+      await directus.updateApplication(applicationId, {
+        status: 'field_visit_scheduled',
+        field_visit_date: visitDate,
+        applicant_notified: true,
+        notification_message: `Field visit scheduled for ${visitDate}. Applicant and specialist notified.`,
+      });
     }
     await complete(task.id, { fieldVisitDate: visitDate });
   },
@@ -50,7 +55,10 @@ const handlers = {
     const applicationId = task.variables.applicationId?.value;
     console.log(`[worker] SLA BREACH escalation for application #${applicationId} (Head of Section review overdue)`);
     if (applicationId) {
-      await directus.updateApplication(applicationId, { sla_breached: true });
+      await directus.updateApplication(applicationId, {
+        sla_breached: true,
+        notification_message: 'Escalation notice: Head of Section review exceeded the service time limit.',
+      });
     }
     await complete(task.id, {});
   },

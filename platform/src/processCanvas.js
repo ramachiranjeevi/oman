@@ -158,7 +158,9 @@ export function compileCanvas(canvas) {
       const unitCode = { minutes: 'M', hours: 'H', days: 'D' }[s.timer.unit] || 'M';
       const iso = unitCode === 'D' ? `P${s.timer.duration}D` : `PT${s.timer.duration}${unitCode}`;
       const boundaryId = `${id}_timer`;
-      elements.push(`<bpmn:boundaryEvent id="${boundaryId}" name="Timeout" attachedToRef="${id}"><bpmn:timerEventDefinition><bpmn:timeDuration xsi:type="bpmn:tFormalExpression" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">${iso}</bpmn:timeDuration></bpmn:timerEventDefinition></bpmn:boundaryEvent>`);
+      // Non-interrupting: mark breach / escalate notice but leave the approval
+      // task active so Head of Section can still respond.
+      elements.push(`<bpmn:boundaryEvent id="${boundaryId}" name="Timeout" attachedToRef="${id}" cancelActivity="false"><bpmn:timerEventDefinition><bpmn:timeDuration xsi:type="bpmn:tFormalExpression" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">${iso}</bpmn:timeDuration></bpmn:timerEventDefinition></bpmn:boundaryEvent>`);
       const escId = `${id}_escalate`;
       elements.push(`<bpmn:serviceTask id="${escId}" name="Escalate" camunda:type="external" camunda:topic="${xmlEscape(s.timer.onTimeoutAction || 'escalate-sla-breach')}" />`);
       fixedFlows.push(`<bpmn:sequenceFlow id="${sanitizeId(s.id)}_timerflow" sourceRef="${boundaryId}" targetRef="${escId}" />`);
