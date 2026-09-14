@@ -55,10 +55,41 @@ if (checkOnly) {
   process.exit(0);
 }
 
-// argv[0]=node, argv[1]=script — only positional args after that count
-const positional = process.argv.slice(2).filter((a) => a !== '--check-env' && !a.startsWith('-'));
-const schemaPath = positional[0] || 'directus/schema/directus-schema.json';
-const resourcesDir = positional[1] || 'camunda-module/configuration/resources';
+// Defaults only — do not treat argv[0]/node binary) as a schema path.
+function argValue(flag) {
+  const i = process.argv.indexOf(flag);
+  if (i >= 0 && process.argv[i + 1] && !process.argv[i + 1].startsWith('-')) {
+    return process.argv[i + 1];
+  }
+  const prefix = `${flag}=`;
+  const hit = process.argv.find((a) => a.startsWith(prefix));
+  return hit ? hit.slice(prefix.length) : null;
+}
+
+const schemaPath = argValue('--schema') || 'directus/schema/directus-schema.json';
+const resourcesDir = argValue('--resources') || 'camunda-module/configuration/resources';
+
+function readJsonFile(filePath, label) {
+  const raw = readFileSync(filePath);
+  const head = raw.subarray(0, 4).toString('binary');
+  if (head.startsWith('\x7fELF') || head.startsWith('MZ')) {
+    throw new Error(
+      `${label}: ${filePath} looks like a binary executable, not JSON. ` +
+        'Check CI argv / checkout — refusing to parse.',
+    );
+  }
+  const text = raw.toString('utf8').replace(/^\uFEFF/, '').trim();
+  if (!text.startsWith('{') && !text.startsWith('[')) {
+    throw new Error(
+      `${label}: ${filePath} does not look like JSON (starts with ${JSON.stringify(text.slice(0, 40))})`,
+    );
+  }
+  try {
+    return JSON.parse(text);
+  } catch (err) {
+    throw new Error(`${label}: failed to parse ${filePath}: ${err.message}`);
+  }
+}
 
 async function post(pathname, body) {
   const res = await fetch(`${base}${pathname}`, {
@@ -71,14 +102,15 @@ async function post(pathname, body) {
   });
   const text = await res.text();
   let json;
-  try { json = JSON.parse(text); } catch { json = { raw: text }; }
+  try { json = JSON.parse(text); } catch { json = { raw: text.slice(0, 500) }; }
   if (!res.ok) {
-    throw new Error(`${pathname} → ${res.status}: ${json.error || text}`);
+    throw new Error(`${pathname} → ${res.status}: ${json.error || text.slice(0, 500)}`);
   }
   return json;
 }
 
-const schema = JSON.parse(readFileSync(schemaPath, 'utf8'));
+console.log(`Schema file: ${schemaPath}`);
+const schema = readJsonFile(schemaPath, 'Directus schema');
 console.log('Promoting Directus schema…');
 const schemaResult = await post('/api/ci/promote-schema', schema);
 console.log(schemaResult.log || schemaResult);
