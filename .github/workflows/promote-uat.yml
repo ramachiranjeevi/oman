@@ -73,72 +73,78 @@ jobs:
   promote-uat:
     if: github.event_name == 'push' || github.event_name == 'workflow_dispatch'
     runs-on: ubuntu-latest
-    # Deploy-time approval gate: pauses until a required reviewer on the
-    # "uat" environment approves in the GitHub Actions UI.
     environment: uat
-    # Public UAT host — prefer repo Variable; fall back to Secret; then default.
-    # (Environment-scoped secrets override repo secrets — fix bad values under
-    # Settings → Environments → uat, not only repo secrets.)
     env:
       UAT_PLATFORM_URL: ${{ vars.UAT_PLATFORM_URL || secrets.UAT_PLATFORM_URL || 'https://omandp.paradigmit.com' }}
       CI_PROMOTE_API_KEY: ${{ secrets.CI_PROMOTE_API_KEY }}
     steps:
       - uses: actions/checkout@v4
 
-      - uses: actions/setup-node@v4
-        with:
-          node-version: 22
-
       - name: Show checkout revision
         run: |
           echo "GITHUB_SHA=$GITHUB_SHA"
           git log -1 --oneline
-          grep -n "CI_PROMOTE_SCRIPT_VERSION" ops/ci-push-artifacts.mjs
-          file directus/schema/directus-schema.json
-          xxd -l 8 directus/schema/directus-schema.json
-          # Must be JSON object, never ELF
+          echo "UAT_PLATFORM_URL host will be used from env (secret redacted)"
           python3 - <<'PY'
           from pathlib import Path
           b = Path('directus/schema/directus-schema.json').read_bytes()[:4]
-          print('magic', list(b))
-          if b[:4] == b'\x7fELF':
-              raise SystemExit('schema file is ELF — checkout is wrong')
-          if b[:1] not in (b'{', b'['):
-              raise SystemExit(f'schema file not JSON, first bytes={b!r}')
-          print('schema file looks like JSON')
+          print('schema magic', list(b))
+          assert b[:1] in (b'{', b'['), b
+          print('schema OK')
           PY
 
-      - name: Validate promote configuration
-        run: node ops/ci-push-artifacts.mjs --check-env
-
-      - name: Probe promote-schema endpoint
+      - name: Require CI_PROMOTE_API_KEY
         run: |
-          set -e
-          CODE=$(curl -sS -o /tmp/promote-probe.out -w "%{http_code}" \
-            -X POST "${UAT_PLATFORM_URL}/api/ci/promote-schema" \
+          if [ -z "${CI_PROMOTE_API_KEY}" ]; then
+            echo "::error::CI_PROMOTE_API_KEY is empty"
+            exit 1
+          fi
+          echo "CI_PROMOTE_API_KEY length=${#CI_PROMOTE_API_KEY}"
+
+      # Pure curl/python — do NOT use ops/ci-push-artifacts.mjs here.
+      # (Old revisions of that script mis-read argv[0]/node ELF) as the schema file.)
+      - name: Promote Directus schema to UAT
+        run: |
+          set -euo pipefail
+          BASE="${UAT_PLATFORM_URL%/}"
+          CODE=$(curl -sS -o /tmp/schema-out.json -w "%{http_code}" \
+            -X POST "${BASE}/api/ci/promote-schema" \
             -H "Content-Type: application/json" \
             -H "X-Api-Key: ${CI_PROMOTE_API_KEY}" \
             --data-binary @directus/schema/directus-schema.json)
-          CTYPE=$(file -b /tmp/promote-probe.out || true)
           echo "HTTP $CODE"
-          echo "file(1): $CTYPE"
-          xxd -l 16 /tmp/promote-probe.out || true
-          echo "body head:"
-          head -c 400 /tmp/promote-probe.out; echo
-          echo "## Promote probe" >> "$GITHUB_STEP_SUMMARY"
-          echo "" >> "$GITHUB_STEP_SUMMARY"
-          echo "- HTTP status: \`$CODE\`" >> "$GITHUB_STEP_SUMMARY"
-          echo "- Body type: \`$CTYPE\`" >> "$GITHUB_STEP_SUMMARY"
-          if [ "$CODE" != "200" ]; then
-            echo "::error::promote-schema probe returned HTTP $CODE"
-            exit 1
-          fi
-          if head -c 4 /tmp/promote-probe.out | grep -q $'\x7fELF'; then
-            echo "::error::promote-schema returned an ELF binary — nginx/proxy misrouted /api/ci/promote-schema"
-            exit 1
-          fi
+          head -c 800 /tmp/schema-out.json; echo
+          test "$CODE" = "200"
 
-      - name: Promote Camunda BPMN/DMN only
+      - name: Promote Camunda BPMN/DMN to UAT
         run: |
-          # Schema already applied by probe; still run full script for Camunda + clear logs
-          node ops/ci-push-artifacts.mjs
+          set -euo pipefail
+          BASE="${UAT_PLATFORM_URL%/}"
+          python3 <<'PY'
+          import json, os, pathlib, urllib.error, urllib.request
+          base = os.environ["UAT_PLATFORM_URL"].rstrip("/")
+          key = os.environ["CI_PROMOTE_API_KEY"]
+          root = pathlib.Path("camunda-module/configuration/resources")
+          files = {
+              p.name: p.read_text(encoding="utf-8")
+              for p in sorted(root.iterdir())
+              if p.suffix.lower() in (".bpmn", ".dmn")
+          }
+          print(f"Uploading {len(files)} resource(s): {', '.join(files)}")
+          body = json.dumps({"files": files}).encode("utf-8")
+          req = urllib.request.Request(
+              f"{base}/api/ci/promote-camunda",
+              data=body,
+              headers={"Content-Type": "application/json", "X-Api-Key": key},
+              method="POST",
+          )
+          try:
+              with urllib.request.urlopen(req, timeout=120) as res:
+                  raw = res.read()
+                  print("HTTP", res.status)
+                  print(raw[:800].decode("utf-8", errors="replace"))
+          except urllib.error.HTTPError as e:
+              print("HTTP", e.code)
+              print(e.read()[:800].decode("utf-8", errors="replace"))
+              raise SystemExit(1)
+          PY
