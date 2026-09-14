@@ -1,18 +1,21 @@
 #!/usr/bin/env node
-// Used by GitHub Actions (promote-uat.yml) to push committed schema/BPMN/DMN
-// artifacts to the UAT Platform CI endpoints. Platform then applies them to
-// local Directus/Camunda (not exposed on the public internet).
+// GitHub Actions → UAT Platform CI promote (schema + Camunda BPMN/DMN).
 //
-// Env:
-//   UAT_PLATFORM_URL   e.g. https://omandp.paradigmit.com
-//   CI_PROMOTE_API_KEY  shared secret (X-Api-Key)
+// Env: UAT_PLATFORM_URL, CI_PROMOTE_API_KEY
+// Flags: --check-env
 //
-// CI_PROMOTE_SCRIPT_VERSION=3
+// CI_PROMOTE_SCRIPT_VERSION=4
 
-import { readFileSync, readdirSync } from 'node:fs';
+import { readFileSync, readdirSync, existsSync } from 'node:fs';
 import path from 'node:path';
+import { fileURLToPath } from 'node:url';
 
-console.log('CI_PROMOTE_SCRIPT_VERSION=3');
+const SCRIPT_VERSION = 4;
+console.log(`CI_PROMOTE_SCRIPT_VERSION=${SCRIPT_VERSION}`);
+
+const repoRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
+const SCHEMA_PATH = path.join(repoRoot, 'directus', 'schema', 'directus-schema.json');
+const RESOURCES_DIR = path.join(repoRoot, 'camunda-module', 'configuration', 'resources');
 
 function normalizePlatformUrl(raw) {
   let base = String(raw || '').trim();
@@ -20,16 +23,11 @@ function normalizePlatformUrl(raw) {
     base = base.slice(1, -1).trim();
   }
   base = base.replace(/\/$/, '');
-  if (base && !/^https?:\/\//i.test(base)) {
-    base = `https://${base}`;
-  }
+  if (base && !/^https?:\/\//i.test(base)) base = `https://${base}`;
   try {
     new URL(base);
   } catch {
-    console.error(
-      'UAT_PLATFORM_URL must be a valid absolute URL, e.g. https://omandp.paradigmit.com',
-      '(no quotes, no path — check the repository secret value)',
-    );
+    console.error('UAT_PLATFORM_URL must be a valid absolute URL, e.g. https://omandp.paradigmit.com');
     process.exit(1);
   }
   return base;
@@ -37,66 +35,47 @@ function normalizePlatformUrl(raw) {
 
 const base = normalizePlatformUrl(process.env.UAT_PLATFORM_URL);
 const key = String(process.env.CI_PROMOTE_API_KEY || '').trim();
+
 if (!base) {
   console.error('UAT_PLATFORM_URL is missing or invalid.');
   process.exit(1);
 }
 if (!key) {
-  console.error(
-    'CI_PROMOTE_API_KEY is empty in this job.',
-    'GitHub always shows secret values as blank in the UI — that is normal.',
-    'If you set the key on the repo but the job still sees empty, check',
-    'Settings → Environments → uat → Environment secrets: a same-named secret',
-    'there overrides the repo secret (delete it or paste the value again).',
-  );
+  console.error('CI_PROMOTE_API_KEY is empty in this job.');
   process.exit(1);
 }
-console.log(`Target platform: ${base}`);
 
-const checkOnly = process.argv.includes('--check-env');
-if (checkOnly) {
+console.log(`Target platform host: ${new URL(base).host}`);
+console.log(`Repo root: ${repoRoot}`);
+console.log(`Schema path: ${SCHEMA_PATH}`);
+console.log(`argv: ${JSON.stringify(process.argv)}`);
+
+if (process.argv.includes('--check-env')) {
   console.log('CI_PROMOTE_API_KEY is set');
   process.exit(0);
 }
 
-// Defaults only — do not treat argv[0]/node binary) as a schema path.
-function argValue(flag) {
-  const i = process.argv.indexOf(flag);
-  if (i >= 0 && process.argv[i + 1] && !process.argv[i + 1].startsWith('-')) {
-    return process.argv[i + 1];
+function loadSchemaJson(filePath) {
+  if (!existsSync(filePath)) {
+    throw new Error(`Schema file missing: ${filePath}`);
   }
-  const prefix = `${flag}=`;
-  const hit = process.argv.find((a) => a.startsWith(prefix));
-  return hit ? hit.slice(prefix.length) : null;
-}
-
-const schemaPath = argValue('--schema') || 'directus/schema/directus-schema.json';
-const resourcesDir = argValue('--resources') || 'camunda-module/configuration/resources';
-
-function readJsonFile(filePath, label) {
-  const raw = readFileSync(filePath);
-  const head = raw.subarray(0, 4).toString('binary');
-  if (head.startsWith('\x7fELF') || head.startsWith('MZ')) {
-    throw new Error(
-      `${label}: ${filePath} looks like a binary executable, not JSON. ` +
-        'Check CI argv / checkout — refusing to parse.',
-    );
+  const buf = readFileSync(filePath);
+  const magic = [...buf.subarray(0, 4)].map((b) => b.toString(16).padStart(2, '0')).join(' ');
+  console.log(`Schema magic bytes: ${magic} (${buf.length} bytes)`);
+  if (buf[0] === 0x7f && buf[1] === 0x45 && buf[2] === 0x4c && buf[3] === 0x46) {
+    throw new Error(`Refusing to parse ELF executable at ${filePath}`);
   }
-  const text = raw.toString('utf8').replace(/^\uFEFF/, '').trim();
-  if (!text.startsWith('{') && !text.startsWith('[')) {
-    throw new Error(
-      `${label}: ${filePath} does not look like JSON (starts with ${JSON.stringify(text.slice(0, 40))})`,
-    );
+  if (buf[0] !== 0x7b && buf[0] !== 0x5b) {
+    // 0x7b='{' 0x5b='['
+    throw new Error(`Schema file is not JSON (first byte 0x${buf[0].toString(16)}) at ${filePath}`);
   }
-  try {
-    return JSON.parse(text);
-  } catch (err) {
-    throw new Error(`${label}: failed to parse ${filePath}: ${err.message}`);
-  }
+  return JSON.parse(buf.toString('utf8'));
 }
 
 async function post(pathname, body) {
-  const res = await fetch(`${base}${pathname}`, {
+  const url = `${base}${pathname}`;
+  console.log(`POST ${pathname} (${JSON.stringify(body).length} bytes body)`);
+  const res = await fetch(url, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
@@ -105,23 +84,27 @@ async function post(pathname, body) {
     body: JSON.stringify(body),
   });
   const text = await res.text();
+  console.log(`← ${res.status} content-type=${res.headers.get('content-type') || '(none)'} body=${text.length}b`);
   let json;
-  try { json = JSON.parse(text); } catch { json = { raw: text.slice(0, 500) }; }
+  try {
+    json = JSON.parse(text);
+  } catch {
+    json = { raw: text.slice(0, 300) };
+  }
   if (!res.ok) {
-    throw new Error(`${pathname} → ${res.status}: ${json.error || text.slice(0, 500)}`);
+    throw new Error(`${pathname} → ${res.status}: ${json.error || text.slice(0, 300)}`);
   }
   return json;
 }
 
-console.log(`Schema file: ${schemaPath}`);
-const schema = readJsonFile(schemaPath, 'Directus schema');
+const schema = loadSchemaJson(SCHEMA_PATH);
 console.log('Promoting Directus schema…');
 const schemaResult = await post('/api/ci/promote-schema', schema);
 console.log(schemaResult.log || schemaResult);
 
 const files = {};
-for (const name of readdirSync(resourcesDir).filter((f) => /\.(bpmn|dmn)$/i.test(f))) {
-  files[name] = readFileSync(path.join(resourcesDir, name), 'utf8');
+for (const name of readdirSync(RESOURCES_DIR).filter((f) => /\.(bpmn|dmn)$/i.test(f))) {
+  files[name] = readFileSync(path.join(RESOURCES_DIR, name), 'utf8');
 }
 console.log(`Promoting ${Object.keys(files).length} Camunda resource(s)…`);
 const camundaResult = await post('/api/ci/promote-camunda', { files });

@@ -89,23 +89,27 @@ jobs:
         with:
           node-version: 22
 
-      - name: Show checkout revision (must be 7283b4a or newer)
+      - name: Show checkout revision
         run: |
           echo "GITHUB_SHA=$GITHUB_SHA"
-          git rev-parse HEAD
           git log -1 --oneline
-          echo "---- ops/ci-push-artifacts.mjs (first markers) ----"
-          grep -n "Schema file:\|readJsonFile\|CI_PROMOTE_SCRIPT_VERSION\|argv.find" ops/ci-push-artifacts.mjs || true
-          if ! grep -q "CI_PROMOTE_SCRIPT_VERSION" ops/ci-push-artifacts.mjs; then
-            echo "::error::Checked out an old ci-push-artifacts.mjs. Do not Re-run an old Promote job — use Run workflow on latest main."
-            exit 1
-          fi
-          # Guard: schema path must be JSON, never an ELF binary
+          grep -n "CI_PROMOTE_SCRIPT_VERSION" ops/ci-push-artifacts.mjs
           file directus/schema/directus-schema.json
-          head -c 1 directus/schema/directus-schema.json | od -An -tx1
+          xxd -l 8 directus/schema/directus-schema.json
+          # Must be JSON object, never ELF
+          python3 - <<'PY'
+          from pathlib import Path
+          b = Path('directus/schema/directus-schema.json').read_bytes()[:4]
+          print('magic', list(b))
+          if b[:4] == b'\x7fELF':
+              raise SystemExit('schema file is ELF — checkout is wrong')
+          if b[:1] not in (b'{', b'['):
+              raise SystemExit(f'schema file not JSON, first bytes={b!r}')
+          print('schema file looks like JSON')
+          PY
 
       - name: Validate promote configuration
         run: node ops/ci-push-artifacts.mjs --check-env
 
       - name: Promote schema + BPMN/DMN to UAT via Platform
-        run: node ops/ci-push-artifacts.mjs --schema directus/schema/directus-schema.json --resources camunda-module/configuration/resources
+        run: node ops/ci-push-artifacts.mjs
