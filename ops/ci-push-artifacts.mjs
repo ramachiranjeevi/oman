@@ -6,9 +6,13 @@
 // Env:
 //   UAT_PLATFORM_URL   e.g. https://omandp.paradigmit.com
 //   CI_PROMOTE_API_KEY  shared secret (X-Api-Key)
+//
+// CI_PROMOTE_SCRIPT_VERSION=3
 
 import { readFileSync, readdirSync } from 'node:fs';
 import path from 'node:path';
+
+console.log('CI_PROMOTE_SCRIPT_VERSION=3');
 
 function normalizePlatformUrl(raw) {
   let base = String(raw || '').trim();

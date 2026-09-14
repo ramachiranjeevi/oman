@@ -89,8 +89,23 @@ jobs:
         with:
           node-version: 22
 
+      - name: Show checkout revision (must be 7283b4a or newer)
+        run: |
+          echo "GITHUB_SHA=$GITHUB_SHA"
+          git rev-parse HEAD
+          git log -1 --oneline
+          echo "---- ops/ci-push-artifacts.mjs (first markers) ----"
+          grep -n "Schema file:\|readJsonFile\|CI_PROMOTE_SCRIPT_VERSION\|argv.find" ops/ci-push-artifacts.mjs || true
+          if ! grep -q "CI_PROMOTE_SCRIPT_VERSION" ops/ci-push-artifacts.mjs; then
+            echo "::error::Checked out an old ci-push-artifacts.mjs. Do not Re-run an old Promote job — use Run workflow on latest main."
+            exit 1
+          fi
+          # Guard: schema path must be JSON, never an ELF binary
+          file directus/schema/directus-schema.json
+          head -c 1 directus/schema/directus-schema.json | od -An -tx1
+
       - name: Validate promote configuration
         run: node ops/ci-push-artifacts.mjs --check-env
 
       - name: Promote schema + BPMN/DMN to UAT via Platform
-        run: node ops/ci-push-artifacts.mjs
+        run: node ops/ci-push-artifacts.mjs --schema directus/schema/directus-schema.json --resources camunda-module/configuration/resources
